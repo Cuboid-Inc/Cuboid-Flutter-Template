@@ -1,4 +1,3 @@
-import 'package:cuboid_flutter_template/core/config/formatters.dart';
 import 'package:cuboid_flutter_template/features/auth/data/auth_validation.dart';
 
 abstract final class FormValidators {
@@ -18,23 +17,6 @@ abstract final class FormValidators {
     return RegExp(r'^\+?\d{7,15}$').hasMatch(normalized)
         ? null
         : 'Enter a valid phone number';
-  }
-
-  static String? money(
-    String? value, {
-    String label = 'Amount',
-    bool allowZero = false,
-    num? max,
-    String? maxMessage,
-  }) {
-    final amount = Formatters.parseMoney(value ?? '');
-    if (amount == null || (allowZero ? amount < 0 : amount <= 0)) {
-      return 'Enter a valid ${label.toLowerCase()}${allowZero ? '' : ' greater than 0'}';
-    }
-    if (max != null && amount > max) {
-      return maxMessage ?? '$label exceeds the allowed amount';
-    }
-    return null;
   }
 
   static String? integerRange(

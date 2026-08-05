@@ -1,10 +1,7 @@
 import 'dart:ui';
 
 import 'package:cuboid_flutter_template/features/home/ui/home_view.dart';
-import 'package:cuboid_flutter_template/features/money/ui/money_view.dart';
-import 'package:cuboid_flutter_template/features/more/ui/more_view.dart';
 import 'package:cuboid_flutter_template/features/shell/shell_viewmodel.dart';
-import 'package:cuboid_flutter_template/features/work/ui/work_view.dart';
 import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -22,24 +19,6 @@ class ShellView extends StackedView<ShellViewModel> {
       selectedIcon: CupertinoIcons.house_fill,
       unselectedIcon: CupertinoIcons.house,
       view: HomeView(),
-    ),
-    (
-      label: 'Work',
-      selectedIcon: CupertinoIcons.briefcase_fill,
-      unselectedIcon: CupertinoIcons.briefcase,
-      view: WorkView(),
-    ),
-    (
-      label: 'Money',
-      selectedIcon: CupertinoIcons.creditcard_fill,
-      unselectedIcon: CupertinoIcons.creditcard,
-      view: MoneyView(),
-    ),
-    (
-      label: 'More',
-      selectedIcon: CupertinoIcons.ellipsis_circle_fill,
-      unselectedIcon: CupertinoIcons.ellipsis_circle,
-      view: MoreView(),
     ),
   ];
 

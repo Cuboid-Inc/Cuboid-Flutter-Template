@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cuboid_flutter_template/app/app.bottomsheets.dart';
 import 'package:cuboid_flutter_template/app/app.dialogs.dart';
 import 'package:cuboid_flutter_template/app/app.locator.dart';
 import 'package:cuboid_flutter_template/app/app.router.dart';
@@ -48,7 +47,6 @@ Future<void> main() async {
   }
 
   await setupLocator();
-  setupBottomSheetUi();
   setupDialogUi();
   setupSnackbarUi();
 

@@ -1,6 +1,4 @@
 import 'package:cuboid_flutter_template/core/enums/enums.dart';
-import 'package:cuboid_flutter_template/core/models/business_profile.dart';
-import 'package:cuboid_flutter_template/features/auth/data/auth_validation.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
@@ -22,22 +20,7 @@ class InviteStaffFormSheetModel extends BaseViewModel {
     notifyListeners();
   }
 
-  void submit() {
-    final name = nameController.text.trim();
-    final email = emailController.text.trim();
-    if (name.isEmpty || !isValidEmail(email) || selectedPacks.isEmpty) return;
-    completer(
-      SheetResponse<StaffMember>(
-        confirmed: true,
-        data: StaffMember(
-          id: '',
-          name: name,
-          email: email,
-          accessPacks: selectedPacks.toSet(),
-        ),
-      ),
-    );
-  }
+  void submit() {}
 
   @override
   void dispose() {

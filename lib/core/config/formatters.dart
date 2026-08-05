@@ -1,5 +1,4 @@
 import 'package:cuboid_flutter_template/core/config/app_config.dart';
-import 'package:cuboid_flutter_template/core/money.dart';
 import 'package:intl/intl.dart';
 
 /// All display formatting, routed through [AppConfig].
@@ -15,18 +14,6 @@ abstract final class Formatters {
       return '$code -${_rawMoney.format(amount.abs())}';
     }
     return '$code ${_rawMoney.format(amount)}';
-  }
-
-  static num? parseMoney(String input) {
-    final value = input.trim().replaceAll(',', '');
-    final match = RegExp(r'^([+-]?)(\d+)(?:\.(\d+))?$').firstMatch(value);
-    if (match == null) return null;
-    final whole = int.parse(match.group(2)!);
-    final fraction = (match.group(3) ?? '').padRight(3, '0');
-    var cents = whole * 100 + int.parse(fraction.substring(0, 2));
-    if (fraction.codeUnitAt(2) >= 53) cents++;
-    final amount = cents / 100;
-    return match.group(1) == '-' ? -roundMoney(amount) : roundMoney(amount);
   }
 
   static String signedMoney(num amount) =>
