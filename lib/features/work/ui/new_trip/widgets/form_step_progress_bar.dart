@@ -1,5 +1,5 @@
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
 
 class FormStepProgressBar extends StatelessWidget {
   const FormStepProgressBar({

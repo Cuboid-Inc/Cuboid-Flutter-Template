@@ -1,11 +1,11 @@
 import 'dart:ui';
 
-import 'package:fleetgo/features/home/ui/home_view.dart';
-import 'package:fleetgo/features/money/ui/money_view.dart';
-import 'package:fleetgo/features/more/ui/more_view.dart';
-import 'package:fleetgo/features/shell/shell_viewmodel.dart';
-import 'package:fleetgo/features/work/ui/work_view.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/features/home/ui/home_view.dart';
+import 'package:cuboid_flutter_template/features/money/ui/money_view.dart';
+import 'package:cuboid_flutter_template/features/more/ui/more_view.dart';
+import 'package:cuboid_flutter_template/features/shell/shell_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/work/ui/work_view.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';

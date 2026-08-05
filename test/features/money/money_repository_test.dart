@@ -1,12 +1,12 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/expense.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/core/models/period.dart';
-import 'package:fleetgo/core/models/settlement.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/features/money/data/money_repository.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/expense.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/core/models/period.dart';
+import 'package:cuboid_flutter_template/core/models/settlement.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

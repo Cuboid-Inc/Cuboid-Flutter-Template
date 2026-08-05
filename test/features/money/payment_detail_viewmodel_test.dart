@@ -1,17 +1,18 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/core/models/settlement.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/money/data/money_repository.dart';
-import 'package:fleetgo/features/parties/data/parties_repository.dart';
-import 'package:fleetgo/features/money/ui/payment_detail/payment_detail_viewmodel.dart';
-import '../../helpers/stacked_service_mocks.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/core/models/settlement.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_repository.dart';
+import 'package:cuboid_flutter_template/features/money/ui/payment_detail/payment_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/parties/data/parties_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
+
+import '../../helpers/stacked_service_mocks.dart';
 
 class MockMoneyRepository extends Mock implements MoneyRepository {}
 

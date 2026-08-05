@@ -1,2 +1,2 @@
-export 'package:fleetgo/core/enums/enums.dart' show PartyType;
-export 'package:fleetgo/core/models/party.dart';
+export 'package:cuboid_flutter_template/core/enums/enums.dart' show PartyType;
+export 'package:cuboid_flutter_template/core/models/party.dart';

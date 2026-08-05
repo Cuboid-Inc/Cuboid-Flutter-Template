@@ -1,17 +1,18 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/models/paginated_result.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/parties/data/parties_repository.dart';
-import 'package:fleetgo/features/shell/shell_service.dart';
-import 'package:fleetgo/features/work/data/work_repository.dart';
-import 'package:fleetgo/features/work/ui/work_viewmodel.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/parties/data/parties_repository.dart';
+import 'package:cuboid_flutter_template/features/shell/shell_service.dart';
+import 'package:cuboid_flutter_template/features/work/data/work_repository.dart';
+import 'package:cuboid_flutter_template/features/work/ui/work_viewmodel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
+
 import '../../helpers/stacked_service_mocks.dart';
 
 class MockWorkRepository extends Mock implements WorkRepository {}
@@ -76,26 +77,54 @@ void main() {
 
   test('filters, formats, refreshes, and updates a work order', () async {
     final original = WorkOrder(
-      id: 'work-1', number: 'WO-1', customerId: 'customer-1',
-      date: DateTime(2026, 7, 17), pickup: 'Pickup', destination: 'Destination',
+      id: 'work-1',
+      number: 'WO-1',
+      customerId: 'customer-1',
+      date: DateTime(2026, 7, 17),
+      pickup: 'Pickup',
+      destination: 'Destination',
       chargeLines: [const ChargeLine(name: 'Trip', unitPrice: 100)],
     );
     final updated = WorkOrder(
-      id: 'work-1', number: 'WO-2', customerId: 'customer-1',
-      date: DateTime(2026, 7, 17), pickup: 'Pickup', destination: 'Destination',
+      id: 'work-1',
+      number: 'WO-2',
+      customerId: 'customer-1',
+      date: DateTime(2026, 7, 17),
+      pickup: 'Pickup',
+      destination: 'Destination',
       status: WorkStatus.completed,
     );
-    when(() => workRepository.fetchPage(
-      pageNumber: 1, pageSize: 50, status: any(named: 'status'), search: any(named: 'search'),
-    )).thenAnswer((_) async => Success(PaginatedResult(
-      items: [original], pageNumber: 1, pageSize: 50, totalRecords: 1,
-    )));
-    when(() => partiesRepository.fetchAll()).thenAnswer((_) async => const Success([
-      Party(id: 'customer-1', name: 'Customer', type: PartyType.customer),
-    ]));
-    when(() => navigationService.navigateTo(any(), arguments: any(named: 'arguments')))
-        .thenAnswer((_) async => null);
-    when(() => workRepository.fetchOne('work-1')).thenAnswer((_) async => Success(updated));
+    when(
+      () => workRepository.fetchPage(
+        pageNumber: 1,
+        pageSize: 50,
+        status: any(named: 'status'),
+        search: any(named: 'search'),
+      ),
+    ).thenAnswer(
+      (_) async => Success(
+        PaginatedResult(
+          items: [original],
+          pageNumber: 1,
+          pageSize: 50,
+          totalRecords: 1,
+        ),
+      ),
+    );
+    when(() => partiesRepository.fetchAll()).thenAnswer(
+      (_) async => const Success([
+        Party(id: 'customer-1', name: 'Customer', type: PartyType.customer),
+      ]),
+    );
+    when(
+      () => navigationService.navigateTo(
+        any(),
+        arguments: any(named: 'arguments'),
+      ),
+    ).thenAnswer((_) async => null);
+    when(
+      () => workRepository.fetchOne('work-1'),
+    ).thenAnswer((_) async => Success(updated));
     final model = WorkViewModel(workRepository, partiesRepository);
     await model.init();
     expect(model.customerFor(original), 'Customer');
@@ -115,16 +144,33 @@ void main() {
 
   test('keeps an unknown customer and reports party failure', () async {
     final work = WorkOrder(
-      id: 'w', number: 'W', customerId: 'missing', date: DateTime(2026), pickup: 'A', destination: 'B',
+      id: 'w',
+      number: 'W',
+      customerId: 'missing',
+      date: DateTime(2026),
+      pickup: 'A',
+      destination: 'B',
     );
-    when(() => workRepository.fetchPage(
-      pageNumber: 1, pageSize: 50, status: null, search: '',
-    )).thenAnswer((_) async => Success(PaginatedResult(
-      items: [work], pageNumber: 1, pageSize: 50, totalRecords: 1,
-    )));
-    when(() => partiesRepository.fetchAll()).thenAnswer(
-      (_) async => const Failure(ServerFailure('parties failed')),
+    when(
+      () => workRepository.fetchPage(
+        pageNumber: 1,
+        pageSize: 50,
+        status: null,
+        search: '',
+      ),
+    ).thenAnswer(
+      (_) async => Success(
+        PaginatedResult(
+          items: [work],
+          pageNumber: 1,
+          pageSize: 50,
+          totalRecords: 1,
+        ),
+      ),
     );
+    when(
+      () => partiesRepository.fetchAll(),
+    ).thenAnswer((_) async => const Failure(ServerFailure('parties failed')));
     final model = WorkViewModel(workRepository, partiesRepository);
     await model.init();
     expect(model.customerFor(work), 'Unknown customer');

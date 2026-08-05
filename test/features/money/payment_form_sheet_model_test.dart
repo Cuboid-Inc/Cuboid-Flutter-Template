@@ -1,16 +1,16 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/core/models/paginated_result.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/expense.dart';
-import 'package:fleetgo/core/models/settlement.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/parties/data/parties_repository.dart';
-import 'package:fleetgo/features/money/data/money_repository.dart';
-import 'package:fleetgo/ui/bottom_sheets/payment_form/payment_form_sheet_model.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/models/expense.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/core/models/settlement.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_repository.dart';
+import 'package:cuboid_flutter_template/features/parties/data/parties_repository.dart';
+import 'package:cuboid_flutter_template/ui/bottom_sheets/payment_form/payment_form_sheet_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
@@ -560,7 +560,11 @@ void main() {
     expect(outgoing.linkedDocError, isNotNull);
     outgoing.amountController.text = '10';
     outgoing.submit();
-    expect(saved, isNull, reason: 'submit must reject a payment with no linked settlement/expense');
+    expect(
+      saved,
+      isNull,
+      reason: 'submit must reject a payment with no linked settlement/expense',
+    );
     model.dispose();
     outgoing.dispose();
   });

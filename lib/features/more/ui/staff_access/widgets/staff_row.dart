@@ -1,9 +1,8 @@
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
 import 'package:flutter/cupertino.dart';
-
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
 
 class StaffRow extends StatelessWidget {
   const StaffRow({super.key, required this.member, required this.packsLabel});

@@ -280,7 +280,7 @@ NAME-10. Do not use generic names such as data, item, manager, helper, common, m
 
 NAME-11. Test names describe the behavior, condition, and expected result.
 
-NAME-12. Use package:fleetgo imports in handwritten Dart. Generated files are exempt.
+NAME-12. Use package:cuboid_flutter_template imports in handwritten Dart. Generated files are exempt.
 
 NAME-13. Group imports as Dart SDK, Flutter, third-party packages, then project packages.
 

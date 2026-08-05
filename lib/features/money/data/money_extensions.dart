@@ -1,9 +1,9 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/money.dart';
-import 'package:fleetgo/core/models/expense.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/core/models/settlement.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/expense.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/core/models/settlement.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
 
 DateTime _date(Object value) => DateTime.parse(value.toString());
 DateTime? _dateOrNull(Object? value) => value == null ? null : _date(value);

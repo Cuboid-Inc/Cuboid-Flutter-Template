@@ -1,7 +1,6 @@
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
 import 'package:flutter/foundation.dart';
-
-import 'package:fleetgo/core/models/paginated_result.dart';
-import 'package:fleetgo/core/result.dart';
 
 /// Controller to manage pagination state and logic for REST API.
 class PaginationController<T> {

@@ -1,7 +1,7 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/features/money/ui/invoice_detail/widgets/invoice_date_card.dart';
-import 'package:fleetgo/features/money/ui/invoice_detail/widgets/invoice_line_tile.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/features/money/ui/invoice_detail/widgets/invoice_date_card.dart';
+import 'package:cuboid_flutter_template/features/money/ui/invoice_detail/widgets/invoice_line_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

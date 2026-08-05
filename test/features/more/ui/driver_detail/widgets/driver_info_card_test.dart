@@ -1,7 +1,7 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/driver.dart';
-import 'package:fleetgo/features/more/ui/driver_detail/widgets/driver_info_card.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/driver.dart';
+import 'package:cuboid_flutter_template/features/more/ui/driver_detail/widgets/driver_info_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

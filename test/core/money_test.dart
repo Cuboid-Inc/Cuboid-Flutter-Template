@@ -1,4 +1,4 @@
-import 'package:fleetgo/core/money.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

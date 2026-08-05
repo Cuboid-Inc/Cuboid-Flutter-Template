@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/ui/pdf/components/pdf_theme.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/ui/pdf/components/pdf_theme.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 

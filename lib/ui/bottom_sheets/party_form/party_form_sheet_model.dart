@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';

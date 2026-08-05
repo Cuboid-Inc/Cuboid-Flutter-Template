@@ -1,4 +1,4 @@
-import 'package:fleetgo/core/failures.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
 
 /// Dart 3 sealed result type: either a [Success] value or a [Failure].
 sealed class Result<T> {

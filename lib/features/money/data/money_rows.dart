@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/money.dart';
-import 'package:fleetgo/core/models/report_models.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/features/money/data/money_extensions.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/report_models.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_extensions.dart';
 
-export 'package:fleetgo/core/models/report_models.dart';
+export 'package:cuboid_flutter_template/core/models/report_models.dart';
 
 num _money(Object? value) => roundMoney((value as num?) ?? 0);
 DateTime _date(Object value) => DateTime.parse(value.toString());

@@ -1,7 +1,7 @@
-import 'package:fleetgo/core/config/app_config.dart';
-import 'package:fleetgo/features/startup/startup_viewmodel.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/core/config/app_config.dart';
+import 'package:cuboid_flutter_template/features/startup/startup_viewmodel.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 

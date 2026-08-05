@@ -1,15 +1,15 @@
 import 'dart:async';
 
-import 'package:fleetgo/app/app.bottomsheets.dart';
-import 'package:fleetgo/app/app.dialogs.dart';
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/app/app.router.dart';
-import 'package:fleetgo/core/config/app_config.dart';
-import 'package:fleetgo/core/supabase/env.dart';
-import 'package:fleetgo/core/supabase/secure_local_storage.dart';
-import 'package:fleetgo/main.logger.dart';
-import 'package:fleetgo/ui/common/app_theme.dart';
-import 'package:fleetgo/ui/common/snackbar_ui.dart';
+import 'package:cuboid_flutter_template/app/app.bottomsheets.dart';
+import 'package:cuboid_flutter_template/app/app.dialogs.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/app/app.router.dart';
+import 'package:cuboid_flutter_template/core/config/app_config.dart';
+import 'package:cuboid_flutter_template/core/supabase/env.dart';
+import 'package:cuboid_flutter_template/core/supabase/secure_local_storage.dart';
+import 'package:cuboid_flutter_template/main.logger.dart';
+import 'package:cuboid_flutter_template/ui/common/app_theme.dart';
+import 'package:cuboid_flutter_template/ui/common/snackbar_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked_annotations.dart';

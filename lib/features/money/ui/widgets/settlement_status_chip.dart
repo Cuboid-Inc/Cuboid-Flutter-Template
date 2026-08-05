@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/ui/widgets/status_chip.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/ui/widgets/status_chip.dart';
 import 'package:flutter/material.dart';
 
 class SettlementStatusChip extends StatelessWidget {

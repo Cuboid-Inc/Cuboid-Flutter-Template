@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/core/supabase/env.dart';
-import 'package:fleetgo/main.logger.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/core/supabase/env.dart';
+import 'package:cuboid_flutter_template/main.logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

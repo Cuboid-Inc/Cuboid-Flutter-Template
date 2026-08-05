@@ -1,9 +1,9 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/agreement.dart';
-import 'package:fleetgo/features/work/ui/monthly_work/monthly_work_viewmodel.dart';
-import 'package:fleetgo/ui/widgets/app_combo_box.dart';
-import 'package:fleetgo/ui/widgets/app_date_time_picker.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/agreement.dart';
+import 'package:cuboid_flutter_template/features/work/ui/monthly_work/monthly_work_viewmodel.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_combo_box.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_date_time_picker.dart';
 import 'package:flutter/material.dart';
 
 class MonthlyWorkStepOne extends StatelessWidget {

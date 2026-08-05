@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/forms/form_validators.dart';
-import 'package:fleetgo/ui/widgets/app_text_field.dart';
+import 'package:cuboid_flutter_template/core/forms/form_validators.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

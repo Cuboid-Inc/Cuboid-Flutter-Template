@@ -1,9 +1,8 @@
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:stacked_services/stacked_services.dart';
-
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
 
 enum SnackbarType { success, error, warning, info }
 

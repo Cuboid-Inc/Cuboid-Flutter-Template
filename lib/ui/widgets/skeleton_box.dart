@@ -1,4 +1,4 @@
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// A single bone shape for skeleton loading screens. Wrap a tree of these in

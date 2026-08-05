@@ -1,8 +1,8 @@
-import 'package:fleetgo/core/models/driver.dart';
-import 'package:fleetgo/core/models/vehicle.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
+import 'package:cuboid_flutter_template/core/models/driver.dart';
+import 'package:cuboid_flutter_template/core/models/vehicle.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

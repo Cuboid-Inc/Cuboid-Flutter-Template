@@ -1,7 +1,7 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/features/money/data/money_rows.dart';
-import 'package:fleetgo/features/money/ui/statement_view/statement_viewmodel.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_rows.dart';
+import 'package:cuboid_flutter_template/features/money/ui/statement_view/statement_viewmodel.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 
 class StatementRowTile extends StatelessWidget {

@@ -1,10 +1,10 @@
-import 'package:fleetgo/features/work/ui/monthly_work/monthly_work_viewmodel.dart';
-import 'package:fleetgo/features/work/ui/monthly_work/steps/monthly_work_step_one.dart';
-import 'package:fleetgo/features/work/ui/monthly_work/steps/monthly_work_step_three.dart';
-import 'package:fleetgo/features/work/ui/monthly_work/steps/monthly_work_step_two.dart';
-import 'package:fleetgo/features/work/ui/new_trip/widgets/form_step_progress_bar.dart';
-import 'package:fleetgo/ui/widgets/app_bar_ios.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/features/work/ui/monthly_work/monthly_work_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/work/ui/monthly_work/steps/monthly_work_step_one.dart';
+import 'package:cuboid_flutter_template/features/work/ui/monthly_work/steps/monthly_work_step_three.dart';
+import 'package:cuboid_flutter_template/features/work/ui/monthly_work/steps/monthly_work_step_two.dart';
+import 'package:cuboid_flutter_template/features/work/ui/new_trip/widgets/form_step_progress_bar.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 

@@ -1,7 +1,7 @@
-import 'package:fleetgo/ui/bottom_sheets/add_expense/add_expense_sheet_model.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/widgets/app_loading_indicator.dart';
-import 'package:fleetgo/ui/widgets/empty_state.dart';
+import 'package:cuboid_flutter_template/ui/bottom_sheets/add_expense/add_expense_sheet_model.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_loading_indicator.dart';
+import 'package:cuboid_flutter_template/ui/widgets/empty_state.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

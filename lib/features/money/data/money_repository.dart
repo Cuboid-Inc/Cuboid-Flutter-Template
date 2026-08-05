@@ -1,19 +1,19 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/cache/cache_entry.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/expense.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/paginated_result.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/core/models/period.dart';
-import 'package:fleetgo/core/models/settlement.dart';
-import 'package:fleetgo/core/money.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/core/supabase/supabase_guard.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/features/money/data/money_extensions.dart';
-import 'package:fleetgo/features/money/data/money_rows.dart';
-import 'package:fleetgo/main.logger.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/cache/cache_entry.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/expense.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/core/models/period.dart';
+import 'package:cuboid_flutter_template/core/models/settlement.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/core/supabase/supabase_guard.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_extensions.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_rows.dart';
+import 'package:cuboid_flutter_template/main.logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MoneyBalances {
@@ -172,10 +172,9 @@ class MoneyRepository with RepositoryCacheMixin {
     period: period,
   );
 
-  String _periodKey(Period? period) =>
-      period == null
-          ? ''
-          : '${period.start.toIso8601String()}_${period.end.toIso8601String()}';
+  String _periodKey(Period? period) => period == null
+      ? ''
+      : '${period.start.toIso8601String()}_${period.end.toIso8601String()}';
 
   Future<Result<PaginatedResult<T>>> _page<T>(
     String key,

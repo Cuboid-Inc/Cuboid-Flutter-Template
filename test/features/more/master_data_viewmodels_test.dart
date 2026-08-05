@@ -1,23 +1,24 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/agreement.dart';
-import 'package:fleetgo/core/models/driver.dart';
-import 'package:fleetgo/core/models/paginated_result.dart';
-import 'package:fleetgo/core/models/route_rate.dart';
-import 'package:fleetgo/core/models/vehicle.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/more/data/agreement_repository.dart';
-import 'package:fleetgo/features/more/data/driver_repository.dart';
-import 'package:fleetgo/features/more/data/route_rate_repository.dart';
-import 'package:fleetgo/features/more/data/vehicle_repository.dart';
-import 'package:fleetgo/features/more/ui/agreements/agreements_viewmodel.dart';
-import 'package:fleetgo/features/more/ui/drivers/drivers_viewmodel.dart';
-import 'package:fleetgo/features/more/ui/route_rates/route_rates_viewmodel.dart';
-import 'package:fleetgo/features/more/ui/vehicles/vehicles_viewmodel.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/models/agreement.dart';
+import 'package:cuboid_flutter_template/core/models/driver.dart';
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/models/route_rate.dart';
+import 'package:cuboid_flutter_template/core/models/vehicle.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/more/data/agreement_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/driver_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/route_rate_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/vehicle_repository.dart';
+import 'package:cuboid_flutter_template/features/more/ui/agreements/agreements_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/ui/drivers/drivers_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/ui/route_rates/route_rates_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/ui/vehicles/vehicles_viewmodel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
+
 import '../../helpers/stacked_service_mocks.dart';
 
 class MockVehicleRepository extends Mock implements VehicleRepository {}

@@ -1,9 +1,9 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/features/parties/ui/party_detail/widgets/party_info_card.dart';
-import 'package:fleetgo/features/parties/ui/party_detail/widgets/party_open_invoice_tile.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/features/parties/ui/party_detail/widgets/party_info_card.dart';
+import 'package:cuboid_flutter_template/features/parties/ui/party_detail/widgets/party_open_invoice_tile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

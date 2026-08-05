@@ -1,6 +1,6 @@
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/features/shell/shell_service.dart';
 import 'package:stacked/stacked.dart';
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/features/shell/shell_service.dart';
 
 class ShellViewModel extends ReactiveViewModel {
   final _shellService = locator<ShellService>();

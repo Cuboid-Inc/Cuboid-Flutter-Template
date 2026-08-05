@@ -1,16 +1,16 @@
 import 'dart:io';
 
-import 'package:fleetgo/core/forms/form_validators.dart';
-import 'package:fleetgo/features/more/ui/business_profile/business_profile_viewmodel.dart';
-import 'package:fleetgo/features/more/ui/business_profile/widgets/brand_color_picker.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_bar_ios.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
-import 'package:fleetgo/ui/widgets/app_loading_indicator.dart';
-import 'package:fleetgo/ui/widgets/app_text_field.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
-import 'package:fleetgo/ui/widgets/section_label.dart';
+import 'package:cuboid_flutter_template/core/forms/form_validators.dart';
+import 'package:cuboid_flutter_template/features/more/ui/business_profile/business_profile_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/ui/business_profile/widgets/brand_color_picker.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_loading_indicator.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_text_field.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
+import 'package:cuboid_flutter_template/ui/widgets/section_label.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';

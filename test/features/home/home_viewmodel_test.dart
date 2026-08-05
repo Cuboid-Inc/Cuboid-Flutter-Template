@@ -1,22 +1,23 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/features/home/data/home_repository.dart';
-import 'package:fleetgo/features/home/ui/home_viewmodel.dart';
-import 'package:fleetgo/features/money/data/money_repository.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/models/expense.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/core/models/period.dart';
-import 'package:fleetgo/core/models/report_models.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/ui/common/snackbar_ui.dart';
-import 'package:fleetgo/ui/bottom_sheets/payment_form/payment_form_sheet_model.dart';
-import 'package:fleetgo/ui/bottom_sheets/period/period_sheet_model.dart';
-import 'package:fleetgo/features/shell/shell_service.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/models/expense.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/core/models/period.dart';
+import 'package:cuboid_flutter_template/core/models/report_models.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/features/home/data/home_repository.dart';
+import 'package:cuboid_flutter_template/features/home/ui/home_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_repository.dart';
+import 'package:cuboid_flutter_template/features/shell/shell_service.dart';
+import 'package:cuboid_flutter_template/ui/bottom_sheets/payment_form/payment_form_sheet_model.dart';
+import 'package:cuboid_flutter_template/ui/bottom_sheets/period/period_sheet_model.dart';
+import 'package:cuboid_flutter_template/ui/common/snackbar_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
+
 import '../../helpers/stacked_service_mocks.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}

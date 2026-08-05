@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/ui/dialogs/add_edit_extra/add_edit_extra_dialog_model.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/ui/dialogs/add_edit_extra/add_edit_extra_dialog_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stacked_services/stacked_services.dart';
 

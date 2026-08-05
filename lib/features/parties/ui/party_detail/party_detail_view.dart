@@ -1,18 +1,17 @@
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/features/parties/ui/party_detail/party_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/parties/ui/party_detail/widgets/party_info_card.dart';
+import 'package:cuboid_flutter_template/features/parties/ui/party_detail/widgets/party_open_invoice_tile.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_loading_indicator.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
-
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_bar_ios.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
-import 'package:fleetgo/ui/widgets/app_loading_indicator.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
-import 'package:fleetgo/features/parties/ui/party_detail/party_detail_viewmodel.dart';
-import 'package:fleetgo/features/parties/ui/party_detail/widgets/party_info_card.dart';
-import 'package:fleetgo/features/parties/ui/party_detail/widgets/party_open_invoice_tile.dart';
 
 class PartyDetailView extends StackedView<PartyDetailViewModel> {
   const PartyDetailView({super.key, required this.party});

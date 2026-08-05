@@ -1,6 +1,6 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/features/more/ui/staff_access/widgets/staff_row.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/features/more/ui/staff_access/widgets/staff_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

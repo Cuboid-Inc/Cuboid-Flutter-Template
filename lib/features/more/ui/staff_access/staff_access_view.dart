@@ -1,10 +1,10 @@
-import 'package:fleetgo/features/more/ui/staff_access/staff_access_viewmodel.dart';
-import 'package:fleetgo/features/more/ui/staff_access/widgets/staff_row.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_bar_ios.dart';
-import 'package:fleetgo/ui/widgets/app_loading_indicator.dart';
-import 'package:fleetgo/ui/widgets/empty_state.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
+import 'package:cuboid_flutter_template/features/more/ui/staff_access/staff_access_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/ui/staff_access/widgets/staff_row.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_loading_indicator.dart';
+import 'package:cuboid_flutter_template/ui/widgets/empty_state.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';

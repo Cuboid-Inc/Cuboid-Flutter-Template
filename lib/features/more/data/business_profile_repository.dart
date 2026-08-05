@@ -1,10 +1,10 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/cache/cache_entry.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/core/supabase/supabase_guard.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/features/more/data/business_profile_extension.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/cache/cache_entry.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/core/supabase/supabase_guard.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/business_profile_extension.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BusinessProfileRepository with RepositoryCacheMixin {

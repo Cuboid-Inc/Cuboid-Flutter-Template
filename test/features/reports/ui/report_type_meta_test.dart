@@ -1,6 +1,6 @@
-import 'package:fleetgo/features/reports/data/report_type.dart';
-import 'package:fleetgo/features/reports/ui/report_type_meta.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/features/reports/data/report_type.dart';
+import 'package:cuboid_flutter_template/features/reports/ui/report_type_meta.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 

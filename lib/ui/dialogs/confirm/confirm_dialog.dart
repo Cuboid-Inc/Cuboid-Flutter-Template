@@ -1,5 +1,5 @@
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/dialogs/confirm/confirm_dialog_model.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/dialogs/confirm/confirm_dialog_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';

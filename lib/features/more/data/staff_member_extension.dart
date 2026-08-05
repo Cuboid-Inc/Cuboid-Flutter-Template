@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
 
 extension StaffMemberRow on StaffMember {
   static StaffMember fromRow(Map<String, dynamic> row) {

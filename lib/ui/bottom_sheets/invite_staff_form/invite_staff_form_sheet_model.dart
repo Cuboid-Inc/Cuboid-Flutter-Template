@@ -1,6 +1,6 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/features/auth/data/auth_validation.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_validation.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';

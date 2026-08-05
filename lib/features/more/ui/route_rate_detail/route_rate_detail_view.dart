@@ -1,13 +1,12 @@
+import 'package:cuboid_flutter_template/core/models/route_rate.dart';
+import 'package:cuboid_flutter_template/features/more/ui/route_rate_detail/route_rate_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/ui/route_rate_detail/widgets/route_rate_info_card.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
-
-import 'package:fleetgo/core/models/route_rate.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_bar_ios.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
-import 'package:fleetgo/ui/widgets/app_loading_indicator.dart';
-import 'package:fleetgo/features/more/ui/route_rate_detail/route_rate_detail_viewmodel.dart';
-import 'package:fleetgo/features/more/ui/route_rate_detail/widgets/route_rate_info_card.dart';
 
 class RouteRateDetailView extends StackedView<RouteRateDetailViewModel> {
   const RouteRateDetailView({super.key, required this.routeRate});

@@ -1,8 +1,8 @@
-import 'package:fleetgo/features/more/ui/more_viewmodel.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
-import 'package:fleetgo/ui/widgets/section_label.dart';
+import 'package:cuboid_flutter_template/features/more/ui/more_viewmodel.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
+import 'package:cuboid_flutter_template/ui/widgets/section_label.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';

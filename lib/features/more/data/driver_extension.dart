@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/driver.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/driver.dart';
 
 extension DriverRow on Driver {
   Map<String, dynamic> toRow(String tenantId) => {

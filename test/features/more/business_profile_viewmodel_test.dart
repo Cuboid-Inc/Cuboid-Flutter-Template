@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/features/more/data/business_profile_repository.dart';
-import 'package:fleetgo/features/more/ui/business_profile/business_profile_viewmodel.dart';
-import 'package:fleetgo/ui/common/snackbar_ui.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/business_profile_repository.dart';
+import 'package:cuboid_flutter_template/features/more/ui/business_profile/business_profile_viewmodel.dart';
+import 'package:cuboid_flutter_template/ui/common/snackbar_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
@@ -90,15 +90,25 @@ void main() {
 
   test('init fills fields and computed letterhead state', () async {
     when(() => authRepository.currentTenantName).thenReturn('Tenant');
-    when(() => repository.fetchBusinessProfile()).thenAnswer((_) async => const Success(
-      BusinessProfile(
-        legalName: '', arabicLegalName: 'Arabic', trn: 'TRN', address: 'Address',
-        city: 'Dubai', invoicePrefix: 'FG', brandColor: 7,
-        useCustomLetterhead: true, letterheadPath: '/tmp/header.png',
-        letterheadMarginTopMm: 10, letterheadMarginBottomMm: 20,
-        letterheadMarginLeftMm: 30, letterheadMarginRightMm: 40,
+    when(() => repository.fetchBusinessProfile()).thenAnswer(
+      (_) async => const Success(
+        BusinessProfile(
+          legalName: '',
+          arabicLegalName: 'Arabic',
+          trn: 'TRN',
+          address: 'Address',
+          city: 'Dubai',
+          invoicePrefix: 'FG',
+          brandColor: 7,
+          useCustomLetterhead: true,
+          letterheadPath: '/tmp/header.png',
+          letterheadMarginTopMm: 10,
+          letterheadMarginBottomMm: 20,
+          letterheadMarginLeftMm: 30,
+          letterheadMarginRightMm: 40,
+        ),
       ),
-    ));
+    );
     final model = BusinessProfileViewModel(repository);
     await model.init();
     expect(model.legalNameController.text, 'Tenant');
@@ -123,11 +133,16 @@ void main() {
     when(() => navigationService.back()).thenReturn(true);
     await model.save();
     verify(() => navigationService.back()).called(1);
-    when(() => repository.updateBusinessProfile(any())).thenAnswer(
-      (_) async => const Failure(ValidationFailure('save failed')),
-    );
+    when(
+      () => repository.updateBusinessProfile(any()),
+    ).thenAnswer((_) async => const Failure(ValidationFailure('save failed')));
     await model.save();
-    verify(() => snackbarService.showCustomSnackBar(message: 'save failed', variant: SnackbarType.error)).called(1);
+    verify(
+      () => snackbarService.showCustomSnackBar(
+        message: 'save failed',
+        variant: SnackbarType.error,
+      ),
+    ).called(1);
     model.dispose();
   });
 }

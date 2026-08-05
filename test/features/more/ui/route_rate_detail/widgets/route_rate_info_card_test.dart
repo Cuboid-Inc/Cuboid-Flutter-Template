@@ -1,7 +1,7 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/route_rate.dart';
-import 'package:fleetgo/features/more/ui/route_rate_detail/widgets/route_rate_info_card.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/route_rate.dart';
+import 'package:cuboid_flutter_template/features/more/ui/route_rate_detail/widgets/route_rate_info_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

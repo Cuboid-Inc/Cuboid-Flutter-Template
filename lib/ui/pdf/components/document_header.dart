@@ -1,4 +1,4 @@
-import 'package:fleetgo/ui/pdf/components/pdf_theme.dart';
+import 'package:cuboid_flutter_template/ui/pdf/components/pdf_theme.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 

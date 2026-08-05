@@ -1,6 +1,6 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/result.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 String describe(Result<int> result) => switch (result) {

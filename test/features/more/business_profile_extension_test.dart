@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/features/more/data/business_profile_extension.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/features/more/data/business_profile_extension.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/features/auth/data/auth_validation.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_validation.dart';
 
 abstract final class FormValidators {
   static String? required(String? value, {required String label}) =>

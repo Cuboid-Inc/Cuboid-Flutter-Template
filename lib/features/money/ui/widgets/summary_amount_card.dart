@@ -1,5 +1,5 @@
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
 import 'package:flutter/material.dart';
 
 /// ListCard showing a label on the left and a large amount on the right,

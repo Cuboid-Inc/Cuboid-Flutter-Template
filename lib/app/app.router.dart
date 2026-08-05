@@ -9,77 +9,85 @@
 import 'dart:async' as _i48;
 import 'dart:typed_data' as _i49;
 
-import 'package:fleetgo/core/enums/enums.dart' as _i50;
-import 'package:fleetgo/core/models/agreement.dart' as _i45;
-import 'package:fleetgo/core/models/driver.dart' as _i43;
-import 'package:fleetgo/core/models/expense.dart' as _i41;
-import 'package:fleetgo/core/models/invoice.dart' as _i37;
-import 'package:fleetgo/core/models/party.dart' as _i42;
-import 'package:fleetgo/core/models/payment.dart' as _i40;
-import 'package:fleetgo/core/models/period.dart' as _i39;
-import 'package:fleetgo/core/models/route_rate.dart' as _i44;
-import 'package:fleetgo/core/models/settlement.dart' as _i38;
-import 'package:fleetgo/core/models/vehicle.dart' as _i46;
-import 'package:fleetgo/core/models/work_order.dart' as _i36;
-import 'package:fleetgo/features/auth/ui/accept_invitation/accept_invitation_view.dart'
+import 'package:cuboid_flutter_template/core/enums/enums.dart' as _i50;
+import 'package:cuboid_flutter_template/core/models/agreement.dart' as _i45;
+import 'package:cuboid_flutter_template/core/models/driver.dart' as _i43;
+import 'package:cuboid_flutter_template/core/models/expense.dart' as _i41;
+import 'package:cuboid_flutter_template/core/models/invoice.dart' as _i37;
+import 'package:cuboid_flutter_template/core/models/party.dart' as _i42;
+import 'package:cuboid_flutter_template/core/models/payment.dart' as _i40;
+import 'package:cuboid_flutter_template/core/models/period.dart' as _i39;
+import 'package:cuboid_flutter_template/core/models/route_rate.dart' as _i44;
+import 'package:cuboid_flutter_template/core/models/settlement.dart' as _i38;
+import 'package:cuboid_flutter_template/core/models/vehicle.dart' as _i46;
+import 'package:cuboid_flutter_template/core/models/work_order.dart' as _i36;
+import 'package:cuboid_flutter_template/features/auth/ui/accept_invitation/accept_invitation_view.dart'
     as _i32;
-import 'package:fleetgo/features/auth/ui/access_unavailable/access_unavailable_view.dart'
+import 'package:cuboid_flutter_template/features/auth/ui/access_unavailable/access_unavailable_view.dart'
     as _i33;
-import 'package:fleetgo/features/auth/ui/forgot_password/forgot_password_view.dart'
+import 'package:cuboid_flutter_template/features/auth/ui/forgot_password/forgot_password_view.dart'
     as _i30;
-import 'package:fleetgo/features/auth/ui/login/login_view.dart' as _i3;
-import 'package:fleetgo/features/auth/ui/reset_password/reset_password_view.dart'
+import 'package:cuboid_flutter_template/features/auth/ui/login/login_view.dart'
+    as _i3;
+import 'package:cuboid_flutter_template/features/auth/ui/reset_password/reset_password_view.dart'
     as _i31;
-import 'package:fleetgo/features/money/ui/balance_detail/balance_detail_view.dart'
+import 'package:cuboid_flutter_template/features/money/ui/balance_detail/balance_detail_view.dart'
     as _i15;
-import 'package:fleetgo/features/money/ui/expense_detail/expense_detail_view.dart'
+import 'package:cuboid_flutter_template/features/money/ui/expense_detail/expense_detail_view.dart'
     as _i14;
-import 'package:fleetgo/features/money/ui/invoice_detail/invoice_detail_view.dart'
+import 'package:cuboid_flutter_template/features/money/ui/invoice_detail/invoice_detail_view.dart'
     as _i10;
-import 'package:fleetgo/features/money/ui/payment_detail/payment_detail_view.dart'
+import 'package:cuboid_flutter_template/features/money/ui/payment_detail/payment_detail_view.dart'
     as _i13;
-import 'package:fleetgo/features/money/ui/settlement_detail/settlement_detail_view.dart'
+import 'package:cuboid_flutter_template/features/money/ui/settlement_detail/settlement_detail_view.dart'
     as _i11;
-import 'package:fleetgo/features/money/ui/statement_view/statement_view.dart'
+import 'package:cuboid_flutter_template/features/money/ui/statement_view/statement_view.dart'
     as _i12;
-import 'package:fleetgo/features/more/ui/agreement_detail/agreement_detail_view.dart'
+import 'package:cuboid_flutter_template/features/more/ui/agreement_detail/agreement_detail_view.dart'
     as _i23;
-import 'package:fleetgo/features/more/ui/agreements/agreements_view.dart'
+import 'package:cuboid_flutter_template/features/more/ui/agreements/agreements_view.dart'
     as _i20;
-import 'package:fleetgo/features/more/ui/business_profile/business_profile_view.dart'
+import 'package:cuboid_flutter_template/features/more/ui/business_profile/business_profile_view.dart'
     as _i26;
-import 'package:fleetgo/features/more/ui/driver_detail/driver_detail_view.dart'
+import 'package:cuboid_flutter_template/features/more/ui/driver_detail/driver_detail_view.dart'
     as _i19;
-import 'package:fleetgo/features/more/ui/drivers/drivers_view.dart' as _i18;
-import 'package:fleetgo/features/more/ui/route_rate_detail/route_rate_detail_view.dart'
+import 'package:cuboid_flutter_template/features/more/ui/drivers/drivers_view.dart'
+    as _i18;
+import 'package:cuboid_flutter_template/features/more/ui/route_rate_detail/route_rate_detail_view.dart'
     as _i22;
-import 'package:fleetgo/features/more/ui/route_rates/route_rates_view.dart'
+import 'package:cuboid_flutter_template/features/more/ui/route_rates/route_rates_view.dart'
     as _i21;
-import 'package:fleetgo/features/more/ui/staff_access/staff_access_view.dart'
+import 'package:cuboid_flutter_template/features/more/ui/staff_access/staff_access_view.dart'
     as _i25;
-import 'package:fleetgo/features/more/ui/vehicle_detail/vehicle_detail_view.dart'
+import 'package:cuboid_flutter_template/features/more/ui/vehicle_detail/vehicle_detail_view.dart'
     as _i24;
-import 'package:fleetgo/features/more/ui/vehicles/vehicles_view.dart' as _i17;
-import 'package:fleetgo/features/parties/ui/parties/parties_view.dart' as _i5;
-import 'package:fleetgo/features/parties/ui/party_detail/party_detail_view.dart'
+import 'package:cuboid_flutter_template/features/more/ui/vehicles/vehicles_view.dart'
+    as _i17;
+import 'package:cuboid_flutter_template/features/parties/ui/parties/parties_view.dart'
+    as _i5;
+import 'package:cuboid_flutter_template/features/parties/ui/party_detail/party_detail_view.dart'
     as _i16;
-import 'package:fleetgo/features/reports/data/report_type.dart' as _i47;
-import 'package:fleetgo/features/reports/ui/report_detail/report_detail_view.dart'
+import 'package:cuboid_flutter_template/features/reports/data/report_type.dart'
+    as _i47;
+import 'package:cuboid_flutter_template/features/reports/ui/report_detail/report_detail_view.dart'
     as _i28;
-import 'package:fleetgo/features/reports/ui/reports_view.dart' as _i27;
-import 'package:fleetgo/features/shell/shell_view.dart' as _i4;
-import 'package:fleetgo/features/startup/startup_view.dart' as _i2;
-import 'package:fleetgo/features/work/ui/monthly_work/monthly_work_view.dart'
+import 'package:cuboid_flutter_template/features/reports/ui/reports_view.dart'
+    as _i27;
+import 'package:cuboid_flutter_template/features/shell/shell_view.dart' as _i4;
+import 'package:cuboid_flutter_template/features/startup/startup_view.dart'
+    as _i2;
+import 'package:cuboid_flutter_template/features/work/ui/monthly_work/monthly_work_view.dart'
     as _i7;
-import 'package:fleetgo/features/work/ui/new_trip/new_trip_view.dart' as _i6;
-import 'package:fleetgo/features/work/ui/prepare_month/prepare_month_view.dart'
+import 'package:cuboid_flutter_template/features/work/ui/new_trip/new_trip_view.dart'
+    as _i6;
+import 'package:cuboid_flutter_template/features/work/ui/prepare_month/prepare_month_view.dart'
     as _i8;
-import 'package:fleetgo/features/work/ui/work_detail/work_detail_view.dart'
+import 'package:cuboid_flutter_template/features/work/ui/work_detail/work_detail_view.dart'
     as _i9;
-import 'package:fleetgo/ui/pdf/pdf_preview_view.dart' as _i29;
+import 'package:cuboid_flutter_template/ui/pdf/pdf_preview_view.dart' as _i29;
 import 'package:flutter/cupertino.dart' as _i35;
-import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as _i34;
+import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart' as _i1;
 import 'package:stacked_services/stacked_services.dart' as _i51;
 

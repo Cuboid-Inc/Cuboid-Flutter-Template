@@ -1,20 +1,20 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/cache/cache_entry.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/driver.dart';
-import 'package:fleetgo/core/models/expense.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/core/models/period.dart';
-import 'package:fleetgo/core/models/report_models.dart';
-import 'package:fleetgo/core/models/settlement.dart';
-import 'package:fleetgo/core/models/vehicle.dart';
-import 'package:fleetgo/core/money.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/core/supabase/supabase_guard.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/features/more/data/driver_repository.dart';
-import 'package:fleetgo/features/more/data/vehicle_repository.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/cache/cache_entry.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/driver.dart';
+import 'package:cuboid_flutter_template/core/models/expense.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/core/models/period.dart';
+import 'package:cuboid_flutter_template/core/models/report_models.dart';
+import 'package:cuboid_flutter_template/core/models/settlement.dart';
+import 'package:cuboid_flutter_template/core/models/vehicle.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/core/supabase/supabase_guard.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/driver_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/vehicle_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeSummary {

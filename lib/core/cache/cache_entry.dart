@@ -1,4 +1,4 @@
-import 'package:fleetgo/core/result.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
 
 /// A generic in-memory cache entry with TTL support.
 class CacheEntry<T> {

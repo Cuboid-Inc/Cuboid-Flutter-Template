@@ -1,6 +1,6 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/agreement.dart';
-import 'package:fleetgo/core/money.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/agreement.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
 
 extension AgreementRow on Agreement {
   Map<String, dynamic> toRow(String tenantId) => {

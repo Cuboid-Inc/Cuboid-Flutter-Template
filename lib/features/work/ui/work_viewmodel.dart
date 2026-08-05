@@ -1,14 +1,14 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/app/app.router.dart';
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/parties/data/parties_repository.dart';
-import 'package:fleetgo/features/shell/shell_service.dart';
-import 'package:fleetgo/features/work/data/work_repository.dart';
-import 'package:fleetgo/ui/widgets/paginated_list/pagination_controller.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/app/app.router.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/parties/data/parties_repository.dart';
+import 'package:cuboid_flutter_template/features/shell/shell_service.dart';
+import 'package:cuboid_flutter_template/features/work/data/work_repository.dart';
+import 'package:cuboid_flutter_template/ui/widgets/paginated_list/pagination_controller.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 

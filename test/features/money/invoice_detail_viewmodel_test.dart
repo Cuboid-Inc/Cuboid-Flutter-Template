@@ -1,19 +1,19 @@
 import 'dart:async';
 
-import 'package:fleetgo/app/app.dialogs.dart';
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/money/data/money_repository.dart';
-import 'package:fleetgo/features/more/data/business_profile_repository.dart';
-import 'package:fleetgo/features/work/data/work_repository.dart';
-import 'package:fleetgo/features/money/ui/invoice_detail/invoice_detail_viewmodel.dart';
-import 'package:fleetgo/ui/common/snackbar_ui.dart';
+import 'package:cuboid_flutter_template/app/app.dialogs.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_repository.dart';
+import 'package:cuboid_flutter_template/features/money/ui/invoice_detail/invoice_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/data/business_profile_repository.dart';
+import 'package:cuboid_flutter_template/features/work/data/work_repository.dart';
+import 'package:cuboid_flutter_template/ui/common/snackbar_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
@@ -175,20 +175,29 @@ void main() {
 
   test('voidInvoice marks an invoice voided after confirmation', () async {
     final invoice = Invoice(
-      id: 'invoice', number: 'INV-1', buyerId: 'customer', buyerName: 'Customer',
+      id: 'invoice',
+      number: 'INV-1',
+      buyerId: 'customer',
+      buyerName: 'Customer',
       issueDate: DateTime(2026, 7),
     );
-    when(() => dialogService.showCustomDialog(
-      variant: DialogType.confirm,
-      title: 'Void invoice?',
-      description: 'This reserves the invoice number and cannot be undone.',
-      mainButtonTitle: 'Void invoice',
-      secondaryButtonTitle: 'Keep invoice',
-    )).thenAnswer((_) async => DialogResponse(confirmed: true));
-    when(() => moneyRepository.voidInvoice('invoice')).thenAnswer((_) async => const Success(null));
+    when(
+      () => dialogService.showCustomDialog(
+        variant: DialogType.confirm,
+        title: 'Void invoice?',
+        description: 'This reserves the invoice number and cannot be undone.',
+        mainButtonTitle: 'Void invoice',
+        secondaryButtonTitle: 'Keep invoice',
+      ),
+    ).thenAnswer((_) async => DialogResponse(confirmed: true));
+    when(
+      () => moneyRepository.voidInvoice('invoice'),
+    ).thenAnswer((_) async => const Success(null));
     final model = InvoiceDetailViewModel(
-      invoice, repository: moneyRepository,
-      businessProfileRepository: businessProfileRepository, workRepository: workRepository,
+      invoice,
+      repository: moneyRepository,
+      businessProfileRepository: businessProfileRepository,
+      workRepository: workRepository,
     );
     await model.voidInvoice();
     expect(invoice.status, InvoiceStatus.voided);

@@ -1,10 +1,9 @@
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/app/app.router.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
-
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/app/app.router.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/core/result.dart';
 
 class StartupViewModel extends BaseViewModel {
   final _authRepository = locator<AuthRepository>();

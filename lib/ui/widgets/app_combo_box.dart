@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/ui/widgets/empty_state.dart';
+import 'package:cuboid_flutter_template/ui/widgets/paginated_list/paginated_list_view.dart';
+import 'package:cuboid_flutter_template/ui/widgets/paginated_list/pagination_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import 'package:fleetgo/core/models/paginated_result.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_bar_ios.dart';
-import 'package:fleetgo/ui/widgets/empty_state.dart';
-import 'package:fleetgo/ui/widgets/paginated_list/paginated_list_view.dart';
-import 'package:fleetgo/ui/widgets/paginated_list/pagination_controller.dart';
 
 typedef ComboBoxFetchPage<T> =
     Future<Result<PaginatedResult<T>>> Function({

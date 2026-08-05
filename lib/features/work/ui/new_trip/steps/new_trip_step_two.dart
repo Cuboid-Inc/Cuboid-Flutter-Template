@@ -1,10 +1,9 @@
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/driver.dart';
+import 'package:cuboid_flutter_template/core/models/vehicle.dart';
+import 'package:cuboid_flutter_template/features/work/ui/new_trip/new_trip_viewmodel.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_combo_box.dart';
 import 'package:flutter/material.dart';
-
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/driver.dart';
-import 'package:fleetgo/core/models/vehicle.dart';
-import 'package:fleetgo/ui/widgets/app_combo_box.dart';
-import 'package:fleetgo/features/work/ui/new_trip/new_trip_viewmodel.dart';
 
 class NewTripStepTwo extends StatelessWidget {
   const NewTripStepTwo({super.key, required this.vm});

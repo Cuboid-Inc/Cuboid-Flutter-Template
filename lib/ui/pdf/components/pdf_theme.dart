@@ -1,4 +1,4 @@
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 

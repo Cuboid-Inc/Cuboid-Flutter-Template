@@ -1,7 +1,6 @@
+import 'package:cuboid_flutter_template/features/reports/data/report_type.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/cupertino.dart';
-
-import 'package:fleetgo/features/reports/data/report_type.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
 
 extension ReportTypeMeta on ReportType {
   String get title => switch (this) {

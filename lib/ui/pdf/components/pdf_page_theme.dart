@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fleetgo/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';

@@ -1,10 +1,10 @@
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/features/work/ui/work_viewmodel.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
-import 'package:fleetgo/ui/widgets/app_text_field.dart';
-import 'package:fleetgo/ui/widgets/empty_state.dart';
-import 'package:fleetgo/ui/widgets/paginated_list/paginated_list_view.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/features/work/ui/work_viewmodel.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_text_field.dart';
+import 'package:cuboid_flutter_template/ui/widgets/empty_state.dart';
+import 'package:cuboid_flutter_template/ui/widgets/paginated_list/paginated_list_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:stacked/stacked.dart';
 

@@ -1,17 +1,15 @@
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/accept_invitation/accept_invitation_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/widgets/auth_header.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/widgets/auth_scaffold.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_text_field.dart';
+import 'package:cuboid_flutter_template/ui/widgets/status_chip.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
-
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
-import 'package:fleetgo/ui/widgets/app_text_field.dart';
-import 'package:fleetgo/ui/widgets/status_chip.dart';
-import 'package:fleetgo/features/auth/ui/widgets/auth_scaffold.dart';
-import 'package:fleetgo/features/auth/ui/widgets/auth_header.dart';
-
-import 'package:fleetgo/features/auth/ui/accept_invitation/accept_invitation_viewmodel.dart';
 
 class AcceptInvitationView extends StackedView<AcceptInvitationViewModel> {
   const AcceptInvitationView({

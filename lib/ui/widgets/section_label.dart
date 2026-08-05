@@ -1,6 +1,5 @@
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/material.dart';
-
-import 'package:fleetgo/ui/common/app_colors.dart';
 
 /// Small muted uppercase header used between list sections
 /// (e.g. "NEEDS ATTENTION", "CUSTOMERS").

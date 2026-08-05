@@ -1,4 +1,4 @@
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 
 /// Banner shown on invoice/settlement detail screens once the document

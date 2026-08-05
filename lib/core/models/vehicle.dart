@@ -1,4 +1,4 @@
-import 'package:fleetgo/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
 
 class Vehicle {
   Vehicle({

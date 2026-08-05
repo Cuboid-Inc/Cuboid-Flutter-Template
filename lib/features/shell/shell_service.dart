@@ -1,5 +1,5 @@
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
 import 'package:stacked/stacked.dart';
-import 'package:fleetgo/core/enums/enums.dart';
 
 class ShellService with ListenableServiceMixin {
   final _index = ReactiveValue<int>(0);

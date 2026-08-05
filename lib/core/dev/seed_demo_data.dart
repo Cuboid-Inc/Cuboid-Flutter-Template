@@ -1,26 +1,26 @@
 // ponytail: dev-only seeder for the local Supabase reset cycle. Delete this
 // file and its Home button once real data entry replaces it.
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/agreement.dart';
-import 'package:fleetgo/core/models/driver.dart';
-import 'package:fleetgo/core/models/expense.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/core/models/route_rate.dart';
-import 'package:fleetgo/core/models/settlement.dart';
-import 'package:fleetgo/core/models/vehicle.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/core/money.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/money/data/money_repository.dart';
-import 'package:fleetgo/features/more/data/agreement_repository.dart';
-import 'package:fleetgo/features/more/data/driver_repository.dart';
-import 'package:fleetgo/features/more/data/route_rate_repository.dart';
-import 'package:fleetgo/features/more/data/vehicle_repository.dart';
-import 'package:fleetgo/features/parties/data/parties_repository.dart';
-import 'package:fleetgo/features/work/data/work_repository.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/agreement.dart';
+import 'package:cuboid_flutter_template/core/models/driver.dart';
+import 'package:cuboid_flutter_template/core/models/expense.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/core/models/route_rate.dart';
+import 'package:cuboid_flutter_template/core/models/settlement.dart';
+import 'package:cuboid_flutter_template/core/models/vehicle.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/money/data/money_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/agreement_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/driver_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/route_rate_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/vehicle_repository.dart';
+import 'package:cuboid_flutter_template/features/parties/data/parties_repository.dart';
+import 'package:cuboid_flutter_template/features/work/data/work_repository.dart';
 
 /// Seeds detailed master, work, and historical money data through the same
 /// repositories used by the UI.

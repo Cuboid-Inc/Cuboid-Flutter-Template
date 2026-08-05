@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
 
 extension AuthAccessRow on AuthAccess {
   static AuthAccess fromRow(Map<String, dynamic> row) {

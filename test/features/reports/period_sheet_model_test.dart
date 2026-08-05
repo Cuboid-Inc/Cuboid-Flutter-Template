@@ -1,9 +1,9 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/models/period.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/reports/data/reports_repository.dart';
-import 'package:fleetgo/ui/bottom_sheets/period/period_sheet_model.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/models/period.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/reports/data/reports_repository.dart';
+import 'package:cuboid_flutter_template/ui/bottom_sheets/period/period_sheet_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';

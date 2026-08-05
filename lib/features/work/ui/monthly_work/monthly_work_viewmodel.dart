@@ -1,14 +1,14 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/agreement.dart';
-import 'package:fleetgo/core/models/paginated_result.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/core/money.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/more/data/agreement_repository.dart';
-import 'package:fleetgo/features/shell/shell_service.dart';
-import 'package:fleetgo/features/work/data/work_repository.dart';
-import 'package:fleetgo/ui/common/snackbar_ui.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/agreement.dart';
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/more/data/agreement_repository.dart';
+import 'package:cuboid_flutter_template/features/shell/shell_service.dart';
+import 'package:cuboid_flutter_template/features/work/data/work_repository.dart';
+import 'package:cuboid_flutter_template/ui/common/snackbar_ui.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 

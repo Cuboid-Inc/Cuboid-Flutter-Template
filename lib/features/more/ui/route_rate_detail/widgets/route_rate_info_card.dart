@@ -1,9 +1,9 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/route_rate.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/widgets/detail_row.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/route_rate.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/widgets/detail_row.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
 import 'package:flutter/material.dart';
 
 class RouteRateInfoCard extends StatelessWidget {

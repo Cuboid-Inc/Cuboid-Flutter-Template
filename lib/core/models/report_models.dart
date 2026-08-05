@@ -1,7 +1,7 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/core/money.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
 
 class CashbookTotals {
   const CashbookTotals({required this.inAmount, required this.outAmount});

@@ -1,16 +1,14 @@
+import 'package:cuboid_flutter_template/core/config/app_config.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/login/login_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/widgets/auth_header.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/widgets/auth_scaffold.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/widgets/auth_styles.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
-
-import 'package:fleetgo/core/config/app_config.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
-import 'package:fleetgo/ui/widgets/app_text_field.dart';
-import 'package:fleetgo/features/auth/ui/widgets/auth_scaffold.dart';
-import 'package:fleetgo/features/auth/ui/widgets/auth_header.dart';
-import 'package:fleetgo/features/auth/ui/widgets/auth_styles.dart';
-
-import 'package:fleetgo/features/auth/ui/login/login_viewmodel.dart';
 
 /// Dark gradient sign-in screen matching the design's LOGIN section.
 class LoginView extends StackedView<LoginViewModel> {

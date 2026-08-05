@@ -1,7 +1,7 @@
-import 'package:fleetgo/core/models/period.dart';
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/reports/data/reports_repository.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/models/period.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/reports/data/reports_repository.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 
@@ -9,8 +9,10 @@ typedef PeriodSheetData = ({Period selected, Period resetTo});
 
 class PeriodSheetModel extends BaseViewModel {
   PeriodSheetModel({required this.completer, required this.request})
-    : selected = (request.data as PeriodSheetData?)?.selected ?? Period.thisMonth(),
-      _resetTo = (request.data as PeriodSheetData?)?.resetTo ?? Period.thisMonth(),
+    : selected =
+          (request.data as PeriodSheetData?)?.selected ?? Period.thisMonth(),
+      _resetTo =
+          (request.data as PeriodSheetData?)?.resetTo ?? Period.thisMonth(),
       years = [DateTime.now().year];
 
   final Function(SheetResponse response) completer;

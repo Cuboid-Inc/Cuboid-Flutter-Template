@@ -1,18 +1,19 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/driver.dart';
-import 'package:fleetgo/core/models/expense.dart';
-import 'package:fleetgo/core/models/vehicle.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/more/data/driver_repository.dart';
-import 'package:fleetgo/features/more/data/vehicle_repository.dart';
-import 'package:fleetgo/features/work/data/work_repository.dart';
-import 'package:fleetgo/features/money/ui/expense_detail/expense_detail_viewmodel.dart';
-import '../../helpers/stacked_service_mocks.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/driver.dart';
+import 'package:cuboid_flutter_template/core/models/expense.dart';
+import 'package:cuboid_flutter_template/core/models/vehicle.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/money/ui/expense_detail/expense_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/data/driver_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/vehicle_repository.dart';
+import 'package:cuboid_flutter_template/features/work/data/work_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
+
+import '../../helpers/stacked_service_mocks.dart';
 
 class MockWorkRepository extends Mock implements WorkRepository {}
 

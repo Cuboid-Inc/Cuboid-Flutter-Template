@@ -1,19 +1,18 @@
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/models/expense.dart';
+import 'package:cuboid_flutter_template/features/money/ui/expense_detail/expense_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/money/ui/expense_detail/widgets/linked_resources_card.dart';
+import 'package:cuboid_flutter_template/features/money/ui/widgets/detail_header.dart';
+import 'package:cuboid_flutter_template/features/money/ui/widgets/section_label.dart';
+import 'package:cuboid_flutter_template/features/money/ui/widgets/summary_amount_card.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_loading_indicator.dart';
+import 'package:cuboid_flutter_template/ui/widgets/detail_row.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
+import 'package:cuboid_flutter_template/ui/widgets/status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
-
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/models/expense.dart';
-import 'package:fleetgo/features/money/ui/expense_detail/widgets/linked_resources_card.dart';
-import 'package:fleetgo/features/money/ui/widgets/detail_header.dart';
-import 'package:fleetgo/features/money/ui/widgets/section_label.dart';
-import 'package:fleetgo/features/money/ui/widgets/summary_amount_card.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_bar_ios.dart';
-import 'package:fleetgo/ui/widgets/app_loading_indicator.dart';
-import 'package:fleetgo/ui/widgets/detail_row.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
-import 'package:fleetgo/ui/widgets/status_chip.dart';
-import 'package:fleetgo/features/money/ui/expense_detail/expense_detail_viewmodel.dart';
 
 class ExpenseDetailView extends StackedView<ExpenseDetailViewModel> {
   const ExpenseDetailView({super.key, required this.expense});

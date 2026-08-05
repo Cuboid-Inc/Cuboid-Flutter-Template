@@ -1,4 +1,4 @@
-import 'package:fleetgo/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

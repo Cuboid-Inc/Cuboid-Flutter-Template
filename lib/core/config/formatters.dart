@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/config/app_config.dart';
-import 'package:fleetgo/core/money.dart';
+import 'package:cuboid_flutter_template/core/config/app_config.dart';
+import 'package:cuboid_flutter_template/core/money.dart';
 import 'package:intl/intl.dart';
 
 /// All display formatting, routed through [AppConfig].

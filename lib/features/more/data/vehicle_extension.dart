@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/vehicle.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/vehicle.dart';
 
 extension VehicleRow on Vehicle {
   Map<String, dynamic> toRow(String tenantId) => {

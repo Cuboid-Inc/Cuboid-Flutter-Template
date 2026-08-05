@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/core/supabase/env.dart';
-import 'package:fleetgo/core/supabase/supabase_guard.dart';
-import 'package:fleetgo/features/auth/data/auth_access_extension.dart';
-import 'package:fleetgo/main.logger.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/core/supabase/env.dart';
+import 'package:cuboid_flutter_template/core/supabase/supabase_guard.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_access_extension.dart';
+import 'package:cuboid_flutter_template/main.logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum AuthDestination {

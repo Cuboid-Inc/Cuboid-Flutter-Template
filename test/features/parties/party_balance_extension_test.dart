@@ -1,4 +1,4 @@
-import 'package:fleetgo/features/parties/data/party_balance_extension.dart';
+import 'package:cuboid_flutter_template/features/parties/data/party_balance_extension.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

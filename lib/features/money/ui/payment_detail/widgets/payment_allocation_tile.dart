@@ -1,7 +1,7 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/models/payment.dart';
-import 'package:fleetgo/features/money/ui/payment_detail/payment_detail_viewmodel.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/models/payment.dart';
+import 'package:cuboid_flutter_template/features/money/ui/payment_detail/payment_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 
 class PaymentAllocationTile extends StatelessWidget {

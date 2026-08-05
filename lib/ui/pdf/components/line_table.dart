@@ -1,4 +1,4 @@
-import 'package:fleetgo/ui/pdf/components/pdf_theme.dart';
+import 'package:cuboid_flutter_template/ui/pdf/components/pdf_theme.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -29,7 +29,9 @@ pw.Widget lineTable({
               padding: const pw.EdgeInsets.fromLTRB(6, 6, 6, 6),
               child: pw.Text(
                 headers[i],
-                style: tableHeader.copyWith(color: readableTextColor(headerTint)),
+                style: tableHeader.copyWith(
+                  color: readableTextColor(headerTint),
+                ),
                 textAlign: i == 0 ? pw.TextAlign.left : pw.TextAlign.right,
               ),
             ),

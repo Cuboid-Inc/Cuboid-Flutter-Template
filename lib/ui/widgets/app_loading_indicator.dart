@@ -1,5 +1,5 @@
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
 import 'package:flutter/material.dart';
 
 enum AppLoadingIndicatorVariant { fullScreen, inline, overlay }

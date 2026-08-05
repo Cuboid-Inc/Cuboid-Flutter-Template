@@ -1,19 +1,21 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/failures.dart';
-import 'package:fleetgo/core/models/driver.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/more/data/driver_repository.dart';
-import 'package:fleetgo/features/more/ui/driver_detail/driver_detail_viewmodel.dart';
-import 'package:fleetgo/features/parties/data/parties_repository.dart';
-import 'package:fleetgo/ui/common/snackbar_ui.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/models/driver.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/more/data/driver_repository.dart';
+import 'package:cuboid_flutter_template/features/more/ui/driver_detail/driver_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/parties/data/parties_repository.dart';
+import 'package:cuboid_flutter_template/ui/common/snackbar_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
+
 import '../../helpers/stacked_service_mocks.dart';
 
 class MockDriverRepository extends Mock implements DriverRepository {}
+
 class MockPartiesRepository extends Mock implements PartiesRepository {}
 
 class FakeDriver extends Fake implements Driver {}
@@ -42,7 +44,11 @@ void main() {
   tearDown(locator.reset);
 
   test('loads suppliers and formats names', () async {
-    final supplier = const Party(id: 'p', name: 'Supplier', type: PartyType.supplier);
+    final supplier = const Party(
+      id: 'p',
+      name: 'Supplier',
+      type: PartyType.supplier,
+    );
     when(() => parties.fetchAll()).thenAnswer((_) async => Success([supplier]));
     final model = DriverDetailViewModel(driver(), repository: repository);
     await model.init();
@@ -57,32 +63,57 @@ void main() {
     );
     final model = DriverDetailViewModel(driver(), repository: repository);
     await model.init();
-    verify(() => snackbar.showCustomSnackBar(message: 'parties failed', variant: SnackbarType.error)).called(1);
-    when(() => sheets.showCustomSheet<Driver, Driver>(
-      variant: any(named: 'variant'), data: any(named: 'data'),
-      isScrollControlled: any(named: 'isScrollControlled'),
-    )).thenAnswer((_) async => SheetResponse(data: driver('updated')));
-    when(() => repository.addDriver(any())).thenAnswer(
-      (_) async => const Failure(ValidationFailure('edit failed')),
-    );
+    verify(
+      () => snackbar.showCustomSnackBar(
+        message: 'parties failed',
+        variant: SnackbarType.error,
+      ),
+    ).called(1);
+    when(
+      () => sheets.showCustomSheet<Driver, Driver>(
+        variant: any(named: 'variant'),
+        data: any(named: 'data'),
+        isScrollControlled: any(named: 'isScrollControlled'),
+      ),
+    ).thenAnswer((_) async => SheetResponse(data: driver('updated')));
+    when(
+      () => repository.addDriver(any()),
+    ).thenAnswer((_) async => const Failure(ValidationFailure('edit failed')));
     await model.editDriver();
-    verify(() => snackbar.showCustomSnackBar(message: 'edit failed', variant: SnackbarType.error)).called(1);
+    verify(
+      () => snackbar.showCustomSnackBar(
+        message: 'edit failed',
+        variant: SnackbarType.error,
+      ),
+    ).called(1);
     when(() => repository.archiveDriver('d')).thenAnswer(
       (_) async => const Failure(ValidationFailure('archive failed')),
     );
     await model.archiveDriver();
-    verify(() => snackbar.showCustomSnackBar(message: 'archive failed', variant: SnackbarType.error)).called(1);
+    verify(
+      () => snackbar.showCustomSnackBar(
+        message: 'archive failed',
+        variant: SnackbarType.error,
+      ),
+    ).called(1);
   });
 
   test('edits and archives successfully', () async {
     final updated = driver('updated');
     when(() => parties.fetchAll()).thenAnswer((_) async => const Success([]));
-    when(() => sheets.showCustomSheet<Driver, Driver>(
-      variant: any(named: 'variant'), data: any(named: 'data'),
-      isScrollControlled: any(named: 'isScrollControlled'),
-    )).thenAnswer((_) async => SheetResponse(data: updated));
-    when(() => repository.addDriver(updated)).thenAnswer((_) async => Success(updated));
-    when(() => repository.archiveDriver('updated')).thenAnswer((_) async => const Success(null));
+    when(
+      () => sheets.showCustomSheet<Driver, Driver>(
+        variant: any(named: 'variant'),
+        data: any(named: 'data'),
+        isScrollControlled: any(named: 'isScrollControlled'),
+      ),
+    ).thenAnswer((_) async => SheetResponse(data: updated));
+    when(
+      () => repository.addDriver(updated),
+    ).thenAnswer((_) async => Success(updated));
+    when(
+      () => repository.archiveDriver('updated'),
+    ).thenAnswer((_) async => const Success(null));
     final model = DriverDetailViewModel(driver(), repository: repository);
     await model.editDriver();
     expect(model.driver, updated);

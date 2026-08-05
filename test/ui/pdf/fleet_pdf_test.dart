@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/core/models/invoice.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/core/models/period.dart';
-import 'package:fleetgo/core/models/report_models.dart';
-import 'package:fleetgo/core/models/settlement.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/ui/pdf/fleet_pdf.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/core/models/invoice.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/models/period.dart';
+import 'package:cuboid_flutter_template/core/models/report_models.dart';
+import 'package:cuboid_flutter_template/core/models/settlement.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/ui/pdf/fleet_pdf.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _onePixelPng = <int>[

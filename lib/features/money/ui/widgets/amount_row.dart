@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Label + money value line item, used to list totals/balances under a

@@ -1,8 +1,8 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/core/supabase/supabase_guard.dart';
-import 'package:fleetgo/features/more/data/staff_member_extension.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/core/supabase/supabase_guard.dart';
+import 'package:cuboid_flutter_template/features/more/data/staff_member_extension.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class StaffRepository {

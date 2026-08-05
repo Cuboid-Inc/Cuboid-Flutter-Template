@@ -1,14 +1,14 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/agreement.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/core/models/route_rate.dart';
-import 'package:fleetgo/features/work/ui/new_trip/new_trip_viewmodel.dart';
-import 'package:fleetgo/features/work/ui/new_trip/widgets/form_section_label.dart';
-import 'package:fleetgo/ui/widgets/app_combo_box.dart';
-import 'package:fleetgo/ui/widgets/app_date_time_picker.dart';
-import 'package:fleetgo/ui/widgets/app_dropdown.dart';
-import 'package:fleetgo/ui/widgets/app_text_field.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/agreement.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/models/route_rate.dart';
+import 'package:cuboid_flutter_template/features/work/ui/new_trip/new_trip_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/work/ui/new_trip/widgets/form_section_label.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_combo_box.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_date_time_picker.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_dropdown.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_text_field.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

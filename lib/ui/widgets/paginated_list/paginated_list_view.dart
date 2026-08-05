@@ -1,12 +1,11 @@
 import 'dart:async';
 
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_loading_indicator.dart';
+import 'package:cuboid_flutter_template/ui/widgets/empty_state.dart';
+import 'package:cuboid_flutter_template/ui/widgets/paginated_list/pagination_controller.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
-
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/widgets/app_loading_indicator.dart';
-import 'package:fleetgo/ui/widgets/empty_state.dart';
-import 'package:fleetgo/ui/widgets/paginated_list/pagination_controller.dart';
 
 // ponytail: controller-only, ListView-only. Add a sliver variant when a
 // CustomScrollView screen needs one.

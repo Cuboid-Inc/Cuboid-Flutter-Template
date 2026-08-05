@@ -1,14 +1,14 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/cache/cache_entry.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/party.dart';
-import 'package:fleetgo/core/models/report_models.dart';
-import 'package:fleetgo/core/models/paginated_result.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/core/supabase/supabase_guard.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/features/parties/data/party_balance_extension.dart';
-import 'package:fleetgo/features/parties/data/party_extension.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/cache/cache_entry.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/models/party.dart';
+import 'package:cuboid_flutter_template/core/models/report_models.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/core/supabase/supabase_guard.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/features/parties/data/party_balance_extension.dart';
+import 'package:cuboid_flutter_template/features/parties/data/party_extension.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PartiesRepository with RepositoryCacheMixin {

@@ -1,13 +1,12 @@
+import 'package:cuboid_flutter_template/core/models/vehicle.dart';
+import 'package:cuboid_flutter_template/features/more/ui/vehicle_detail/vehicle_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/ui/vehicle_detail/widgets/vehicle_info_card.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
-
-import 'package:fleetgo/core/models/vehicle.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_bar_ios.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
-import 'package:fleetgo/ui/widgets/app_loading_indicator.dart';
-import 'package:fleetgo/features/more/ui/vehicle_detail/vehicle_detail_viewmodel.dart';
-import 'package:fleetgo/features/more/ui/vehicle_detail/widgets/vehicle_info_card.dart';
 
 class VehicleDetailView extends StackedView<VehicleDetailViewModel> {
   const VehicleDetailView({super.key, required this.vehicle});

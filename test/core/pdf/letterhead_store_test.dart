@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:cuboid_flutter_template/core/pdf/letterhead_store.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:file_picker/src/platform/file_picker_platform_interface.dart';
-import 'package:fleetgo/core/pdf/letterhead_store.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 

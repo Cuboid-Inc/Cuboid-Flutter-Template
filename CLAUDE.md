@@ -47,7 +47,7 @@ Key conventions:
 - **Centralized config**: locale/currency/date patterns in `lib/core/config/app_config.dart`; all money/date/time display via `Formatters` (`lib/core/config/formatters.dart`). Never format inline in widgets.
 - **Money rules**: Postgres `numeric`, never float; half-up rounding to 2dp; financial transactions run in privileged Postgres functions, never client-side.
 - **Issued documents are immutable**: invoices/settlements lock a snapshot at issue; corrections = void + reissue. Never write code that mutates an issued document. Master data archives, never hard-deletes.
-- Package imports only (`package:fleetgo/...`), no relative imports.
+- Package imports only (`package:cuboid_flutter_template/...`), no relative imports.
 - Registered sheets and dialogs use Stacked services from ViewModels. No context-based presentation in ViewModels.
 - **UI & Icon Preference**: Focus on Cupertino icons (`CupertinoIcons`) and iOS-style UI guidelines for a cleaner, more premium look. For polishing/compacting any grouped-list screen (menus, report breakdowns, settings), follow the row pattern documented in `doc/design/ios_polish_pattern.md` (tinted icon tile + title/subtitle + chevron, `ListCard` + `Divider`, per-category tint colors) instead of inventing a new layout.
 

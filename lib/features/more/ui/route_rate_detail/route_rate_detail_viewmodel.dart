@@ -1,9 +1,9 @@
-import 'package:fleetgo/app/app.bottomsheets.dart';
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/core/models/route_rate.dart';
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/more/data/route_rate_repository.dart';
-import 'package:fleetgo/ui/common/snackbar_ui.dart';
+import 'package:cuboid_flutter_template/app/app.bottomsheets.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/models/route_rate.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/more/data/route_rate_repository.dart';
+import 'package:cuboid_flutter_template/ui/common/snackbar_ui.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 

@@ -1,14 +1,15 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/app/app.router.dart';
-import 'package:fleetgo/features/auth/ui/forgot_password/forgot_password_viewmodel.dart';
-import 'package:fleetgo/features/auth/ui/reset_password/reset_password_viewmodel.dart';
-import 'package:fleetgo/features/auth/ui/accept_invitation/accept_invitation_viewmodel.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/result.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/app/app.router.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/accept_invitation/accept_invitation_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/forgot_password/forgot_password_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/reset_password/reset_password_viewmodel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
+
 import '../../helpers/stacked_service_mocks.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}

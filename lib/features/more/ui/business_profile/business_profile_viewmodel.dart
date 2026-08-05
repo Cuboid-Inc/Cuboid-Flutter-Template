@@ -1,13 +1,14 @@
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/app/app.router.dart';
-import 'package:fleetgo/core/config/app_config.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/core/pdf/letterhead_store.dart' as letterhead_store;
-import 'package:fleetgo/core/result.dart';
-import 'package:fleetgo/features/auth/data/auth_repository.dart';
-import 'package:fleetgo/features/more/data/business_profile_repository.dart';
-import 'package:fleetgo/ui/common/snackbar_ui.dart';
-import 'package:fleetgo/ui/pdf/fleet_pdf.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/app/app.router.dart';
+import 'package:cuboid_flutter_template/core/config/app_config.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/core/pdf/letterhead_store.dart'
+    as letterhead_store;
+import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_repository.dart';
+import 'package:cuboid_flutter_template/features/more/data/business_profile_repository.dart';
+import 'package:cuboid_flutter_template/ui/common/snackbar_ui.dart';
+import 'package:cuboid_flutter_template/ui/pdf/fleet_pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';

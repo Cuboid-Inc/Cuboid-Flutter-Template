@@ -1,4 +1,4 @@
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Title + subtitle header used at the top of money detail screens,

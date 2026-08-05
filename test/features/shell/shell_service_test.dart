@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/features/shell/shell_service.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/features/shell/shell_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

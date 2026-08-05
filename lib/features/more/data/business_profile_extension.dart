@@ -1,4 +1,4 @@
-import 'package:fleetgo/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
 
 extension BusinessProfileRow on BusinessProfile {
   Map<String, dynamic> toRow(String tenantId) => {

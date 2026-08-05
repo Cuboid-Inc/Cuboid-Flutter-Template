@@ -1,5 +1,5 @@
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/ui/widgets/financial_line_tile.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/ui/widgets/financial_line_tile.dart';
 import 'package:flutter/material.dart';
 
 class WorkChargeTile extends StatelessWidget {

@@ -1,4 +1,4 @@
-import 'package:fleetgo/features/auth/data/auth_validation.dart';
+import 'package:cuboid_flutter_template/features/auth/data/auth_validation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

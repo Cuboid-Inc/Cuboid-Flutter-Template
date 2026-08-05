@@ -1,4 +1,4 @@
-import 'package:fleetgo/ui/dialogs/confirm/confirm_dialog_model.dart';
+import 'package:cuboid_flutter_template/ui/dialogs/confirm/confirm_dialog_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stacked_services/stacked_services.dart';
 

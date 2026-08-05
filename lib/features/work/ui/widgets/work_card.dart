@@ -1,8 +1,8 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/work_order.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
-import 'package:fleetgo/ui/widgets/status_chip.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/work_order.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
+import 'package:cuboid_flutter_template/ui/widgets/status_chip.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../work_viewmodel.dart';

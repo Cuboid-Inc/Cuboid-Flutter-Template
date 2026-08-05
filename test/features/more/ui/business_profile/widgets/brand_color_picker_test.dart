@@ -1,4 +1,4 @@
-import 'package:fleetgo/features/more/ui/business_profile/widgets/brand_color_picker.dart';
+import 'package:cuboid_flutter_template/features/more/ui/business_profile/widgets/brand_color_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

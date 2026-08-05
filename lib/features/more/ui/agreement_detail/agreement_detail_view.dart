@@ -1,13 +1,12 @@
+import 'package:cuboid_flutter_template/core/models/agreement.dart';
+import 'package:cuboid_flutter_template/features/more/ui/agreement_detail/agreement_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/more/ui/agreement_detail/widgets/agreement_info_card.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
-
-import 'package:fleetgo/core/models/agreement.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_bar_ios.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
-import 'package:fleetgo/ui/widgets/app_loading_indicator.dart';
-import 'package:fleetgo/features/more/ui/agreement_detail/agreement_detail_viewmodel.dart';
-import 'package:fleetgo/features/more/ui/agreement_detail/widgets/agreement_info_card.dart';
 
 class AgreementDetailView extends StackedView<AgreementDetailViewModel> {
   const AgreementDetailView({super.key, required this.agreement});

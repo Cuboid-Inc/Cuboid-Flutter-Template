@@ -1,6 +1,6 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/features/money/ui/balance_detail/balance_detail_viewmodel.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/features/money/ui/balance_detail/balance_detail_viewmodel.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 
 class BalanceActivityTile extends StatelessWidget {

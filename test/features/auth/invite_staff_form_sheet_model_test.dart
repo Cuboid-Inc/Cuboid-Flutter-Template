@@ -1,6 +1,6 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/business_profile.dart';
-import 'package:fleetgo/ui/bottom_sheets/invite_staff_form/invite_staff_form_sheet_model.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/business_profile.dart';
+import 'package:cuboid_flutter_template/ui/bottom_sheets/invite_staff_form/invite_staff_form_sheet_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stacked_services/stacked_services.dart';
 

@@ -1,9 +1,9 @@
-import 'package:fleetgo/features/auth/ui/forgot_password/forgot_password_viewmodel.dart';
-import 'package:fleetgo/features/auth/ui/widgets/auth_header.dart';
-import 'package:fleetgo/features/auth/ui/widgets/auth_scaffold.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/app_button.dart';
-import 'package:fleetgo/ui/widgets/app_text_field.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/forgot_password/forgot_password_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/widgets/auth_header.dart';
+import 'package:cuboid_flutter_template/features/auth/ui/widgets/auth_scaffold.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_button.dart';
+import 'package:cuboid_flutter_template/ui/widgets/app_text_field.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:stacked/stacked.dart';
 

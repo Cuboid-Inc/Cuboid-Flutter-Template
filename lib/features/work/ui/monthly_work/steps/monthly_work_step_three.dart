@@ -1,9 +1,9 @@
-import 'package:fleetgo/core/config/formatters.dart';
-import 'package:fleetgo/features/work/ui/monthly_work/monthly_work_viewmodel.dart';
-import 'package:fleetgo/features/work/ui/new_trip/widgets/form_section_label.dart';
-import 'package:fleetgo/features/work/ui/new_trip/widgets/trip_total_card.dart';
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/widgets/list_card.dart';
+import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/features/work/ui/monthly_work/monthly_work_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/work/ui/new_trip/widgets/form_section_label.dart';
+import 'package:cuboid_flutter_template/features/work/ui/new_trip/widgets/trip_total_card.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/widgets/list_card.dart';
 import 'package:flutter/material.dart';
 
 class MonthlyWorkStepThree extends StatelessWidget {

@@ -1,6 +1,6 @@
-import 'package:fleetgo/ui/common/app_colors.dart';
-import 'package:fleetgo/ui/common/ui_helpers.dart';
-import 'package:fleetgo/ui/widgets/skeleton_box.dart';
+import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
+import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
+import 'package:cuboid_flutter_template/ui/widgets/skeleton_box.dart';
 import 'package:flutter/material.dart';
 
 /// Placeholder shaped like the loaded home screen (greeting, hero metrics
@@ -48,13 +48,7 @@ class HomeSkeleton extends StatelessWidget {
               const SizedBox(height: 8),
               const SkeletonBox(width: 200, height: 12),
               const Divider(height: 22),
-              Row(
-                children: [
-                  _heroStat(),
-                  _heroStat(),
-                  _heroStat(),
-                ],
-              ),
+              Row(children: [_heroStat(), _heroStat(), _heroStat()]),
             ],
           ),
         ),

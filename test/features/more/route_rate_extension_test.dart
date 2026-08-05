@@ -1,6 +1,6 @@
-import 'package:fleetgo/core/enums/enums.dart';
-import 'package:fleetgo/core/models/route_rate.dart';
-import 'package:fleetgo/features/more/data/route_rate_extension.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/models/route_rate.dart';
+import 'package:cuboid_flutter_template/features/more/data/route_rate_extension.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
