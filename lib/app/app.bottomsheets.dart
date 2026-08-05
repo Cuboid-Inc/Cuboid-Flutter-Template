@@ -8,7 +8,7 @@
 import 'package:stacked_services/stacked_services.dart';
 
 import 'app.locator.dart';
-import '../ui/bottom_sheets/invite_staff_form/invite_staff_form_sheet.dart';
+import '../shared/bottom_sheets/invite_staff_form/invite_staff_form_sheet.dart';
 
 enum BottomSheetType { inviteStaffForm }
 

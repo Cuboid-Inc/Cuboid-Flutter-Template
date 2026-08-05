@@ -1,7 +1,7 @@
-import 'package:cuboid_flutter_template/core/failures.dart';
+import 'package:cuboid_flutter_template/core/errors/failures.dart';
 import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
-import 'package:cuboid_flutter_template/core/result.dart';
-import 'package:cuboid_flutter_template/ui/widgets/paginated_list/pagination_controller.dart';
+import 'package:cuboid_flutter_template/core/errors/result.dart';
+import 'package:cuboid_flutter_template/shared/widgets/paginated_list/pagination_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 PaginatedResult<int> page(int number, List<int> items) => PaginatedResult(

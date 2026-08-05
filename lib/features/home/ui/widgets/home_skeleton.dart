@@ -1,6 +1,6 @@
-import 'package:cuboid_flutter_template/ui/common/app_colors.dart';
-import 'package:cuboid_flutter_template/ui/common/ui_helpers.dart';
-import 'package:cuboid_flutter_template/ui/widgets/skeleton_box.dart';
+import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
+import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
+import 'package:cuboid_flutter_template/shared/widgets/skeleton_box.dart';
 import 'package:flutter/material.dart';
 
 /// Placeholder shaped like the loaded home screen (greeting, hero metrics

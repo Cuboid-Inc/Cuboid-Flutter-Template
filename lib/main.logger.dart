@@ -5,7 +5,7 @@
 // StackedLoggerGenerator
 // **************************************************************************
 
-// ignore_for_file: avoid_print, depend_on_referenced_packages
+// ignore_for_file: avoid_print, depend_on_referenced_packages, non_constant_identifier_names
 
 // Maybe this should be generated for the user as well?
 //

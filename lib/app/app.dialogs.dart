@@ -8,7 +8,7 @@
 import 'package:stacked_services/stacked_services.dart';
 
 import 'app.locator.dart';
-import '../ui/dialogs/confirm/confirm_dialog.dart';
+import '../shared/dialogs/confirm/confirm_dialog.dart';
 
 enum DialogType { confirm }
 

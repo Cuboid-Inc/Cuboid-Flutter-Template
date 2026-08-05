@@ -1,5 +1,5 @@
-import 'package:cuboid_flutter_template/core/cache/cache_entry.dart';
-import 'package:cuboid_flutter_template/core/result.dart';
+import 'package:cuboid_flutter_template/core/storage/cache_entry.dart';
+import 'package:cuboid_flutter_template/core/errors/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _CacheOwner with RepositoryCacheMixin {}

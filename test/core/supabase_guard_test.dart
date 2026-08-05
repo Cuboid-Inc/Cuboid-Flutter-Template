@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:cuboid_flutter_template/core/failures.dart';
-import 'package:cuboid_flutter_template/core/result.dart';
-import 'package:cuboid_flutter_template/core/supabase/env.dart';
-import 'package:cuboid_flutter_template/core/supabase/supabase_guard.dart';
+import 'package:cuboid_flutter_template/core/errors/failures.dart';
+import 'package:cuboid_flutter_template/core/errors/result.dart';
+import 'package:cuboid_flutter_template/core/config/env.dart';
+import 'package:cuboid_flutter_template/core/network/supabase_guard.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

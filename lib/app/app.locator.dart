@@ -13,7 +13,7 @@ import 'package:stacked_services/src/navigation/navigation_service.dart';
 import 'package:stacked_services/src/snackbar/snackbar_service.dart';
 import 'package:stacked_shared/stacked_shared.dart';
 
-import '../features/shell/shell_service.dart';
+import '../core/services/shell_service.dart';
 
 final locator = StackedLocator.instance;
 

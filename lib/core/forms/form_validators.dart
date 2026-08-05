@@ -1,4 +1,4 @@
-import 'package:cuboid_flutter_template/features/auth/data/auth_validation.dart';
+import 'package:cuboid_flutter_template/core/validators/auth_validation.dart';
 
 abstract final class FormValidators {
   static String? required(String? value, {required String label}) =>
