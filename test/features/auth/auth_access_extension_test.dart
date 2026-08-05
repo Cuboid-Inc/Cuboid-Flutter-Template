@@ -8,7 +8,7 @@ void main() {
     final access = AuthAccessRow.fromRow({
       'id': 'member-1',
       'tenant_id': 'tenant-1',
-      'tenants': {'name': 'FleetGo'},
+      'tenants': {'name': 'Cuboid Flutter Template'},
       'email': 'owner@example.com',
       'display_name': 'Owner',
       'role': 'owner',
@@ -21,7 +21,7 @@ void main() {
     });
 
     expect(access.memberId, 'member-1');
-    expect(access.tenantName, 'FleetGo');
+    expect(access.tenantName, 'Cuboid Flutter Template');
     expect(access.role, StaffRole.owner);
     expect(access.status, MembershipStatus.active);
     expect(access.accessPacks, {AccessPack.operations, AccessPack.reports});

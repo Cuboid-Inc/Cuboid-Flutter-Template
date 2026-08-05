@@ -1,4 +1,4 @@
-# FleetGo Architecture
+# Cuboid Flutter Template Architecture
 
 Status: Current repository architecture and production target
 

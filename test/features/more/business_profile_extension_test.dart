@@ -28,7 +28,7 @@ void main() {
 
     final row = profile.toRow('tenant-1');
     expect(row['tenant_id'], 'tenant-1');
-    expect(row['legal_name'], 'FleetGo LLC');
+    expect(row['legal_name'], 'Cuboid Flutter Template LLC');
     expect(row['arabic_legal_name'], 'فليت جو');
     expect(row['brand_color'], 123);
     expect(row['use_custom_letterhead'], isTrue);

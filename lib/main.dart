@@ -35,7 +35,7 @@ Future<void> main() async {
   } else if (kReleaseMode) {
     // Fail fast: a release build must never silently run in demo mode.
     final error = StateError(
-      'FleetGo release build without Supabase config. '
+      'Cuboid Flutter Template release build without Supabase config. '
       'Build with --dart-define-from-file=env/prod.json.',
     );
     _logger.e(

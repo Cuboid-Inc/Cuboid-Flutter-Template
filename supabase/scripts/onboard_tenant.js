@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
-import readline from 'readline/promises';
-import { stdin as input, stdout as output } from 'process';
+import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import dotenv from 'dotenv';
+import { stdin as input, stdout as output } from 'process';
+import readline from 'readline/promises';
 
 // Load .env if it exists in the script directory
 const scriptDir = path.dirname(new URL(import.meta.url).pathname);
@@ -42,7 +42,7 @@ function logError(msg) {
 async function main() {
   const rl = readline.createInterface({ input, output });
 
-  console.log(`\n${colors.bright}${colors.blue}=== FleetGo Tenant Onboarding Tool ===${colors.reset}\n`);
+  console.log(`\n${colors.bright}${colors.blue}=== Cuboid Flutter Template Tenant Onboarding Tool ===${colors.reset}\n`);
 
   try {
     // 1. Choose Environment

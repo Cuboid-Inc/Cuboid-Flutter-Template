@@ -12,7 +12,7 @@ void main() {
     'profile operations return guard failures without Supabase config',
     () async {
       final repository = BusinessProfileRepository(MockAuthRepository());
-      const profile = BusinessProfile(legalName: 'FleetGo');
+      const profile = BusinessProfile(legalName: 'Cuboid Flutter Template');
 
       expect(
         await repository.fetchBusinessProfile(),

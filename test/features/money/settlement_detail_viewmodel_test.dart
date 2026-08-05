@@ -195,7 +195,8 @@ void main() {
       ),
     );
     when(() => businessProfileRepository.fetchBusinessProfile()).thenAnswer(
-      (_) async => const Success(BusinessProfile(legalName: 'FleetGo')),
+      (_) async =>
+          const Success(BusinessProfile(legalName: 'Cuboid Flutter Template')),
     );
     final payment = Payment(
       id: 'p',

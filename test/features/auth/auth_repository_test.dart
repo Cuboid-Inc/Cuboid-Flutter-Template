@@ -58,7 +58,7 @@ void main() {
     expect(repository.currentAccess!.isOwner, isTrue);
     expect(await repository.signOut(), isA<Success<void>>());
     expect(repository.currentAccess, isNull);
-    expect(repository.currentTenantName, 'FleetGo Owner');
+    expect(repository.currentTenantName, 'Cuboid Flutter Template Owner');
   });
 
   test('AuthAccess reports staff ownership correctly', () {

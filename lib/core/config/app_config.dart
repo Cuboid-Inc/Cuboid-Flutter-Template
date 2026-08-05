@@ -1,6 +1,6 @@
 /// Centralized app configuration: locale, currency, and date/time patterns.
 abstract final class AppConfig {
-  static const appName = 'FleetGo';
+  static const appName = 'Cuboid Flutter Template';
   static const locale = 'en_AE';
   static const currencyCode = 'AED';
   static const datePattern = 'dd MMM yyyy';

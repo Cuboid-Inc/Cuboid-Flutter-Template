@@ -1,7 +1,7 @@
 {
   "name": "fleet-go-db-scripts",
   "version": "1.0.0",
-  "description": "Helper scripts for FleetGo database management",
+  "description": "Helper scripts for Cuboid Flutter Template database management",
   "main": "onboard_tenant.js",
   "type": "module",
   "scripts": {
