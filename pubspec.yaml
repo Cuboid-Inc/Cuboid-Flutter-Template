@@ -1,5 +1,5 @@
-name: fleetgo
-description: "Fleet Management Application by Cuboid Inc."
+name: cuboid_flutter_template
+description: "Template for Cuboid Flutter projects"
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
