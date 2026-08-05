@@ -7,7 +7,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>FleetGo</string>
+		<string>Cuboid Flutter Template</string>
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
