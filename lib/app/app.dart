@@ -1,0 +1,137 @@
+import 'package:fleetgo/features/auth/data/auth_repository.dart';
+import 'package:fleetgo/features/auth/ui/access_unavailable/access_unavailable_view.dart';
+import 'package:fleetgo/features/auth/ui/accept_invitation/accept_invitation_view.dart';
+import 'package:fleetgo/features/auth/ui/forgot_password/forgot_password_view.dart';
+import 'package:fleetgo/features/auth/ui/login/login_view.dart';
+import 'package:fleetgo/features/auth/ui/reset_password/reset_password_view.dart';
+import 'package:fleetgo/features/home/data/home_repository.dart';
+import 'package:fleetgo/features/money/data/money_repository.dart';
+import 'package:fleetgo/features/money/ui/balance_detail/balance_detail_view.dart';
+import 'package:fleetgo/features/money/ui/expense_detail/expense_detail_view.dart';
+import 'package:fleetgo/features/money/ui/invoice_detail/invoice_detail_view.dart';
+import 'package:fleetgo/features/money/ui/payment_detail/payment_detail_view.dart';
+import 'package:fleetgo/features/money/ui/settlement_detail/settlement_detail_view.dart';
+import 'package:fleetgo/features/money/ui/statement_view/statement_view.dart';
+import 'package:fleetgo/features/more/data/agreement_repository.dart';
+import 'package:fleetgo/features/more/data/business_profile_repository.dart';
+import 'package:fleetgo/features/more/data/driver_repository.dart';
+import 'package:fleetgo/features/more/data/more_repository.dart';
+import 'package:fleetgo/features/more/data/route_rate_repository.dart';
+import 'package:fleetgo/features/more/data/staff_repository.dart';
+import 'package:fleetgo/features/more/data/vehicle_repository.dart';
+import 'package:fleetgo/features/more/ui/agreement_detail/agreement_detail_view.dart';
+import 'package:fleetgo/features/more/ui/agreements/agreements_view.dart';
+import 'package:fleetgo/features/more/ui/business_profile/business_profile_view.dart';
+import 'package:fleetgo/features/more/ui/driver_detail/driver_detail_view.dart';
+import 'package:fleetgo/features/more/ui/drivers/drivers_view.dart';
+import 'package:fleetgo/features/more/ui/route_rate_detail/route_rate_detail_view.dart';
+import 'package:fleetgo/features/more/ui/route_rates/route_rates_view.dart';
+import 'package:fleetgo/features/more/ui/staff_access/staff_access_view.dart';
+import 'package:fleetgo/features/more/ui/vehicle_detail/vehicle_detail_view.dart';
+import 'package:fleetgo/features/more/ui/vehicles/vehicles_view.dart';
+import 'package:fleetgo/features/parties/data/parties_repository.dart';
+import 'package:fleetgo/features/parties/ui/parties/parties_view.dart';
+import 'package:fleetgo/features/parties/ui/party_detail/party_detail_view.dart';
+import 'package:fleetgo/features/reports/data/reports_repository.dart';
+import 'package:fleetgo/features/reports/ui/report_detail/report_detail_view.dart';
+import 'package:fleetgo/features/reports/ui/reports_view.dart';
+import 'package:fleetgo/features/shell/shell_service.dart';
+import 'package:fleetgo/features/shell/shell_view.dart';
+import 'package:fleetgo/features/startup/startup_view.dart';
+import 'package:fleetgo/features/work/data/work_repository.dart';
+import 'package:fleetgo/features/work/ui/monthly_work/monthly_work_view.dart';
+import 'package:fleetgo/features/work/ui/new_trip/new_trip_view.dart';
+import 'package:fleetgo/features/work/ui/prepare_month/prepare_month_view.dart';
+import 'package:fleetgo/features/work/ui/work_detail/work_detail_view.dart';
+import 'package:fleetgo/ui/bottom_sheets/add_expense/add_expense_sheet.dart';
+import 'package:fleetgo/ui/bottom_sheets/agreement_form/agreement_form_sheet.dart';
+import 'package:fleetgo/ui/bottom_sheets/driver_form/driver_form_sheet.dart';
+import 'package:fleetgo/ui/bottom_sheets/invite_staff_form/invite_staff_form_sheet.dart';
+import 'package:fleetgo/ui/bottom_sheets/party_form/party_form_sheet.dart';
+import 'package:fleetgo/ui/bottom_sheets/payment_form/payment_form_sheet.dart';
+import 'package:fleetgo/ui/bottom_sheets/period/period_sheet.dart';
+import 'package:fleetgo/ui/bottom_sheets/route_rate_form/route_rate_form_sheet.dart';
+import 'package:fleetgo/ui/bottom_sheets/vehicle_form/vehicle_form_sheet.dart';
+import 'package:fleetgo/ui/dialogs/add_edit_extra/add_edit_extra_dialog.dart';
+import 'package:fleetgo/ui/dialogs/confirm/confirm_dialog.dart';
+import 'package:fleetgo/ui/pdf/pdf_preview_view.dart';
+import 'package:stacked/stacked_annotations.dart';
+import 'package:stacked_services/stacked_services.dart';
+// @stacked-import
+
+@StackedApp(
+  routes: [
+    MaterialRoute(page: StartupView, initial: true),
+    MaterialRoute(page: LoginView),
+    MaterialRoute(page: ShellView),
+    MaterialRoute(page: PartiesView),
+    MaterialRoute(page: NewTripView),
+    MaterialRoute(page: MonthlyWorkView),
+    MaterialRoute(page: PrepareMonthView),
+    MaterialRoute(page: WorkDetailView),
+    MaterialRoute(page: InvoiceDetailView),
+    MaterialRoute(page: SettlementDetailView),
+    MaterialRoute(page: StatementView),
+    MaterialRoute(page: PaymentDetailView),
+    MaterialRoute(page: ExpenseDetailView),
+    MaterialRoute(page: BalanceDetailView),
+    MaterialRoute(page: PartyDetailView),
+    MaterialRoute(page: VehiclesView),
+    MaterialRoute(page: DriversView),
+    MaterialRoute(page: DriverDetailView),
+    MaterialRoute(page: AgreementsView),
+    MaterialRoute(page: RouteRatesView),
+    MaterialRoute(page: RouteRateDetailView),
+    MaterialRoute(page: AgreementDetailView),
+    MaterialRoute(page: VehicleDetailView),
+    MaterialRoute(page: StaffAccessView),
+    MaterialRoute(page: BusinessProfileView),
+    MaterialRoute(page: ReportsView),
+    MaterialRoute(page: ReportDetailView),
+    MaterialRoute(page: PdfPreviewView),
+    MaterialRoute(page: ForgotPasswordView),
+    MaterialRoute(page: ResetPasswordView),
+    MaterialRoute(page: AcceptInvitationView),
+    MaterialRoute(page: AccessUnavailableView),
+    // @stacked-route
+  ],
+  dependencies: [
+    LazySingleton(classType: NavigationService),
+    LazySingleton(classType: DialogService),
+    LazySingleton(classType: BottomSheetService),
+    LazySingleton(classType: SnackbarService),
+    LazySingleton(classType: ShellService),
+    LazySingleton(classType: AuthRepository),
+    LazySingleton(classType: PartiesRepository),
+    LazySingleton(classType: HomeRepository),
+    LazySingleton(classType: MoneyRepository),
+    LazySingleton(classType: MoreRepository),
+    LazySingleton(classType: VehicleRepository),
+    LazySingleton(classType: DriverRepository),
+    LazySingleton(classType: AgreementRepository),
+    LazySingleton(classType: RouteRateRepository),
+    LazySingleton(classType: StaffRepository),
+    LazySingleton(classType: BusinessProfileRepository),
+    LazySingleton(classType: ReportsRepository),
+    LazySingleton(classType: WorkRepository),
+    // @stacked-service
+  ],
+  bottomsheets: [
+    StackedBottomsheet(classType: PaymentFormSheet),
+    StackedBottomsheet(classType: AddExpenseSheet),
+    StackedBottomsheet(classType: PeriodSheet),
+    StackedBottomsheet(classType: PartyFormSheet),
+    StackedBottomsheet(classType: VehicleFormSheet),
+    StackedBottomsheet(classType: DriverFormSheet),
+    StackedBottomsheet(classType: AgreementFormSheet),
+    StackedBottomsheet(classType: RouteRateFormSheet),
+    StackedBottomsheet(classType: InviteStaffFormSheet),
+    // @stacked-bottom-sheet
+  ],
+  dialogs: [
+    StackedDialog(classType: ConfirmDialog),
+    StackedDialog(classType: AddEditExtraDialog),
+    // @stacked-dialog
+  ],
+)
+class App {}

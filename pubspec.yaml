@@ -1,0 +1,63 @@
+name: fleetgo
+description: "Fleet Management Application by Cuboid Inc."
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.9
+  stacked: ^3.5.0
+  stacked_services: ^1.6.0
+  supabase_flutter: ^2.16.0
+  google_fonts: ^8.1.0
+  intl: ^0.20.3
+  pdf: ^3.11.3
+  printing: ^5.14.2
+  file_picker: ^11.0.2
+  path_provider: ^2.1.6
+  flutter_secure_storage: ^10.3.1
+  package_info_plus: ^9.0.1
+  upgrader: ^13.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  build_runner: ^2.15.1
+  stacked_generator: ^2.0.4
+  mocktail: ^1.0.5
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/icon/
+    - assets/splash/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: "assets/icon/app_icon.png"
+
+flutter_native_splash:
+  image: assets/splash/logo_tile.png
+  background_image: assets/splash/background.png
+  android_12:
+    image: assets/splash/logo_tile.png
+    color: "#11B2F3"
+    color_dark: "#0E57C1"
+  android: true
+  ios: true
+  fullscreen: true

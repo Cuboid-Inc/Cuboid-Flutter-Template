@@ -1,0 +1,12 @@
+{
+  "views_path": "features",
+  "services_path": "core/services",
+  "widgets_path": "ui/widgets",
+  "bottom_sheets_path": "ui/bottom_sheets",
+  "dialogs_path": "ui/dialogs",
+  "stacked_app_file_path": "app/app.dart",
+  "test_views_path": "features",
+  "test_services_path": "core/services",
+  "prefer_web": false,
+  "v1": false
+}

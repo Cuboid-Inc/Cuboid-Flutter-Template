@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FleetGo - Debug",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": ["--dart-define-from-file=env/dev.json"],
+      "env": {
+        "FLUTTER_MODE": "debug"
+      }
+    },
+    {
+      "name": "FleetGo - Release",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": ["--release", "--dart-define-from-file=env/prod.json"],
+      "env": {
+        "FLUTTER_MODE": "release"
+      }
+    },
+    {
+      "name": "FleetGo - Profile",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": ["--profile", "--dart-define-from-file=env/dev.json"],
+      "env": {
+        "FLUTTER_MODE": "profile"
+      }
+    }
+  ]
+}
