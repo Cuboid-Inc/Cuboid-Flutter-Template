@@ -1,4 +1,5 @@
-import 'package:cuboid_flutter_template/core/config/app_config.dart';
+import 'package:cuboid_flutter_template/core/constants/app_constants.dart';
+import 'package:cuboid_flutter_template/core/constants/asset_paths.dart';
 import 'package:cuboid_flutter_template/features/startup/ui/viewmodels/startup_viewmodel.dart';
 import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
 import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
@@ -40,7 +41,7 @@ class StartupView extends StackedView<StartupViewModel> {
                     ),
                   ],
                 ),
-                child: Image.asset('assets/splash/logo_tile.png'),
+                child: Image.asset(AssetPaths.startupLogo),
               ),
               const SizedBox(height: s16),
               Text(

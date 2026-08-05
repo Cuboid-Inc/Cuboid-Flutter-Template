@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:cuboid_flutter_template/core/config/formatters.dart';
+import 'package:cuboid_flutter_template/core/formatters/formatters.dart';
 import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
 import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
 import 'package:flutter/cupertino.dart';

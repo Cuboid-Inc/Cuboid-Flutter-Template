@@ -1,20 +1,14 @@
 import 'dart:async';
 
-import 'package:cuboid_flutter_template/app/app.dialogs.dart';
 import 'package:cuboid_flutter_template/app/app.locator.dart';
-import 'package:cuboid_flutter_template/app/app.router.dart';
-import 'package:cuboid_flutter_template/core/config/app_config.dart';
+import 'package:cuboid_flutter_template/app/app.logger.dart';
+import 'package:cuboid_flutter_template/app/app_root.dart';
 import 'package:cuboid_flutter_template/core/config/env.dart';
+import 'package:cuboid_flutter_template/core/constants/asset_paths.dart';
 import 'package:cuboid_flutter_template/core/storage/secure_local_storage.dart';
-import 'package:cuboid_flutter_template/main.logger.dart';
-import 'package:cuboid_flutter_template/core/theme/app_theme.dart';
-import 'package:cuboid_flutter_template/core/theme/snackbar_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:stacked/stacked_annotations.dart';
-import 'package:stacked_services/stacked_services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:upgrader/upgrader.dart';
 
 final _logger = AppLogger('AppStartup');
 
@@ -47,8 +41,6 @@ Future<void> main() async {
   }
 
   await setupLocator();
-  setupDialogUi();
-  setupSnackbarUi();
 
   await startupLogoReady;
   _logger.i('Startup assets and services ready');
@@ -57,7 +49,7 @@ Future<void> main() async {
 
 Future<void> _precacheStartupLogo() async {
   final stream = const AssetImage(
-    'assets/splash/logo_tile.png',
+    AssetPaths.startupLogo,
   ).resolve(ImageConfiguration.empty);
   final ready = Completer<void>();
   late final ImageStreamListener listener;
@@ -77,27 +69,5 @@ Future<void> _precacheStartupLogo() async {
     await ready.future;
   } finally {
     stream.removeListener(listener);
-  }
-}
-
-@StackedApp(
-  routes: [],
-  logger: StackedLogger(logHelperName: "AppLogger"),
-)
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConfig.appName,
-      theme: AppTheme.light,
-      navigatorKey: StackedService.navigatorKey,
-      onGenerateRoute: StackedRouter().onGenerateRoute,
-      initialRoute: Routes.startupView,
-      debugShowCheckedModeBanner: false,
-      builder: (context, child) =>
-          UpgradeAlert(child: child ?? const SizedBox()),
-    );
   }
 }
