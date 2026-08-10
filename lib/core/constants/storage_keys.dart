@@ -1,4 +1,4 @@
 abstract final class StorageKeys {
-  static const supabaseSession = 'fleetgo_supabase_session';
-  static const authStorageNamespace = 'fleetgo_auth';
+  static const supabaseSession = 'nemara_homes_supabase_session';
+  static const authStorageNamespace = 'nemara_homes_auth';
 }

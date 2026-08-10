@@ -1,6 +1,6 @@
 /// Centralized app configuration: locale, currency, and date/time patterns.
 abstract final class AppConfig {
-  static const appName = 'Cuboid Flutter Template';
+  static const appName = 'Nemara Homes';
   static const locale = 'en_US';
   static const currencyCode = 'USD';
   static const datePattern = 'dd MMM, yyyy';

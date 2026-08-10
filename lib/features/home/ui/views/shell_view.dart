@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:cuboid_flutter_template/features/home/ui/views/home_view.dart';
-import 'package:cuboid_flutter_template/features/home/ui/viewmodels/shell_viewmodel.dart';
-import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
+import 'package:nemara_homes/features/home/ui/views/home_view.dart';
+import 'package:nemara_homes/features/home/ui/viewmodels/shell_viewmodel.dart';
+import 'package:nemara_homes/core/theme/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';

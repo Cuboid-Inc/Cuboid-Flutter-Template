@@ -7,7 +7,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>Cuboid Flutter Template</string>
+		<string>Nemara Homes</string>
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
@@ -15,7 +15,7 @@
 				<string>Editor</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<string>com.cuboidinc.fleetgo</string>
+					<string>com.cuboidllc.nemarahomes</string>
 				</array>
 			</dict>
 		</array>
@@ -26,7 +26,7 @@
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>
-		<string>FleetGo</string>
+		<string>Nemara Homes</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>

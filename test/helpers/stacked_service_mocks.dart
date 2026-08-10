@@ -1,4 +1,4 @@
-import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:nemara_homes/app/app.locator.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stacked_services/stacked_services.dart';
 

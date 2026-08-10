@@ -1,4 +1,4 @@
-import 'package:cuboid_flutter_template/core/enums/enums.dart';
+import 'package:nemara_homes/core/enums/enums.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/widgets.dart' show IconData;
 

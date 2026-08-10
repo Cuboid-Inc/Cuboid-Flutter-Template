@@ -1,4 +1,4 @@
-import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:nemara_homes/core/models/paginated_result.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

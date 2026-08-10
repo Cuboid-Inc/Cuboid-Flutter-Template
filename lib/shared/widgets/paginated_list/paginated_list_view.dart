@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
-import 'package:cuboid_flutter_template/shared/widgets/app_loading_indicator.dart';
-import 'package:cuboid_flutter_template/shared/widgets/empty_state.dart';
-import 'package:cuboid_flutter_template/shared/widgets/paginated_list/pagination_controller.dart';
+import 'package:nemara_homes/core/theme/app_colors.dart';
+import 'package:nemara_homes/shared/widgets/app_loading_indicator.dart';
+import 'package:nemara_homes/shared/widgets/empty_state.dart';
+import 'package:nemara_homes/shared/widgets/paginated_list/pagination_controller.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 

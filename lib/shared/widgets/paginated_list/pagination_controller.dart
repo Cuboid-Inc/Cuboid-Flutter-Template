@@ -1,5 +1,5 @@
-import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
-import 'package:cuboid_flutter_template/core/errors/result.dart';
+import 'package:nemara_homes/core/models/paginated_result.dart';
+import 'package:nemara_homes/core/errors/result.dart';
 import 'package:flutter/foundation.dart';
 
 /// Controller to manage pagination state and logic for REST API.

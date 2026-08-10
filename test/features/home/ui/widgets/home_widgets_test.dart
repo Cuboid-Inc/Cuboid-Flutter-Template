@@ -1,6 +1,6 @@
-import 'package:cuboid_flutter_template/features/home/ui/widgets/attention_action_tile.dart';
-import 'package:cuboid_flutter_template/features/home/ui/widgets/dashboard_metric_card.dart';
-import 'package:cuboid_flutter_template/features/home/ui/widgets/quick_action_grid.dart';
+import 'package:nemara_homes/features/home/ui/widgets/attention_action_tile.dart';
+import 'package:nemara_homes/features/home/ui/widgets/dashboard_metric_card.dart';
+import 'package:nemara_homes/features/home/ui/widgets/quick_action_grid.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

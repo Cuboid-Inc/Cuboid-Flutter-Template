@@ -1,10 +1,10 @@
-# FleetGo — UAE Transport Fleet MVP
+# Nemara Homes
 
-This repo contains the FleetGo Flutter app plus the product and system blueprint for a small UAE transport operator.
+This project was created from the Cuboid Flutter Template.
 
 ## App
 
-FleetGo is a fleet operations & money app (Home / Work / Money / More): work orders, invoicing, supplier settlements, payments, and operational profit for a single pilot operator. Flutter + Stacked MVVM + Supabase.
+It is a Flutter application built with Stacked MVVM and Supabase. Replace this section with product-specific documentation when the generated application is ready.
 
 ```bash
 flutter pub get

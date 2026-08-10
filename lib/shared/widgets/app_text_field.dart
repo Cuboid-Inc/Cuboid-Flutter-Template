@@ -1,5 +1,5 @@
-import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
-import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
+import 'package:nemara_homes/core/theme/app_colors.dart';
+import 'package:nemara_homes/core/theme/ui_helpers.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 

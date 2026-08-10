@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "FleetGo - Debug",
+      "name": "Nemara Homes - Debug",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
@@ -12,7 +12,7 @@
       }
     },
     {
-      "name": "FleetGo - Release",
+      "name": "Nemara Homes - Release",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
@@ -22,7 +22,7 @@
       }
     },
     {
-      "name": "FleetGo - Profile",
+      "name": "Nemara Homes - Profile",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",

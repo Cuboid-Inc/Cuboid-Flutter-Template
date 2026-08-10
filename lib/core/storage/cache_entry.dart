@@ -1,4 +1,4 @@
-import 'package:cuboid_flutter_template/core/errors/result.dart';
+import 'package:nemara_homes/core/errors/result.dart';
 
 /// A generic in-memory cache entry with TTL support.
 class CacheEntry<T> {

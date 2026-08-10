@@ -1,4 +1,4 @@
-import 'package:cuboid_flutter_template/features/home/ui/viewmodels/home_viewmodel.dart';
+import 'package:nemara_homes/features/home/ui/viewmodels/home_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 
