@@ -447,6 +447,14 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
       category: 'Supabase',
     ),
     Replacement(
+      path: 'supabase/functions/invite-staff/index.ts',
+      oldValue: "const redirectTo = '$oldPackageIdentifier://auth-callback'",
+      newValue:
+          "const redirectTo = '${values.packageIdentifier}://auth-callback'",
+      label: 'Supabase invite staff auth redirect URL',
+      category: 'Supabase',
+    ),
+    Replacement(
       path: 'README.md',
       oldValue: '# $oldProductName — UAE Transport Fleet MVP',
       newValue: '# ${values.displayName}',

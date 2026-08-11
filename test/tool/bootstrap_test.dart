@@ -169,6 +169,9 @@ PRODUCT_BUNDLE_IDENTIFIER = com.cuboidinc.fleetgo.RunnerTests;
 project_id = "Cuboid Flutter Template"
 additional_redirect_urls = ["com.cuboidinc.fleetgo://auth-callback"]
 ''');
+    _writeFixture(root, 'supabase/functions/invite-staff/index.ts', '''
+const redirectTo = 'com.cuboidinc.fleetgo://auth-callback'
+''');
     _writeFixture(
       root,
       'lib/app/app.router.dart',
@@ -210,6 +213,33 @@ FleetGo is a fleet operations & money app (Home / Work / Money / More): work ord
     expect(
       plan.manualConfiguration,
       contains('Supabase project_id in supabase/config.toml.'),
+    );
+    final inviteStaffSource = File(
+      '${root.path}/supabase/functions/invite-staff/index.ts',
+    ).readAsStringSync();
+    expect(
+      inviteStaffSource,
+      contains("const redirectTo = 'com.cuboidinc.fleetgo://auth-callback'"),
+    );
+    final inviteStaffRedirectReplacement = plan.replacements.singleWhere((
+      replacement,
+    ) {
+      return replacement.path == 'supabase/functions/invite-staff/index.ts';
+    });
+    final generatedInviteStaffSource = replaceExactInContent(
+      inviteStaffSource,
+      inviteStaffRedirectReplacement.oldValue,
+      inviteStaffRedirectReplacement.newValue,
+    );
+    expect(
+      generatedInviteStaffSource,
+      contains(
+        "const redirectTo = 'com.cuboidllc.nemarahomes://auth-callback'",
+      ),
+    );
+    expect(
+      generatedInviteStaffSource,
+      isNot(contains('com.cuboidinc.fleetgo://auth-callback')),
     );
     expect(
       plan.replacements,
@@ -350,6 +380,9 @@ PRODUCT_BUNDLE_IDENTIFIER = com.cuboidinc.fleetgo.RunnerTests;
   _writeFixture(root, 'supabase/config.toml', '''
 project_id = "Cuboid Flutter Template"
 additional_redirect_urls = ["com.cuboidinc.fleetgo://auth-callback"]
+''');
+  _writeFixture(root, 'supabase/functions/invite-staff/index.ts', '''
+const redirectTo = 'com.cuboidinc.fleetgo://auth-callback'
 ''');
   _writeFixture(root, 'README.md', '''
 # FleetGo — UAE Transport Fleet MVP
