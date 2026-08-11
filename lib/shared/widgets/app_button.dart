@@ -1,6 +1,6 @@
-import 'package:nemara_homes/core/theme/app_colors.dart';
-import 'package:nemara_homes/core/theme/ui_helpers.dart';
-import 'package:nemara_homes/shared/widgets/app_loading_indicator.dart';
+import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
+import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
+import 'package:cuboid_flutter_template/shared/widgets/app_loading_indicator.dart';
 import 'package:flutter/material.dart';
 
 /// Full-width primary button with an optional loading spinner and compact variant support.

@@ -1,4 +1,4 @@
-import 'package:nemara_homes/core/services/shell_service.dart';
+import 'package:cuboid_flutter_template/core/services/shell_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

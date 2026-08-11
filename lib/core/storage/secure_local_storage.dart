@@ -1,4 +1,4 @@
-import 'package:nemara_homes/core/constants/storage_keys.dart';
+import 'package:cuboid_flutter_template/core/constants/storage_keys.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

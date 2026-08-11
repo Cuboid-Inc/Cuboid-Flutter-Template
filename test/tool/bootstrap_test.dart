@@ -75,12 +75,10 @@ const note = 'package:cuboid_flutter_template/not_an_import.dart';
         'cuboid_flutter_template',
         'nemara_homes',
       ),
-      '''
-import 'package:nemara_homes/app/app.dart';
-
-const note = 'package:cuboid_flutter_template/not_an_import.dart';
-// package:cuboid_flutter_template/comment.dart
-''',
+      "import 'package:${'nemara_homes'}/app/app.dart';\n"
+      '\n'
+      "const note = 'package:cuboid_flutter_template/not_an_import.dart';\n"
+      '// package:cuboid_flutter_template/comment.dart\n',
     );
   });
 

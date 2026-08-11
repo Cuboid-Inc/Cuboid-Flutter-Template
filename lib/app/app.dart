@@ -1,6 +1,6 @@
-import 'package:nemara_homes/core/services/shell_service.dart';
-import 'package:nemara_homes/features/home/ui/views/shell_view.dart';
-import 'package:nemara_homes/features/startup/ui/startup_view.dart';
+import 'package:cuboid_flutter_template/core/services/shell_service.dart';
+import 'package:cuboid_flutter_template/features/home/ui/views/shell_view.dart';
+import 'package:cuboid_flutter_template/features/startup/ui/startup_view.dart';
 import 'package:stacked/stacked_annotations.dart';
 import 'package:stacked_services/stacked_services.dart';
 // @stacked-import

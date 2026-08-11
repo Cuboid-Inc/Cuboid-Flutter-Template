@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:nemara_homes/app/app.locator.dart';
-import 'package:nemara_homes/app/app.logger.dart';
-import 'package:nemara_homes/app/app_root.dart';
-import 'package:nemara_homes/core/config/env.dart';
-import 'package:nemara_homes/core/constants/asset_paths.dart';
-import 'package:nemara_homes/core/storage/secure_local_storage.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/app/app.logger.dart';
+import 'package:cuboid_flutter_template/app/app_root.dart';
+import 'package:cuboid_flutter_template/core/config/env.dart';
+import 'package:cuboid_flutter_template/core/constants/asset_paths.dart';
+import 'package:cuboid_flutter_template/core/storage/secure_local_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

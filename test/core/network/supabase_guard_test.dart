@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:nemara_homes/core/errors/failures.dart';
-import 'package:nemara_homes/core/errors/result.dart';
-import 'package:nemara_homes/core/config/env.dart';
-import 'package:nemara_homes/core/network/supabase_guard.dart';
+import 'package:cuboid_flutter_template/core/errors/failures.dart';
+import 'package:cuboid_flutter_template/core/errors/result.dart';
+import 'package:cuboid_flutter_template/core/config/env.dart';
+import 'package:cuboid_flutter_template/core/network/supabase_guard.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

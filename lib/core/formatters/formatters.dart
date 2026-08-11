@@ -1,4 +1,4 @@
-import 'package:nemara_homes/core/constants/app_constants.dart';
+import 'package:cuboid_flutter_template/core/constants/app_constants.dart';
 import 'package:intl/intl.dart';
 
 /// All display formatting, routed through [AppConfig].

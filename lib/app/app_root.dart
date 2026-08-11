@@ -1,6 +1,6 @@
-import 'package:nemara_homes/app/app.router.dart';
-import 'package:nemara_homes/core/constants/app_constants.dart';
-import 'package:nemara_homes/core/theme/app_theme.dart';
+import 'package:cuboid_flutter_template/app/app.router.dart';
+import 'package:cuboid_flutter_template/core/constants/app_constants.dart';
+import 'package:cuboid_flutter_template/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked_services/stacked_services.dart';
 import 'package:upgrader/upgrader.dart';

@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:nemara_homes/core/models/paginated_result.dart';
-import 'package:nemara_homes/core/errors/result.dart';
-import 'package:nemara_homes/core/theme/app_colors.dart';
-import 'package:nemara_homes/core/theme/ui_helpers.dart';
-import 'package:nemara_homes/shared/widgets/app_bar_ios.dart';
-import 'package:nemara_homes/shared/widgets/empty_state.dart';
-import 'package:nemara_homes/shared/widgets/paginated_list/paginated_list_view.dart';
-import 'package:nemara_homes/shared/widgets/paginated_list/pagination_controller.dart';
+import 'package:cuboid_flutter_template/core/models/paginated_result.dart';
+import 'package:cuboid_flutter_template/core/errors/result.dart';
+import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
+import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
+import 'package:cuboid_flutter_template/shared/widgets/app_bar_ios.dart';
+import 'package:cuboid_flutter_template/shared/widgets/empty_state.dart';
+import 'package:cuboid_flutter_template/shared/widgets/paginated_list/paginated_list_view.dart';
+import 'package:cuboid_flutter_template/shared/widgets/paginated_list/pagination_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

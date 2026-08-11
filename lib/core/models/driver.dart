@@ -1,4 +1,4 @@
-import 'package:nemara_homes/core/enums/enums.dart';
+import 'package:cuboid_flutter_template/core/enums/enums.dart';
 
 class Driver {
   Driver({
