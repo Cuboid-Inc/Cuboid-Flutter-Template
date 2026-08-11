@@ -10,4 +10,15 @@ void main() {
 
     expect(service.index, 1);
   });
+
+  test('notifies listeners when the active shell index changes', () async {
+    final service = ShellService();
+    var notificationCount = 0;
+    service.addListener(() => notificationCount++);
+
+    service.setIndex(1);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(notificationCount, greaterThan(0));
+  });
 }
