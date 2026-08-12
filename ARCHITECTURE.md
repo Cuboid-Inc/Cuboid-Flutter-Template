@@ -98,6 +98,19 @@ supabase/
 
 Tests live under `test/core/` and `test/features/`. Shared business models live under `lib/core/models/`, not inside each feature. `lib/features/parties/data/party.dart` only re-exports the shared party model and enum.
 
+Canonical generated feature folders use this structure:
+
+```text
+lib/features/<feature>/
+|-- data/                  Optional; only when the feature owns data code
+`-- ui/
+    |-- viewmodels/
+    |-- views/
+    `-- widgets/           Optional; only for feature-specific widgets
+```
+
+ViewModels belong under `ui/viewmodels/`. Views belong under `ui/views/`. Feature-specific widgets belong under `ui/widgets/`. Do not add domain, use-case, or other layer folders to generated features. `startup` is an intentional application-bootstrap exception and must not be moved or structurally refactored to match generated feature folders.
+
 ### Presentation pattern
 
 - Stacked MVVM drives routed screens and the four shell tabs.
@@ -302,7 +315,7 @@ Transactional database functions
 - Add row mapping to shared models or repository-local records when database shapes differ.
 - Keep one source for currency and date formatting.
 - Keep cross-tab state in `ShellService` until more shared live state exists.
-- Add no UseCase layer unless an operation gains reusable business logic outside the database transaction.
+- Add no domain, UseCase, or other application-service layer.
 
 ### Supabase target
 
@@ -451,7 +464,7 @@ Use one model when the database row and app concept match. Add a separate transp
 
 ### ADR-4: No pass-through UseCases
 
-View models call repositories directly. Add a UseCase only for reusable logic spanning repositories. Financial authority belongs in PostgreSQL functions.
+View models call repositories directly. Do not add a domain or UseCase layer. Financial authority belongs in PostgreSQL functions.
 
 ### ADR-5: No custom API server
 

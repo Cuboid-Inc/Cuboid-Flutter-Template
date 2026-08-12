@@ -66,7 +66,13 @@ SCOPE-08. Existing violations do not establish a project pattern. Do not spread 
 
 ARCH-01. Organize product code by feature under lib/features.
 
-ARCH-02. A feature keeps data code under data and screen code under ui.
+ARCH-02. A generated feature uses lib/features/<feature>/data for data code and lib/features/<feature>/ui for screen code. data is optional when the feature has no data layer.
+
+ARCH-02A. Under a feature's ui folder, ViewModels belong in viewmodels, Views belong in views, and feature-specific widgets belong in widgets. ui/widgets is optional when the feature has no feature-specific widgets.
+
+ARCH-02B. Do not add domain, use-case, or other layer folders under features.
+
+ARCH-02C. startup is an intentional application-bootstrap exception. Do not move or structurally refactor startup only to match generated feature folders.
 
 ARCH-03. Shared business-neutral code belongs under lib/core.
 
@@ -90,7 +96,7 @@ ARCH-11A. New ViewModels do not access Supabase directly. They use repositories.
 
 ARCH-12. Repositories own data access and model mapping. Repositories do not import UI code.
 
-ARCH-13. Add a UseCase only for non-trivial business logic across repositories or a rule worth isolated testing.
+ARCH-13. Do not add a UseCase layer.
 
 ARCH-14. Do not add one-line pass-through UseCases.
 
