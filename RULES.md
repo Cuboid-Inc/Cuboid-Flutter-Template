@@ -10,7 +10,7 @@ The goal is safe, clear, maintainable code with small changes, exact financial b
 
 AUTH-01. Follow the current user request or approved task first.
 
-AUTH-02. Use PRD.md for product goals, users, scope, priorities, and success measures.
+AUTH-02. Use the current user request or approved downstream product documents for product goals, users, scope, priorities, and success measures.
 
 AUTH-03. Use doc/Transport_Fleet_MVP_Blueprint.md for business rules, calculations, financial states, security, and acceptance cases.
 
@@ -20,7 +20,7 @@ AUTH-05. Use ARCHITECTURE.md for code structure, dependency direction, state flo
 
 AUTH-06. Use RULES.md for implementation and review standards.
 
-AUTH-06A. Use DESIGN.md for color tokens, spacing, typography, and shared UI primitives. DESIGN.md defers to `lib/ui/common/` when the two disagree.
+AUTH-06A. Use `lib/ui/common/` for color tokens, spacing, typography, and shared UI primitives.
 
 AUTH-07. When two sources disagree, stop the conflicting work. Record the exact conflict and ask for a product decision.
 
@@ -470,7 +470,7 @@ AGENT-12. Do not include unrelated advice or future features in a completed hand
 
 19. DOCUMENTATION UPDATES
 
-DOC-01. Update PRD.md when approved product scope, users, goals, or success measures change.
+DOC-01. Update the approved downstream product documentation when product scope, users, goals, or success measures change.
 
 DOC-02. Update the blueprint when an approved business calculation, financial state, permission, or data rule changes.
 

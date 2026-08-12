@@ -39,8 +39,7 @@ Row(
 
 ## Rules
 
-- **Icons**: `CupertinoIcons` only, never Material `Icons.*` (per CLAUDE.md "UI & Icon
-  Preference"). Prefer the `_fill`/`_solid` variants for leading tile icons — they read
+- **Icons**: `CupertinoIcons` only, never Material `Icons.*`. Prefer the `_fill`/`_solid` variants for leading tile icons — they read
   better at 18px than the outline variants.
 - **Per-item tint, not one flat color**: give each row/category a distinct
   `tint`/`tintBg` pair pulled from `AppColors` so the list reads as categorized, not

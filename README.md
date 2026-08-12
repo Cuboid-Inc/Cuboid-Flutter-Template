@@ -21,14 +21,10 @@ The script starts local Supabase and writes its public settings to `env/dev.json
 
 ## Documentation
 
-Root docs, in source-of-truth order (full hierarchy: [RULES.md](RULES.md) §1):
+Root docs:
 
-- [PRD.md](PRD.md) — product goals, users, scope, and success measures
 - [ARCHITECTURE.md](ARCHITECTURE.md) — current vs. production system, folder structure, conventions, feature checklist
-- [DESIGN.md](DESIGN.md) — color, spacing, typography, and shared UI-primitive tokens
 - [RULES.md](RULES.md) — development and AI agent standards, definition of done
-- [PHASE.md](PHASE.md) — delivery phases and current status
-- [MEMORY.md](MEMORY.md) — local setup, Supabase configuration, and auth decisions
 
 Supporting docs:
 

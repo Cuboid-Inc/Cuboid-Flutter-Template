@@ -2,7 +2,7 @@
 
 Status: Current repository architecture and production target
 
-This document separates code present in the repository from the planned production system. Product rules come from `doc/Transport_Fleet_MVP_Blueprint.md` and `PRD.md`. User experience rules come from `doc/Transport_Fleet_MVP_Design_Brief.md` and `DESIGN.md`. Development and AI agent standards come from `RULES.md`.
+This document separates code present in the repository from the planned production system. Development and AI agent standards come from `RULES.md`.
 
 ## 1. Architecture labels
 
@@ -29,7 +29,7 @@ PDF builders ----------------------> pdf + printing
 Letterhead store ------------------> local application documents
 ```
 
-Every business domain — parties, vehicles, drivers, agreements, route rates, work orders, invoices, settlements, expenses, payments, balances, home/report aggregation, and the business profile — reads and writes tenant-scoped Supabase tables (see `PHASE.md` for the migration history). Financial state transitions (issue, void, payment allocation, cheque state, document numbering, work-order lifecycle) run in SECURITY DEFINER Postgres functions; clients cannot write those columns directly.
+Every business domain — parties, vehicles, drivers, agreements, route rates, work orders, invoices, settlements, expenses, payments, balances, home/report aggregation, and the business profile — reads and writes tenant-scoped Supabase tables tracked in `supabase/migrations/`. Financial state transitions (issue, void, payment allocation, cheque state, document numbering, work-order lifecycle) run in SECURITY DEFINER Postgres functions; clients cannot write those columns directly.
 
 ### Runtime modes
 
@@ -467,8 +467,6 @@ Cache only the records listed in the blueprint. Offline writes stay outside the 
 
 ## 13. Reference files
 
-- Product and system source: `doc/Transport_Fleet_MVP_Blueprint.md`, `PRD.md`
-- UX source: `doc/Transport_Fleet_MVP_Design_Brief.md`, `DESIGN.md`
 - Development and AI agent standards: `RULES.md`
 - Stacked registration: `lib/app/app.dart`
 - Bootstrap: `lib/main.dart`
