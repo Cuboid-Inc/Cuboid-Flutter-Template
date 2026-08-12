@@ -3,8 +3,8 @@ select plan(16);
 
 insert into auth.users (id, aud, role, email)
 values
-  ('33333333-3333-4333-8333-333333333333', 'authenticated', 'authenticated', 'money-staff@fleetgo.local'),
-  ('44444444-4444-4444-8444-444444444444', 'authenticated', 'authenticated', 'money-other@fleetgo.local');
+  ('33333333-3333-4333-8333-333333333333', 'authenticated', 'authenticated', 'money-staff@example.local'),
+  ('44444444-4444-4444-8444-444444444444', 'authenticated', 'authenticated', 'money-other@example.local');
 
 insert into public.tenants (id, name)
 values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Money Other Tenant');
@@ -12,8 +12,8 @@ values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Money Other Tenant');
 insert into public.tenant_members (
   id, tenant_id, user_id, display_name, email, role, status
 ) values
-  ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '33333333-3333-4333-8333-333333333333', 'Money Staff', 'money-staff@fleetgo.local', 'staff', 'active'),
-  ('ffffffff-ffff-4fff-8fff-ffffffffffff', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '44444444-4444-4444-8444-444444444444', 'Money Other', 'money-other@fleetgo.local', 'owner', 'active');
+  ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '33333333-3333-4333-8333-333333333333', 'Money Staff', 'money-staff@example.local', 'staff', 'active'),
+  ('ffffffff-ffff-4fff-8fff-ffffffffffff', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '44444444-4444-4444-8444-444444444444', 'Money Other', 'money-other@example.local', 'owner', 'active');
 
 insert into public.parties (id, tenant_id, name, type)
 values

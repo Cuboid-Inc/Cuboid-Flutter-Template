@@ -6,7 +6,7 @@ VALUES (
   '22222222-2222-4222-8222-222222222222',
   'authenticated',
   'authenticated',
-  'other@fleetgo.local'
+  'other@example.local'
 );
 
 INSERT INTO public.tenants (id, name)
@@ -25,7 +25,7 @@ VALUES (
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   '22222222-2222-4222-8222-222222222222',
   'Other Local User',
-  'other@fleetgo.local',
+  'other@example.local',
   'invited'
 );
 
@@ -51,7 +51,7 @@ SET LOCAL ROLE authenticated;
 
 SELECT results_eq(
   $$SELECT name FROM public.tenants ORDER BY name$$,
-  $$VALUES ('FleetGo Local'::text)$$,
+  $$VALUES ('Cuboid Local'::text)$$,
   'An owner sees only the assigned tenant'
 );
 

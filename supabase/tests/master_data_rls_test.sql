@@ -7,19 +7,19 @@ VALUES
     '44444444-4444-4444-8444-444444444444',
     'authenticated',
     'authenticated',
-    'master-other@fleetgo.local'
+    'master-other@example.local'
   ),
   (
     '55555555-5555-4555-8555-555555555555',
     'authenticated',
     'authenticated',
-    'master-staff@fleetgo.local'
+    'master-staff@example.local'
   ),
   (
     '66666666-6666-4666-8666-666666666666',
     'authenticated',
     'authenticated',
-    'master-manager@fleetgo.local'
+    'master-manager@example.local'
   );
 
 INSERT INTO public.tenants (id, name)
@@ -40,7 +40,7 @@ VALUES
     'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
     '44444444-4444-4444-8444-444444444444',
     'Master Data Other User',
-    'master-other@fleetgo.local',
+    'master-other@example.local',
     'owner',
     'active'
   ),
@@ -49,7 +49,7 @@ VALUES
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '55555555-5555-4555-8555-555555555555',
     'Master Data Staff',
-    'master-staff@fleetgo.local',
+    'master-staff@example.local',
     'staff',
     'active'
   ),
@@ -58,7 +58,7 @@ VALUES
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '66666666-6666-4666-8666-666666666666',
     'Master Data Manager',
-    'master-manager@fleetgo.local',
+    'master-manager@example.local',
     'staff',
     'active'
   );

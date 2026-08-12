@@ -7,13 +7,13 @@ VALUES
     '22222222-2222-4222-8222-222222222222',
     'authenticated',
     'authenticated',
-    'work-other@fleetgo.local'
+    'work-other@example.local'
   ),
   (
     '33333333-3333-4333-8333-333333333333',
     'authenticated',
     'authenticated',
-    'work-staff@fleetgo.local'
+    'work-staff@example.local'
   );
 
 INSERT INTO public.tenants (id, name)
@@ -28,7 +28,7 @@ VALUES
     'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
     '22222222-2222-4222-8222-222222222222',
     'Work Other Owner',
-    'work-other@fleetgo.local',
+    'work-other@example.local',
     'owner',
     'active'
   ),
@@ -37,7 +37,7 @@ VALUES
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '33333333-3333-4333-8333-333333333333',
     'Work Staff',
-    'work-staff@fleetgo.local',
+    'work-staff@example.local',
     'staff',
     'active'
   );

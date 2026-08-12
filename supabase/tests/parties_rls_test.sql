@@ -8,7 +8,7 @@ VALUES (
   '22222222-2222-4222-8222-222222222222',
   'authenticated',
   'authenticated',
-  'other@fleetgo.local'
+  'other@example.local'
 );
 
 INSERT INTO public.tenants (id, name)
@@ -28,7 +28,7 @@ VALUES (
   'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
   '22222222-2222-4222-8222-222222222222',
   'Other Local User',
-  'other@fleetgo.local',
+  'other@example.local',
   'owner',
   'active'
 );
@@ -40,7 +40,7 @@ VALUES (
   '33333333-3333-4333-8333-333333333333',
   'authenticated',
   'authenticated',
-  'staff@fleetgo.local'
+  'staff@example.local'
 );
 
 INSERT INTO public.tenant_members (
@@ -57,7 +57,7 @@ VALUES (
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
   '33333333-3333-4333-8333-333333333333',
   'Local Staff',
-  'staff@fleetgo.local',
+  'staff@example.local',
   'staff',
   'active'
 );

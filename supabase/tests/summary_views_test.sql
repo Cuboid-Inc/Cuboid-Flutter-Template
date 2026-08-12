@@ -3,9 +3,9 @@ select plan(13);
 
 insert into auth.users (id, aud, role, email)
 values
-  ('c1111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'summary-owner@fleetgo.local'),
-  ('d1111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'summary-other@fleetgo.local'),
-  ('e1111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'summary-invited@fleetgo.local');
+  ('c1111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'summary-owner@example.local'),
+  ('d1111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'summary-other@example.local'),
+  ('e1111111-1111-4111-8111-111111111111', 'authenticated', 'authenticated', 'summary-invited@example.local');
 
 insert into public.tenants (id, name)
 values
@@ -14,9 +14,9 @@ values
 
 insert into public.tenant_members (id, tenant_id, user_id, display_name, email, role, status)
 values
-  ('a1011111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1111111-1111-4111-8111-111111111111', 'Summary Owner', 'summary-owner@fleetgo.local', 'owner', 'active'),
-  ('b1011111-1111-4111-8111-111111111111', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'd1111111-1111-4111-8111-111111111111', 'Summary Other', 'summary-other@fleetgo.local', 'owner', 'active'),
-  ('a1021111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'e1111111-1111-4111-8111-111111111111', 'Summary Invited', 'summary-invited@fleetgo.local', 'staff', 'invited');
+  ('a1011111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'c1111111-1111-4111-8111-111111111111', 'Summary Owner', 'summary-owner@example.local', 'owner', 'active'),
+  ('b1011111-1111-4111-8111-111111111111', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'd1111111-1111-4111-8111-111111111111', 'Summary Other', 'summary-other@example.local', 'owner', 'active'),
+  ('a1021111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'e1111111-1111-4111-8111-111111111111', 'Summary Invited', 'summary-invited@example.local', 'staff', 'invited');
 
 insert into public.parties (id, tenant_id, name, type)
 values
