@@ -202,7 +202,7 @@ MONEY-16. Do not add percentage commission rules during the MVP. Supplier payabl
 
 ERR-01. Every fallible repository operation returns Result<T>.
 
-ERR-02. Wrap Supabase calls with the shared guard from lib/core/supabase/supabase_guard.dart.
+ERR-02. Wrap Supabase calls with the shared guard from lib/core/network/supabase_guard.dart.
 
 ERR-03. No backend exception crosses a repository boundary.
 

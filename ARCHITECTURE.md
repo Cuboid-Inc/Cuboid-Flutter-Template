@@ -218,7 +218,7 @@ The app routes display formatting through `AppConfig` and `Formatters`. The conf
 
 `lib/core/result.dart` defines sealed `Success<T>` and `Failure<T>` results. `lib/core/failures.dart` defines network, auth, server, validation, and unknown failures.
 
-- Every repository data call goes through `guard` from `lib/core/supabase/supabase_guard.dart`.
+- Every repository data call goes through `guard` from `lib/core/network/supabase_guard.dart`.
 - `guard` maps Auth, PostgREST, socket, and unknown exceptions into app failures.
 - PDF and local-file helpers do not use `Result<T>`. Their file, raster, font, and rendering errors still cross their helper boundary.
 
