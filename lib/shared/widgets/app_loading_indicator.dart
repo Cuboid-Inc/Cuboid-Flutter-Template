@@ -1,5 +1,5 @@
 import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
-import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
+import 'package:cuboid_flutter_template/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 enum AppLoadingIndicatorVariant { fullScreen, inline, overlay }
@@ -58,7 +58,7 @@ class AppLoadingIndicator extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: cardShadow,
+              boxShadow: AppTheme.cardShadow,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

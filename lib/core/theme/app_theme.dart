@@ -3,8 +3,12 @@ import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// App-wide Material 3 theme matching the Al Masar Fleet design.
+/// App-wide Material 3 theme.
 abstract final class AppTheme {
+  static const List<BoxShadow> cardShadow = [
+    BoxShadow(color: Color(0x1A101828), blurRadius: 32, offset: Offset(0, 14)),
+  ];
+
   static ThemeData get light {
     final base = ThemeData(
       useMaterial3: true,

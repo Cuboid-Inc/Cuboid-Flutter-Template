@@ -1,4 +1,5 @@
 import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
+import 'package:cuboid_flutter_template/core/theme/app_theme.dart';
 import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -84,7 +85,7 @@ class DashboardMetricCard extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(radiusMd),
           boxShadow: isProfitHero
-              ? cardShadow
+              ? AppTheme.cardShadow
               : const [
                   BoxShadow(
                     color: Color(0x05101828),

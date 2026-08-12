@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Color tokens extracted from the Al Masar Fleet App design HTML.
+/// Color tokens extracted from the app design HTML.
 abstract final class AppColors {
   // Brand — matches assets/logo.png gradient
   static const Color primary = Color(0xFF11B2F3);
