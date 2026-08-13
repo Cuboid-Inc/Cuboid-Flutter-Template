@@ -375,6 +375,22 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
       category: 'Project identity',
     ),
     Replacement(
+      path: 'lib/features/home/ui/views/home_view.dart',
+      oldValue: "AppBar(title: const Text('$oldDisplayName'))",
+      newValue:
+          "AppBar(title: const Text('${escapeDartString(values.displayName)}'))",
+      label: 'home view title',
+      category: 'Project identity',
+    ),
+    Replacement(
+      path: 'lib/main.dart',
+      oldValue: "'$oldDisplayName release build without Supabase config. '",
+      newValue:
+          "'${escapeDartString(values.displayName)} release build without Supabase config. '",
+      label: 'release configuration error app name',
+      category: 'Project identity',
+    ),
+    Replacement(
       path: 'lib/core/constants/storage_keys.dart',
       oldValue:
           "static const supabaseSession = '${oldStorageNamespace}_supabase_session';",
@@ -495,6 +511,31 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
       category: 'Documentation',
     ),
     Replacement(
+      path: 'ARCHITECTURE.md',
+      oldValue: '# $oldProductName Architecture',
+      newValue: '# ${values.displayName} Architecture',
+      label: 'architecture title',
+      category: 'Documentation',
+    ),
+    Replacement(
+      path: 'RULES.md',
+      oldValue: '$oldProductName DEVELOPMENT AND AI AGENT RULES',
+      newValue: '${values.displayName} DEVELOPMENT AND AI AGENT RULES',
+      label: 'rules title',
+      category: 'Documentation',
+    ),
+    Replacement(
+      path: 'RULES.md',
+      oldValue:
+          'NAME-11. Use package:$oldDartProjectName imports in handwritten Dart until a\n'
+          'generated app is bootstrapped to a new package name. Generated files are exempt.',
+      newValue:
+          'NAME-11. Use package:${values.dartProjectName} imports in handwritten Dart. Generated files\n'
+          'are exempt.',
+      label: 'rules package import guidance',
+      category: 'Documentation',
+    ),
+    Replacement(
       path: '.vscode/launch.json',
       oldValue: '$oldProductName - Debug',
       newValue: '${values.displayName} - Debug',
@@ -519,6 +560,7 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
 
   replacements.addAll(_dartImportReplacements(root, values.dartProjectName));
   replacements.addAll(_kotlinReplacements(root, values.packageIdentifier));
+  replacements.addAll(_widgetTestReplacements(root, values.displayName));
 
   final oldKotlinDir = directoryFor(
     root,
@@ -586,6 +628,29 @@ List<Replacement> _dartImportReplacements(
     }
   }
   return replacements;
+}
+
+List<Replacement> _widgetTestReplacements(Directory root, String displayName) {
+  final widgetTest = pathFor(root, 'test/widget_test.dart');
+  if (!widgetTest.existsSync()) {
+    return const [];
+  }
+  return [
+    Replacement(
+      path: 'test/widget_test.dart',
+      oldValue: "Text('$oldDisplayName')",
+      newValue: "Text('${escapeDartString(displayName)}')",
+      label: 'widget test display text',
+      category: 'Project identity',
+    ),
+    Replacement(
+      path: 'test/widget_test.dart',
+      oldValue: "find.text('$oldDisplayName')",
+      newValue: "find.text('${escapeDartString(displayName)}')",
+      label: 'widget test display assertion',
+      category: 'Project identity',
+    ),
+  ];
 }
 
 List<Replacement> _kotlinReplacements(

@@ -176,11 +176,14 @@ const note = 'package:cuboid_flutter_template/not_an_import.dart';
 name: cuboid_flutter_template
 description: "Template for Cuboid Flutter projects"
 ''');
-    _writeFixture(
-      root,
-      'lib/main.dart',
-      "import 'package:cuboid_flutter_template/app/app_root.dart';\n",
-    );
+    _writeFixture(root, 'lib/main.dart', '''
+import 'package:cuboid_flutter_template/app/app_root.dart';
+
+final error = StateError(
+  'Cuboid Flutter Template release build without Supabase config. '
+  'Build with --dart-define-from-file=env/prod.json.',
+);
+''');
     _writeFixture(
       root,
       'test/widget_test.dart',
@@ -200,7 +203,7 @@ abstract final class AppConfig {
     _writeFixture(
       root,
       'lib/features/home/ui/views/home_view.dart',
-      "const title = 'Cuboid Flutter Template';\n",
+      "appBar: AppBar(title: const Text('Cuboid Flutter Template')),\n",
     );
     _writeFixture(root, 'lib/core/constants/storage_keys.dart', '''
 abstract final class StorageKeys {
@@ -266,8 +269,30 @@ This repository is infrastructure for starting a new app. It is not a production
 domain application and does not contain application-specific business workflows,
 database schema, or repository/data layers.
 ''');
+    _writeFixture(root, 'ARCHITECTURE.md', '''
+# Cuboid Flutter Template Architecture
+''');
+    _writeFixture(root, 'RULES.md', '''
+Cuboid Flutter Template DEVELOPMENT AND AI AGENT RULES
+
+NAME-11. Use package:cuboid_flutter_template imports in handwritten Dart until a
+generated app is bootstrapped to a new package name. Generated files are exempt.
+''');
     _writeFixture(root, '.vscode/launch.json', '''
 {"name":"Cuboid Flutter Template - Debug"},{"name":"Cuboid Flutter Template - Release"},{"name":"Cuboid Flutter Template - Profile"}
+''');
+    _writeFixture(root, 'test/widget_test.dart', '''
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('renders without throwing', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: Text('Cuboid Flutter Template'))),
+    );
+    expect(find.text('Cuboid Flutter Template'), findsOneWidget);
+  });
+}
 ''');
 
     final values = BootstrapValues(
@@ -327,15 +352,91 @@ database schema, or repository/data layers.
     );
     expect(
       plan.replacements.any((replacement) {
-        return replacement.path == 'lib/features/home/ui/views/home_view.dart';
+        return replacement.path == 'test/tool/bootstrap_fixture_test.dart';
       }),
       isFalse,
     );
     expect(
-      plan.replacements.any((replacement) {
-        return replacement.path == 'test/tool/bootstrap_fixture_test.dart';
-      }),
-      isFalse,
+      plan.replacements,
+      contains(
+        isA<Replacement>()
+            .having(
+              (item) => item.path,
+              'path',
+              'lib/features/home/ui/views/home_view.dart',
+            )
+            .having((item) => item.label, 'label', 'home view title')
+            .having(
+              (item) => item.newValue,
+              'newValue',
+              "AppBar(title: const Text('Nemara Homes'))",
+            ),
+      ),
+    );
+    expect(
+      plan.replacements,
+      contains(
+        isA<Replacement>()
+            .having((item) => item.path, 'path', 'lib/main.dart')
+            .having(
+              (item) => item.label,
+              'label',
+              'release configuration error app name',
+            )
+            .having(
+              (item) => item.newValue,
+              'newValue',
+              "'Nemara Homes release build without Supabase config. '",
+            ),
+      ),
+    );
+    expect(
+      plan.replacements,
+      contains(
+        isA<Replacement>()
+            .having((item) => item.path, 'path', 'ARCHITECTURE.md')
+            .having((item) => item.label, 'label', 'architecture title')
+            .having(
+              (item) => item.newValue,
+              'newValue',
+              '# Nemara Homes Architecture',
+            ),
+      ),
+    );
+    expect(
+      plan.replacements,
+      contains(
+        isA<Replacement>()
+            .having((item) => item.path, 'path', 'RULES.md')
+            .having(
+              (item) => item.label,
+              'label',
+              'rules package import guidance',
+            )
+            .having(
+              (item) => item.newValue,
+              'newValue',
+              'NAME-11. Use package:nemara_homes imports in handwritten Dart. Generated files\n'
+                  'are exempt.',
+            ),
+      ),
+    );
+    expect(
+      plan.replacements,
+      contains(
+        isA<Replacement>()
+            .having((item) => item.path, 'path', 'test/widget_test.dart')
+            .having(
+              (item) => item.label,
+              'label',
+              'widget test display assertion',
+            )
+            .having(
+              (item) => item.newValue,
+              'newValue',
+              "find.text('Nemara Homes')",
+            ),
+      ),
     );
     expect(File('${root.path}/pubspec.yaml').readAsStringSync(), before);
   });
@@ -414,6 +515,11 @@ description: "Template for Cuboid Flutter projects"
 ''');
   _writeFixture(root, 'lib/main.dart', '''
 import 'package:cuboid_flutter_template/app/app_root.dart';
+
+final error = StateError(
+  'Cuboid Flutter Template release build without Supabase config. '
+  'Build with --dart-define-from-file=env/prod.json.',
+);
 ''');
   _writeFixture(root, 'lib/core/constants/app_constants.dart', '''
 abstract final class AppConfig {
@@ -478,6 +584,15 @@ Reusable Flutter + Stacked starter template for Cuboid applications.
 This repository is infrastructure for starting a new app. It is not a production
 domain application and does not contain application-specific business workflows,
 database schema, or repository/data layers.
+''');
+  _writeFixture(root, 'ARCHITECTURE.md', '''
+# Cuboid Flutter Template Architecture
+''');
+  _writeFixture(root, 'RULES.md', '''
+Cuboid Flutter Template DEVELOPMENT AND AI AGENT RULES
+
+NAME-11. Use package:cuboid_flutter_template imports in handwritten Dart until a
+generated app is bootstrapped to a new package name. Generated files are exempt.
 ''');
   _writeFixture(root, '.vscode/launch.json', '''
 {"name":"Cuboid Flutter Template - Debug"},{"name":"Cuboid Flutter Template - Release"},{"name":"Cuboid Flutter Template - Profile"}
