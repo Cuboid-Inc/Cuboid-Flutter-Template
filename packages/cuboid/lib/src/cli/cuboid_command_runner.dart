@@ -1,23 +1,37 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:cuboid/src/bootstrap/bootstrap.dart';
+import 'package:cuboid/src/create/create_project.dart';
 
 const cuboidVersion = '0.1.0';
 
 class CuboidCommandRunner extends CommandRunner<int> {
-  CuboidCommandRunner({IOSink? stdout})
-    : _stdout = stdout ?? ioStdout,
-      super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
+  CuboidCommandRunner({
+    IOSink? stdout,
+    IOSink? stderr,
+    CreateProjectService? createProjectService,
+  }) : _stdout = stdout ?? ioStdout,
+       _stderr = stderr ?? ioStderr,
+       _createProjectService = createProjectService ?? CreateProjectService(),
+       super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
     argParser.addFlag(
       'version',
       negatable: false,
       help: 'Print the Cuboid CLI version.',
     );
-    addCommand(CreateCommand(stdout: _stdout));
+    addCommand(
+      CreateCommand(
+        stdout: _stdout,
+        stderr: _stderr,
+        createProjectService: _createProjectService,
+      ),
+    );
   }
 
   final IOSink _stdout;
+  final IOSink _stderr;
+  final CreateProjectService _createProjectService;
 
   @override
   Future<int?> run(Iterable<String> args) async {
@@ -35,9 +49,38 @@ class CuboidCommandRunner extends CommandRunner<int> {
 }
 
 class CreateCommand extends Command<int> {
-  CreateCommand({IOSink? stdout}) : _stdout = stdout ?? ioStdout;
+  CreateCommand({
+    IOSink? stdout,
+    IOSink? stderr,
+    CreateProjectService? createProjectService,
+  }) : _stdout = stdout ?? ioStdout,
+       _stderr = stderr ?? ioStderr,
+       _createProjectService = createProjectService ?? CreateProjectService() {
+    argParser
+      ..addOption(
+        'output-dir',
+        abbr: 'o',
+        help: 'Directory where the project directory will be created.',
+      )
+      ..addOption(
+        'directory',
+        help: 'Project directory name. Defaults to the derived Dart name.',
+      )
+      ..addFlag(
+        'dry-run',
+        negatable: false,
+        help: 'Print the creation plan without writing files or running tools.',
+      )
+      ..addFlag(
+        'post-steps',
+        defaultsTo: true,
+        help: 'Run flutter pub get, build_runner, and dart format.',
+      );
+  }
 
   final IOSink _stdout;
+  final IOSink _stderr;
+  final CreateProjectService _createProjectService;
 
   @override
   String get name => 'create';
@@ -46,11 +89,67 @@ class CreateCommand extends Command<int> {
   String get description => 'Create a new Cuboid Flutter project.';
 
   @override
-  FutureOr<int> run() {
-    _stdout.writeln(
-      'Project creation is not implemented yet. Run "cuboid create --help" for usage.',
+  String get invocation =>
+      'cuboid create [options] <display-name> <package-identifier>';
+
+  @override
+  Future<int> run() async {
+    final rest = argResults!.rest;
+    if (rest.length != 2) {
+      throw UsageException(
+        'Expected a display name and package identifier.',
+        usage,
+      );
+    }
+
+    final outputDir = argResults!['output-dir'] as String?;
+    final input = CreateProjectInput(
+      displayName: rest[0],
+      packageIdentifier: rest[1],
+      destinationParent: outputDir == null ? null : Directory(outputDir),
+      destinationName: argResults!['directory'] as String?,
+      dryRun: argResults!['dry-run'] as bool,
+      runPostSteps: argResults!['post-steps'] as bool,
     );
-    return 64;
+
+    try {
+      final result = await _createProjectService.create(input);
+      _writeResult(result);
+      return 0;
+    } on BootstrapException catch (error) {
+      _stderr.writeln(error.message);
+      return 64;
+    } on CreateProjectException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  void _writeResult(CreateProjectResult result) {
+    final plan = result.plan;
+    if (plan.dryRun) {
+      _stdout.writeln('Dry run: no files were written.');
+    } else {
+      _stdout.writeln('Created ${plan.values.displayName}.');
+    }
+    _stdout.writeln('Destination: ${plan.destination.path}');
+    _stdout.writeln('Dart package: ${plan.values.dartProjectName}');
+    _stdout.writeln('App package: ${plan.values.packageIdentifier}');
+    _stdout.writeln('Template files: ${plan.templateManifest.files.length}');
+    if (plan.dryRun) {
+      _stdout.writeln('Planned actions:');
+      for (final action in plan.actionSummary) {
+        _stdout.writeln('- $action');
+      }
+      return;
+    }
+    if (result.postStepResults.isNotEmpty) {
+      _stdout.writeln('Post-steps:');
+      for (final postStep in result.postStepResults) {
+        _stdout.writeln('- ${postStep.step.label}: ok');
+      }
+    }
+    _stdout.writeln('Done.');
   }
 }
 
@@ -61,7 +160,7 @@ Future<int> runCuboid(
 }) async {
   final output = stdout ?? ioStdout;
   final errorOutput = stderr ?? ioStderr;
-  final runner = CuboidCommandRunner(stdout: output);
+  final runner = CuboidCommandRunner(stdout: output, stderr: errorOutput);
 
   try {
     return await runner.run(arguments) ?? 0;

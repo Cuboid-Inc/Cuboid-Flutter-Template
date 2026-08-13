@@ -14,3 +14,12 @@ export 'src/bootstrap/bootstrap.dart'
         validateBootstrapInput,
         validateBootstrapPlan;
 export 'src/cli/cuboid_command_runner.dart';
+export 'src/create/create_project.dart'
+    show
+        CreateProjectException,
+        CreateProjectInput,
+        CreateProjectPlan,
+        CreateProjectResult,
+        CreateProjectService,
+        PostStep,
+        PostStepResult;

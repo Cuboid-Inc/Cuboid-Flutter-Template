@@ -499,29 +499,9 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
       label: 'rules package import guidance',
       category: 'Documentation',
     ),
-    BootstrapReplacement(
-      path: '.vscode/launch.json',
-      oldValue: '$oldProductName - Debug',
-      newValue: '${values.displayName} - Debug',
-      label: 'VS Code debug launch name',
-      category: 'Documentation',
-    ),
-    BootstrapReplacement(
-      path: '.vscode/launch.json',
-      oldValue: '$oldProductName - Release',
-      newValue: '${values.displayName} - Release',
-      label: 'VS Code release launch name',
-      category: 'Documentation',
-    ),
-    BootstrapReplacement(
-      path: '.vscode/launch.json',
-      oldValue: '$oldProductName - Profile',
-      newValue: '${values.displayName} - Profile',
-      label: 'VS Code profile launch name',
-      category: 'Documentation',
-    ),
   ];
 
+  replacements.addAll(_vscodeReplacements(root, values.displayName));
   replacements.addAll(_dartImportReplacements(root, values.dartProjectName));
   replacements.addAll(_kotlinReplacements(root, values.packageIdentifier));
   replacements.addAll(_widgetTestReplacements(root, values.displayName));
@@ -590,6 +570,38 @@ List<BootstrapReplacement> _dartImportReplacements(
     }
   }
   return replacements;
+}
+
+List<BootstrapReplacement> _vscodeReplacements(
+  Directory root,
+  String displayName,
+) {
+  if (!pathFor(root, '.vscode/launch.json').existsSync()) {
+    return const [];
+  }
+  return [
+    BootstrapReplacement(
+      path: '.vscode/launch.json',
+      oldValue: '$oldProductName - Debug',
+      newValue: '$displayName - Debug',
+      label: 'VS Code debug launch name',
+      category: 'Documentation',
+    ),
+    BootstrapReplacement(
+      path: '.vscode/launch.json',
+      oldValue: '$oldProductName - Release',
+      newValue: '$displayName - Release',
+      label: 'VS Code release launch name',
+      category: 'Documentation',
+    ),
+    BootstrapReplacement(
+      path: '.vscode/launch.json',
+      oldValue: '$oldProductName - Profile',
+      newValue: '$displayName - Profile',
+      label: 'VS Code profile launch name',
+      category: 'Documentation',
+    ),
+  ];
 }
 
 List<BootstrapReplacement> _widgetTestReplacements(

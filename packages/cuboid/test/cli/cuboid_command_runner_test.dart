@@ -34,11 +34,88 @@ void main() {
     expect(output.content.trim(), cuboidVersion);
   });
 
-  test('create command is registered as placeholder', () async {
+  test('create command is registered', () async {
     final runner = CuboidCommandRunner(stdout: _memorySink());
 
     expect(runner.commands['create'], isA<CreateCommand>());
     expect(runner.commands['create']!.description, contains('Create a new'));
+  });
+
+  test(
+    'create dry-run reports the planned project without writing files',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        [
+          'create',
+          '--dry-run',
+          '--output-dir',
+          temp.path,
+          'My App',
+          'com.example.myapp',
+        ],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Dry run: no files were written.'));
+      expect(
+        output.content,
+        contains('Destination: ${temp.absolute.path}/my_app'),
+      );
+      expect(output.content, contains('Planned actions:'));
+      expect(errorOutput.content, isEmpty);
+      expect(Directory('${temp.path}/my_app').existsSync(), isFalse);
+    },
+  );
+
+  test('create validates required positional arguments', () async {
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'My App'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Expected a display name and package identifier.'),
+    );
+  });
+
+  test('runner can use an injected create service', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final output = _memorySink();
+    final service = CreateProjectService(
+      processRunner:
+          (executable, arguments, {required workingDirectory}) async {
+            return ProcessResult(0, 0, '', '');
+          },
+    );
+    final runner = CuboidCommandRunner(
+      stdout: output,
+      stderr: _memorySink(),
+      createProjectService: service,
+    );
+
+    final exitCode = await runner.run([
+      'create',
+      '--no-post-steps',
+      '--output-dir',
+      temp.path,
+      'My App',
+      'com.example.myapp',
+    ]);
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Created My App.'));
+    expect(Directory('${temp.path}/my_app').existsSync(), isTrue);
   });
 
   test('invalid command returns non-zero and writes usage', () async {
