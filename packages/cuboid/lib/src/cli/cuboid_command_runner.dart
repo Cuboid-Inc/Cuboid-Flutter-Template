@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:cuboid/src/bottomsheet/create_bottomsheet.dart';
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
 import 'package:cuboid/src/create/create_project.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
@@ -25,6 +26,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
     IOSink? stderr,
     CreateProjectService? createProjectService,
     CreateFeatureService? createFeatureService,
+    CreateBottomSheetService? createBottomSheetService,
     RegisterRouteService? registerRouteService,
     RegisterServiceService? registerServiceService,
     CreateViewService? createViewService,
@@ -32,6 +34,8 @@ class CuboidCommandRunner extends CommandRunner<int> {
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
        _createFeatureService = createFeatureService ?? CreateFeatureService(),
+       _createBottomSheetService =
+           createBottomSheetService ?? CreateBottomSheetService(),
        _registerRouteService = registerRouteService ?? RegisterRouteService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
@@ -48,6 +52,8 @@ class CuboidCommandRunner extends CommandRunner<int> {
         stderr: _stderr,
         createProjectService: _createProjectService,
         createFeatureService: _createFeatureService,
+        createBottomSheetService: _createBottomSheetService,
+        registerServiceService: _registerServiceService,
       ),
     );
     addCommand(
@@ -84,6 +90,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final IOSink _stderr;
   final CreateProjectService _createProjectService;
   final CreateFeatureService _createFeatureService;
+  final CreateBottomSheetService _createBottomSheetService;
   final RegisterRouteService _registerRouteService;
   final RegisterServiceService _registerServiceService;
   final CreateViewService _createViewService;
@@ -109,10 +116,16 @@ class CreateCommand extends Command<int> {
     IOSink? stderr,
     CreateProjectService? createProjectService,
     CreateFeatureService? createFeatureService,
+    CreateBottomSheetService? createBottomSheetService,
+    RegisterServiceService? registerServiceService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
-       _createFeatureService = createFeatureService ?? CreateFeatureService() {
+       _createFeatureService = createFeatureService ?? CreateFeatureService(),
+       _createBottomSheetService =
+           createBottomSheetService ?? CreateBottomSheetService(),
+       _registerServiceService =
+           registerServiceService ?? RegisterServiceService() {
     argParser
       ..addOption(
         'output-dir',
@@ -139,6 +152,8 @@ class CreateCommand extends Command<int> {
   final IOSink _stderr;
   final CreateProjectService _createProjectService;
   final CreateFeatureService _createFeatureService;
+  final CreateBottomSheetService _createBottomSheetService;
+  final RegisterServiceService _registerServiceService;
 
   @override
   String get name => 'create';
@@ -153,7 +168,9 @@ class CreateCommand extends Command<int> {
   @override
   String get usageFooter =>
       'Canonical namespace: cuboid create <artifact> [arguments] [options]\n'
-      'Implemented artifact commands: cuboid create feature <name>.\n'
+      'Implemented artifact commands: cuboid create feature <name>, '
+      'cuboid create service <name>, '
+      'cuboid create bottomsheet <name>.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -171,6 +188,12 @@ class CreateCommand extends Command<int> {
       if (_knownCreateArtifacts.contains(artifact)) {
         if (artifact == 'feature') {
           return _runCreateFeature(rest.skip(1).toList());
+        }
+        if (artifact == 'service') {
+          return _runCreateService(rest.skip(1).toList());
+        }
+        if (artifact == 'bottomsheet') {
+          return _runCreateBottomSheet(rest.skip(1).toList());
         }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
@@ -228,6 +251,62 @@ class CreateCommand extends Command<int> {
       writeFeatureResult(_stdout, result);
       return 0;
     } on CreateFeatureException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runCreateService(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create service.',
+        usage,
+      );
+    }
+    if (rest.length != 1) {
+      throw UsageException('Expected a service name.', usage);
+    }
+
+    final input = RegisterServiceInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _registerServiceService.create(input);
+      writeCreatedServiceResult(_stdout, result);
+      return 0;
+    } on RegisterServiceException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runCreateBottomSheet(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create bottomsheet.',
+        usage,
+      );
+    }
+    if (rest.length != 1) {
+      throw UsageException('Expected a bottom sheet name.', usage);
+    }
+
+    final input = CreateBottomSheetInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _createBottomSheetService.create(input);
+      writeBottomSheetResult(_stdout, result);
+      return 0;
+    } on CreateBottomSheetException catch (error) {
       _stderr.writeln(error.message);
       return 1;
     }
@@ -327,6 +406,52 @@ void writeFeatureResult(IOSink stdout, CreateFeatureResult result) {
   stdout.writeln('Files:');
   for (final file in plan.files) {
     stdout.writeln('- $file');
+  }
+}
+
+void writeCreatedServiceResult(IOSink stdout, RegisterServiceResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Service: ${plan.serviceClassName}');
+  } else {
+    stdout.writeln('Created service ${plan.serviceClassName}.');
+  }
+  stdout.writeln('Files:');
+  stdout.writeln('- ${plan.servicePath}');
+  stdout.writeln('- ${plan.appPath}');
+  if (plan.dryRun) {
+    stdout.writeln('Planned changes:');
+    stdout.writeln('- class ${plan.serviceClassName} {}');
+    stdout.writeln('- ${plan.importLine}');
+    stdout.writeln('- ${plan.serviceLine.trim()}');
+  } else {
+    stdout.writeln('Next step: dart run build_runner build -d');
+  }
+}
+
+void writeBottomSheetResult(IOSink stdout, CreateBottomSheetResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Bottom sheet: ${plan.sheetClassName}');
+  } else {
+    stdout.writeln('Created bottom sheet ${plan.sheetClassName}.');
+  }
+  stdout.writeln('Files:');
+  stdout.writeln('- ${plan.sheetPath}');
+  stdout.writeln('- ${plan.modelPath}');
+  stdout.writeln('- ${plan.appPath}');
+  stdout.writeln('- ${plan.mainPath}');
+  if (plan.dryRun) {
+    stdout.writeln('Planned changes:');
+    stdout.writeln('- ${plan.sheetImportLine}');
+    stdout.writeln('- ${plan.bottomSheetLine.trim()}');
+    stdout.writeln('- ${plan.serviceLine.trim()}');
+    stdout.writeln('- ${plan.bottomSheetsImportLine}');
+    stdout.writeln('- ${plan.setupLine.trim()}');
+  } else {
+    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 

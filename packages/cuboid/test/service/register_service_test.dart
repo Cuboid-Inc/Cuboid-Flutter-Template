@@ -4,6 +4,154 @@ import 'package:cuboid/src/service/register_service.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('creates and registers an auth service', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = RegisterServiceService();
+
+    final result = await service.create(
+      RegisterServiceInput(name: 'auth', projectRoot: root),
+    );
+
+    expect(result.plan.name, 'auth');
+    expect(result.plan.displayName, 'Auth');
+    expect(result.plan.serviceClassName, 'AuthService');
+    expect(result.plan.servicePath, 'lib/core/services/auth_service.dart');
+    expect(
+      File(
+        '${root.path}/lib/core/services/auth_service.dart',
+      ).readAsStringSync(),
+      'class AuthService {}\n',
+    );
+    final app = _appFile(root).readAsStringSync();
+    expect(
+      app,
+      contains("import 'package:test_app/core/services/auth_service.dart';"),
+    );
+    expect(app, contains('    LazySingleton(classType: AuthService),'));
+    expect(_relativeFiles(root), [
+      'lib/app/app.dart',
+      'lib/core/services/auth_service.dart',
+      'pubspec.yaml',
+    ]);
+  });
+
+  test('create normalizes service name variants consistently', () async {
+    for (final entry in {
+      'auth_service': 'auth_service',
+      'auth-service': 'auth_service',
+      'AuthService': 'auth_service',
+      'userProfile': 'user_profile',
+      'HTTPClient': 'http_client',
+    }.entries) {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = RegisterServiceService();
+
+      final result = await service.create(
+        RegisterServiceInput(name: entry.key, projectRoot: root),
+      );
+
+      expect(result.plan.name, entry.value, reason: entry.key);
+      expect(
+        File(
+          '${root.path}/lib/core/services/${entry.value}_service.dart',
+        ).existsSync(),
+        isTrue,
+        reason: entry.key,
+      );
+    }
+  });
+
+  test('create dry-run validates and writes no files', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final beforeFiles = _relativeFiles(root);
+    final beforeApp = _appFile(root).readAsStringSync();
+    final service = RegisterServiceService();
+
+    final result = await service.create(
+      RegisterServiceInput(
+        name: 'auth-session',
+        projectRoot: root,
+        dryRun: true,
+      ),
+    );
+
+    expect(result.plan.dryRun, isTrue);
+    expect(
+      result.plan.servicePath,
+      'lib/core/services/auth_session_service.dart',
+    );
+    expect(_relativeFiles(root), beforeFiles);
+    expect(_appFile(root).readAsStringSync(), beforeApp);
+  });
+
+  test('create rejects existing service targets without mutation', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    _writeService(root, 'auth_session');
+    final beforeFiles = _relativeFiles(root);
+    final beforeApp = _appFile(root).readAsStringSync();
+    final service = RegisterServiceService();
+
+    await expectLater(
+      service.create(
+        RegisterServiceInput(name: 'auth-session', projectRoot: root),
+      ),
+      throwsA(
+        isA<RegisterServiceException>().having(
+          (error) => error.message,
+          'message',
+          'Target already exists: lib/core/services/auth_session_service.dart',
+        ),
+      ),
+    );
+
+    expect(_relativeFiles(root), beforeFiles);
+    expect(_appFile(root).readAsStringSync(), beforeApp);
+  });
+
+  test('create refuses service directories through symlinks', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final target = Directory('${root.path}/target_services')..createSync();
+    final services = Link('${root.path}/lib/core/services');
+    services.parent.createSync(recursive: true);
+    services.createSync(target.path);
+    final service = RegisterServiceService();
+
+    await expectLater(
+      service.create(RegisterServiceInput(name: 'auth', projectRoot: root)),
+      throwsA(isA<RegisterServiceException>()),
+    );
+  });
+
+  test('create rolls back service file when app update fails', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = RegisterServiceService(
+      fileWriter: (file, contents) {
+        file.writeAsStringSync(contents);
+        throw const FileSystemException('simulated write failure');
+      },
+    );
+
+    await expectLater(
+      service.create(RegisterServiceInput(name: 'auth', projectRoot: root)),
+      throwsA(
+        isA<RegisterServiceException>().having(
+          (error) => error.message,
+          'message',
+          contains('Unable to create service Auth'),
+        ),
+      ),
+    );
+
+    expect(Directory('${root.path}/lib/core').existsSync(), isFalse);
+    expect(_relativeFiles(root), ['lib/app/app.dart', 'pubspec.yaml']);
+  });
+
   test('registers an auth session service', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));

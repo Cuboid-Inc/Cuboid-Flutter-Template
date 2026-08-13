@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
 
+typedef ServiceFileWriter = void Function(File file, String contents);
+
 class RegisterServiceInput {
   const RegisterServiceInput({
     required this.name,
@@ -54,6 +56,12 @@ class RegisterServiceException implements Exception {
 }
 
 class RegisterServiceService {
+  RegisterServiceService({ServiceFileWriter? fileWriter})
+    : _fileWriter =
+          fileWriter ?? ((file, contents) => file.writeAsStringSync(contents));
+
+  final ServiceFileWriter _fileWriter;
+
   Future<RegisterServicePlan> plan(RegisterServiceInput input) async {
     final serviceName = _normalizeServiceName(input.name);
     final words = serviceName.split('_');
@@ -94,6 +102,51 @@ class RegisterServiceService {
     _replaceFileContents(appFile, nextContents);
     return RegisterServiceResult(plan: servicePlan);
   }
+
+  Future<RegisterServiceResult> create(RegisterServiceInput input) async {
+    final servicePlan = await plan(input);
+    final projectRoot = (input.projectRoot ?? Directory.current).absolute;
+    final appFile = File(
+      '${projectRoot.path}${Platform.pathSeparator}'
+      '${servicePlan.appPath.replaceAll('/', Platform.pathSeparator)}',
+    );
+    final serviceFile = _targetFile(projectRoot, servicePlan.servicePath);
+
+    final appContents = _validateCreateTargets(
+      projectRoot,
+      servicePlan,
+      appFile,
+      serviceFile,
+    );
+    final nextContents = _applyPlan(appContents, servicePlan);
+
+    if (servicePlan.dryRun) {
+      return RegisterServiceResult(plan: servicePlan);
+    }
+
+    final createdDirectories = <Directory>[];
+    try {
+      _createParentDirectories(
+        projectRoot,
+        serviceFile.parent,
+        createdDirectories,
+      );
+      _fileWriter(serviceFile, _serviceContents(servicePlan));
+      _replaceFileContents(appFile, nextContents);
+    } on FileSystemException catch (error) {
+      _rollbackCreatedService(serviceFile, createdDirectories);
+      throw RegisterServiceException(
+        'Unable to create service ${servicePlan.displayName}: ${error.message}',
+      );
+    } catch (error) {
+      _rollbackCreatedService(serviceFile, createdDirectories);
+      throw RegisterServiceException(
+        'Unable to create service ${servicePlan.displayName}: $error',
+      );
+    }
+
+    return RegisterServiceResult(plan: servicePlan);
+  }
 }
 
 String _validateTargets(
@@ -108,6 +161,29 @@ String _validateTargets(
     plan.servicePath,
   );
 
+  return _validateAppRegistration(plan, appFile);
+}
+
+String _validateCreateTargets(
+  Directory projectRoot,
+  RegisterServicePlan plan,
+  File appFile,
+  File serviceFile,
+) {
+  _ensureRegularFile(appFile.path, 'lib/app/app.dart');
+  _validateNoAncestorSymlinks(projectRoot, serviceFile.parent);
+  if (File(serviceFile.path).existsSync() ||
+      Directory(serviceFile.path).existsSync() ||
+      Link(serviceFile.path).existsSync()) {
+    throw RegisterServiceException(
+      'Target already exists: ${plan.servicePath}',
+    );
+  }
+
+  return _validateAppRegistration(plan, appFile);
+}
+
+String _validateAppRegistration(RegisterServicePlan plan, File appFile) {
   final String contents;
   try {
     contents = appFile.readAsStringSync();
@@ -135,6 +211,27 @@ String _validateTargets(
     );
   }
   return contents;
+}
+
+void _validateNoAncestorSymlinks(
+  Directory projectRoot,
+  Directory targetDirectory,
+) {
+  var current = targetDirectory;
+  final ancestors = <Directory>[];
+  while (current.path != projectRoot.path) {
+    ancestors.add(current);
+    current = current.parent;
+  }
+
+  for (final directory in ancestors.reversed) {
+    if (Link(directory.path).existsSync()) {
+      throw RegisterServiceException(
+        'Refusing to create service through a symlink: '
+        '${_relativePath(projectRoot, directory.path)}',
+      );
+    }
+  }
 }
 
 void _ensureRegularFile(String path, String label) {
@@ -231,6 +328,60 @@ void _replaceFileContents(File file, String contents) {
   }
 }
 
+File _targetFile(Directory projectRoot, String path) {
+  return File(
+    '${projectRoot.path}${Platform.pathSeparator}'
+    '${path.replaceAll('/', Platform.pathSeparator)}',
+  );
+}
+
+void _createParentDirectories(
+  Directory projectRoot,
+  Directory targetDirectory,
+  List<Directory> createdDirectories,
+) {
+  final missing = <Directory>[];
+  var current = targetDirectory;
+  while (current.path != projectRoot.path && !current.existsSync()) {
+    missing.add(current);
+    current = current.parent;
+  }
+
+  targetDirectory.createSync(recursive: true);
+  createdDirectories.addAll(missing);
+}
+
+void _rollbackCreatedService(
+  File serviceFile,
+  List<Directory> createdDirectories,
+) {
+  try {
+    if (serviceFile.existsSync()) {
+      serviceFile.deleteSync();
+    }
+  } on FileSystemException {
+    // Best-effort cleanup; preserve the original failure.
+  }
+
+  final directories = createdDirectories.toSet().toList()
+    ..sort((a, b) => b.path.length.compareTo(a.path.length));
+  for (final directory in directories) {
+    try {
+      if (directory.existsSync() && directory.listSync().isEmpty) {
+        directory.deleteSync();
+      }
+    } on FileSystemException {
+      // Best-effort cleanup; preserve the original failure.
+    }
+  }
+}
+
+String _relativePath(Directory root, String path) {
+  return path
+      .substring(root.path.length + 1)
+      .replaceAll(Platform.pathSeparator, '/');
+}
+
 String _readPackageName(Directory projectRoot) {
   final pubspecPath =
       '${projectRoot.path}${Platform.pathSeparator}pubspec.yaml';
@@ -319,4 +470,10 @@ String _humanize(List<String> words) {
   return words
       .map((word) => word[0].toUpperCase() + word.substring(1))
       .join(' ');
+}
+
+String _serviceContents(RegisterServicePlan plan) {
+  return '''
+class ${plan.serviceClassName} {}
+''';
 }

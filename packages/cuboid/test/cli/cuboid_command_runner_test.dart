@@ -184,7 +184,8 @@ void main() {
         contains('other artifact commands are not yet implemented'),
       );
       expect(output.content, contains('cuboid create feature <name>'));
-      expect(output.content, isNot(contains('cuboid create service <name>')));
+      expect(output.content, contains('cuboid create service <name>'));
+      expect(output.content, contains('cuboid create bottomsheet <name>'));
     },
   );
 
@@ -370,7 +371,7 @@ void main() {
   });
 
   for (final artifact in _knownCreateArtifacts.where(
-    (name) => name != 'feature',
+    (name) => name != 'feature' && name != 'service' && name != 'bottomsheet',
   )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -448,20 +449,18 @@ void main() {
 
     expect(exitCode, 64);
     expect(output.content, isEmpty);
-    expect(
-      errorOutput.content,
-      contains('cuboid create service is not implemented yet.'),
-    );
+    expect(errorOutput.content, contains('Expected a service name.'));
     expect(_relativeFiles(temp), beforeFiles);
   });
 
-  test('create known artifact with dry-run still fails cleanly', () async {
+  test('create service with dry-run creates no files', () async {
     final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
     final previousCurrent = Directory.current;
     addTearDown(() {
       Directory.current = previousCurrent;
       temp.deleteSync(recursive: true);
     });
+    _writeServiceProject(temp, createFile: false);
     Directory.current = temp;
     final beforeFiles = _relativeFiles(temp);
     final output = _memorySink();
@@ -472,13 +471,231 @@ void main() {
       stderr: errorOutput,
     );
 
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Service: AuthService'));
+    expect(output.content, contains('- lib/core/services/auth_service.dart'));
+    expect(output.content, contains('- lib/app/app.dart'));
+    expect(
+      output.content,
+      contains("import 'package:my_app/core/services/auth_service.dart';"),
+    );
+    expect(output.content, contains('LazySingleton(classType: AuthService),'));
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create service command creates and registers a core service', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeServiceProject(temp, createFile: false);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'service', 'userProfile'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Created service UserProfileService.'));
+    expect(
+      output.content,
+      contains('Next step: dart run build_runner build -d'),
+    );
+    expect(errorOutput.content, isEmpty);
+    final serviceFile = File(
+      '${temp.path}/lib/core/services/user_profile_service.dart',
+    );
+    expect(serviceFile.readAsStringSync(), 'class UserProfileService {}\n');
+    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    expect(
+      app,
+      contains(
+        "import 'package:my_app/core/services/user_profile_service.dart';",
+      ),
+    );
+    expect(app, contains('    LazySingleton(classType: UserProfileService),'));
+    expect(_relativeFiles(temp), [
+      'lib/app/app.dart',
+      'lib/core/services/user_profile_service.dart',
+      'pubspec.yaml',
+    ]);
+  });
+
+  test('create service rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeServiceProject(temp, createFile: false);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'service', 'auth', '--output-dir', temp.path],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
     expect(exitCode, 64);
-    expect(output.content, isEmpty);
     expect(
       errorOutput.content,
-      contains('cuboid create service is not implemented yet.'),
+      contains('Only --dry-run is supported for cuboid create service.'),
     );
-    expect(errorOutput.content, isNot(contains('Destination:')));
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create bottomsheet with dry-run creates no files', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeBottomSheetProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', '--dry-run', 'bottomsheet', 'confirm-delete'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Bottom sheet: ConfirmDeleteSheet'));
+    expect(
+      output.content,
+      contains(
+        '- lib/shared/bottom_sheets/confirm_delete/'
+        'confirm_delete_sheet.dart',
+      ),
+    );
+    expect(
+      output.content,
+      contains(
+        '- lib/shared/bottom_sheets/confirm_delete/'
+        'confirm_delete_sheet_model.dart',
+      ),
+    );
+    expect(output.content, contains('- lib/app/app.dart'));
+    expect(output.content, contains('- lib/main.dart'));
+    expect(
+      output.content,
+      contains('StackedBottomsheet(classType: ConfirmDeleteSheet),'),
+    );
+    expect(
+      output.content,
+      contains('LazySingleton(classType: BottomSheetService),'),
+    );
+    expect(
+      output.content,
+      contains("import 'package:my_app/app/app.bottomsheets.dart';"),
+    );
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create bottomsheet creates files and registrations', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeBottomSheetProject(temp);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'bottomsheet', 'confirm_delete'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(
+      output.content,
+      contains('Created bottom sheet ConfirmDeleteSheet.'),
+    );
+    expect(
+      output.content,
+      contains('Next step: dart run build_runner build -d'),
+    );
+    expect(errorOutput.content, isEmpty);
+    final sheet = File(
+      '${temp.path}/lib/shared/bottom_sheets/confirm_delete/'
+      'confirm_delete_sheet.dart',
+    ).readAsStringSync();
+    expect(
+      sheet,
+      contains(
+        'class ConfirmDeleteSheet extends '
+        'StackedView<ConfirmDeleteSheetModel>',
+      ),
+    );
+    final model = File(
+      '${temp.path}/lib/shared/bottom_sheets/confirm_delete/'
+      'confirm_delete_sheet_model.dart',
+    ).readAsStringSync();
+    expect(
+      model,
+      contains('class ConfirmDeleteSheetModel extends BaseViewModel {}'),
+    );
+    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    expect(
+      app,
+      contains(
+        "import 'package:my_app/shared/bottom_sheets/confirm_delete/"
+        "confirm_delete_sheet.dart';",
+      ),
+    );
+    expect(app, contains('  bottomsheets: ['));
+    expect(
+      app,
+      contains('    StackedBottomsheet(classType: ConfirmDeleteSheet),'),
+    );
+    expect(app, contains('    LazySingleton(classType: BottomSheetService),'));
+    final main = File('${temp.path}/lib/main.dart').readAsStringSync();
+    expect(
+      main,
+      contains("import 'package:my_app/app/app.bottomsheets.dart';"),
+    );
+    expect(main, contains('  await setupLocator();\n  setupBottomSheetUi();'));
+  });
+
+  test('create bottomsheet rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeBottomSheetProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'bottomsheet', 'confirm', '--directory', 'ignored'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Only --dry-run is supported for cuboid create bottomsheet.'),
+    );
     expect(_relativeFiles(temp), beforeFiles);
   });
 
@@ -691,7 +908,7 @@ void main() {
         Directory.current = previousCurrent;
         temp.deleteSync(recursive: true);
       });
-      _writeServiceProject(temp, 'auth_session');
+      _writeServiceProject(temp);
       final before = File('${temp.path}/lib/app/app.dart').readAsStringSync();
       Directory.current = temp;
       final output = _memorySink();
@@ -728,7 +945,7 @@ void main() {
       Directory.current = previousCurrent;
       temp.deleteSync(recursive: true);
     });
-    _writeServiceProject(temp, 'auth_session');
+    _writeServiceProject(temp);
     Directory.current = temp;
     final output = _memorySink();
     final errorOutput = _memorySink();
@@ -774,7 +991,7 @@ void main() {
       Directory.current = previousCurrent;
       temp.deleteSync(recursive: true);
     });
-    _writeServiceProject(temp, 'auth_session');
+    _writeServiceProject(temp);
     File(
       '${temp.path}/lib/core/services/auth_session_service.dart',
     ).deleteSync();
@@ -1002,7 +1219,11 @@ void _writeFeatureProject(Directory root, {String pubspec = 'name: my_app\n'}) {
   Directory('${root.path}/lib/features').createSync(recursive: true);
 }
 
-void _writeServiceProject(Directory root, String serviceName) {
+void _writeServiceProject(
+  Directory root, {
+  String serviceName = 'auth_session',
+  bool createFile = true,
+}) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
   File('${root.path}/lib/app/app.dart')
     ..parent.createSync(recursive: true)
@@ -1019,6 +1240,9 @@ import 'package:stacked/stacked_annotations.dart';
 )
 class App {}
 ''');
+  if (!createFile) {
+    return;
+  }
   final className = serviceName
       .split('_')
       .map((word) => word[0].toUpperCase() + word.substring(1))
@@ -1026,6 +1250,38 @@ class App {}
   File('${root.path}/lib/core/services/${serviceName}_service.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('class ${className}Service {}\n');
+}
+
+void _writeBottomSheetProject(Directory root) {
+  File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
+  File('${root.path}/lib/app/app.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('''
+import 'package:my_app/core/services/shell_service.dart';
+import 'package:stacked/stacked_annotations.dart';
+import 'package:stacked_services/stacked_services.dart';
+// @stacked-import
+
+@StackedApp(
+  routes: [
+    // @stacked-route
+  ],
+  dependencies: [
+    LazySingleton(classType: ShellService),
+    // @stacked-service
+  ],
+)
+class App {}
+''');
+  File('${root.path}/lib/main.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('''
+import 'package:my_app/app/app.locator.dart';
+
+Future<void> main() async {
+  await setupLocator();
+}
+''');
 }
 
 List<String> _relativeFiles(Directory root) {

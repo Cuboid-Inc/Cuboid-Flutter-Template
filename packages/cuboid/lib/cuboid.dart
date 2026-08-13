@@ -13,6 +13,14 @@ export 'src/bootstrap/bootstrap.dart'
         planBootstrap,
         validateBootstrapInput,
         validateBootstrapPlan;
+export 'src/bottomsheet/create_bottomsheet.dart'
+    show
+        BottomSheetFileWriter,
+        CreateBottomSheetException,
+        CreateBottomSheetInput,
+        CreateBottomSheetPlan,
+        CreateBottomSheetResult,
+        CreateBottomSheetService;
 export 'src/cli/cuboid_command_runner.dart';
 export 'src/create/create_project.dart'
     show
@@ -43,7 +51,8 @@ export 'src/service/register_service.dart'
         RegisterServiceInput,
         RegisterServicePlan,
         RegisterServiceResult,
-        RegisterServiceService;
+        RegisterServiceService,
+        ServiceFileWriter;
 export 'src/view/create_view.dart'
     show
         CreateViewException,
