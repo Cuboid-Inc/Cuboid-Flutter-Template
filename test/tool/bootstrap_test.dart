@@ -310,6 +310,38 @@ This template is built with Stacked MVVM and Supabase. Use `tool/bootstrap.dart`
     expect(printed, contains('Generated files:'));
     expect(printed, contains('Manual configuration:'));
   });
+  test('validation failure does not modify files', () {
+    final root = Directory.systemTemp.createTempSync('bootstrap_test_');
+    addTearDown(() => root.deleteSync(recursive: true));
+
+    _writeMinimalFixture(root);
+
+    final pubspec = File('${root.path}/pubspec.yaml');
+    final before = pubspec.readAsStringSync();
+
+    // Deliberately break an expected template value.
+    pubspec.writeAsStringSync(
+      before.replaceFirst(
+        'name: cuboid_flutter_template',
+        'name: something_else',
+      ),
+    );
+
+    final values = BootstrapValues(
+      displayName: 'Nemara Homes',
+      dartProjectName: deriveProjectName('Nemara Homes'),
+      packageIdentifier: 'com.cuboidllc.nemarahomes',
+      storageNamespace: deriveProjectName('Nemara Homes'),
+    );
+
+    expect(
+      () => validatePlan(root, createBootstrapPlan(root, values)),
+      throwsA(isA<BootstrapException>()),
+    );
+
+    expect(pubspec.readAsStringSync(), isNot(contains('name: nemara_homes')));
+    expect(pubspec.readAsStringSync(), contains('name: something_else'));
+  });
 }
 
 void _writeFixture(Directory root, String relativePath, String content) {
