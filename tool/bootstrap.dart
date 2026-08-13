@@ -2,9 +2,10 @@ import 'dart:io';
 
 const oldDartProjectName = 'cuboid_flutter_template';
 const oldDisplayName = 'Cuboid Flutter Template';
-const oldProductName = 'FleetGo';
-const oldPackageIdentifier = 'com.cuboidinc.fleetgo';
-const oldStorageNamespace = 'fleetgo';
+const oldProductName = 'Cuboid Flutter Template';
+const oldPackageIdentifier = 'com.cuboidllc.cuboid_flutter_template';
+const oldStorageNamespace = 'cuboid_flutter_template';
+const oldKotlinPackagePath = 'com/cuboidllc/cuboid_flutter_template';
 
 const generatedFiles = {
   'lib/app/app.locator.dart',
@@ -407,15 +408,9 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
       category: 'iOS',
     ),
     Replacement(
-      path: 'ios/Runner/Info.plist',
-      oldValue: '<string>$oldProductName</string>',
-      newValue: '<string>${escapeXmlText(values.displayName)}</string>',
-      label: 'iOS bundle name',
-      category: 'iOS',
-    ),
-    Replacement(
       path: 'ios/Runner.xcodeproj/project.pbxproj',
-      oldValue: 'INFOPLIST_KEY_CFBundleDisplayName = $oldProductName;',
+      oldValue:
+          'INFOPLIST_KEY_CFBundleDisplayName = ${escapePbxprojValue(oldProductName)};',
       newValue:
           'INFOPLIST_KEY_CFBundleDisplayName = ${escapePbxprojValue(values.displayName)};',
       label: 'iOS project display name',
@@ -456,15 +451,14 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
     ),
     Replacement(
       path: 'README.md',
-      oldValue: '# $oldProductName — UAE Transport Fleet MVP',
+      oldValue: '# $oldProductName',
       newValue: '# ${values.displayName}',
       label: 'README title',
       category: 'Documentation',
     ),
     Replacement(
       path: 'README.md',
-      oldValue:
-          'This repo contains the $oldProductName Flutter app plus the product and system blueprint for a small UAE transport operator.',
+      oldValue: 'Reusable Flutter starter for Cuboid applications.',
       newValue: 'This project was created from the Cuboid Flutter Template.',
       label: 'README app summary',
       category: 'Documentation',
@@ -472,7 +466,7 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
     Replacement(
       path: 'README.md',
       oldValue:
-          '$oldProductName is a fleet operations & money app (Home / Work / Money / More): work orders, invoicing, supplier settlements, payments, and operational profit for a single pilot operator. Flutter + Stacked MVVM + Supabase.',
+          'This template is built with Stacked MVVM and Supabase. Use `tool/bootstrap.dart` to create an application-specific project identity before product development.',
       newValue:
           'It is a Flutter application built with Stacked MVVM and Supabase. Replace this section with product-specific documentation when the generated application is ready.',
       label: 'README app description',
@@ -506,7 +500,7 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
 
   final oldKotlinDir = directoryFor(
     root,
-    'android/app/src/main/kotlin/com/cuboidinc/fleetgo',
+    'android/app/src/main/kotlin/$oldKotlinPackagePath',
   );
   final newKotlinPath =
       'android/app/src/main/kotlin/${values.packageIdentifier.replaceAll('.', '/')}';
@@ -515,7 +509,7 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
   if (oldKotlinDir.existsSync() && oldKotlinDir.path != newKotlinDir.path) {
     moves.add(
       MoveOperation(
-        from: 'android/app/src/main/kotlin/com/cuboidinc/fleetgo',
+        from: 'android/app/src/main/kotlin/$oldKotlinPackagePath',
         to: newKotlinPath,
         category: 'Android',
         label: 'Kotlin package directory',
@@ -579,14 +573,14 @@ List<Replacement> _kotlinReplacements(
 ) {
   final mainActivity = pathFor(
     root,
-    'android/app/src/main/kotlin/com/cuboidinc/fleetgo/MainActivity.kt',
+    'android/app/src/main/kotlin/$oldKotlinPackagePath/MainActivity.kt',
   );
   if (!mainActivity.existsSync()) {
     return const [];
   }
   return [
     Replacement(
-      path: 'android/app/src/main/kotlin/com/cuboidinc/fleetgo/MainActivity.kt',
+      path: 'android/app/src/main/kotlin/$oldKotlinPackagePath/MainActivity.kt',
       oldValue: 'package $oldPackageIdentifier',
       newValue: 'package $packageIdentifier',
       label: 'Kotlin package declaration',

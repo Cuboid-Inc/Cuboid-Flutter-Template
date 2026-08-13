@@ -1,5 +1,5 @@
 name: cuboid_flutter_template
-description: "Flutter application created from the Cuboid Flutter Template"
+description: "Template for Cuboid Flutter projects"
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 

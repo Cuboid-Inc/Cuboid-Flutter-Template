@@ -1,10 +1,10 @@
-# Nemara Homes
+# Cuboid Flutter Template
 
-This project was created from the Cuboid Flutter Template.
+Reusable Flutter starter for Cuboid applications.
 
 ## App
 
-It is a Flutter application built with Stacked MVVM and Supabase. Replace this section with product-specific documentation when the generated application is ready.
+This template is built with Stacked MVVM and Supabase. Use `tool/bootstrap.dart` to create an application-specific project identity before product development.
 
 ```bash
 flutter pub get

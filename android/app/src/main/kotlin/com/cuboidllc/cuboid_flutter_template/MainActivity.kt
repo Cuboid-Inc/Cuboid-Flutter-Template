@@ -1,4 +1,4 @@
-package com.cuboidllc.nemarahomes
+package com.cuboidllc.cuboid_flutter_template
 
 import io.flutter.embedding.android.FlutterActivity
 

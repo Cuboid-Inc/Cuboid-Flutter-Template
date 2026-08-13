@@ -119,15 +119,15 @@ abstract final class AppConfig {
     );
     _writeFixture(root, 'lib/core/constants/storage_keys.dart', '''
 abstract final class StorageKeys {
-  static const supabaseSession = 'fleetgo_supabase_session';
-  static const authStorageNamespace = 'fleetgo_auth';
+  static const supabaseSession = 'cuboid_flutter_template_supabase_session';
+  static const authStorageNamespace = 'cuboid_flutter_template_auth';
 }
 ''');
     _writeFixture(root, 'android/app/build.gradle.kts', '''
 android {
-    namespace = "com.cuboidinc.fleetgo"
+    namespace = "com.cuboidllc.cuboid_flutter_template"
     defaultConfig {
-        applicationId = "com.cuboidinc.fleetgo"
+        applicationId = "com.cuboidllc.cuboid_flutter_template"
     }
 }
 ''');
@@ -136,7 +136,7 @@ android {
     <application android:label="Cuboid Flutter Template">
         <activity>
             <intent-filter>
-                <data android:scheme="com.cuboidinc.fleetgo" />
+                <data android:scheme="com.cuboidllc.cuboid_flutter_template" />
             </intent-filter>
         </activity>
     </application>
@@ -144,9 +144,9 @@ android {
 ''');
     _writeFixture(
       root,
-      'android/app/src/main/kotlin/com/cuboidinc/fleetgo/MainActivity.kt',
+      'android/app/src/main/kotlin/com/cuboidllc/cuboid_flutter_template/MainActivity.kt',
       '''
-package com.cuboidinc.fleetgo
+package com.cuboidllc.cuboid_flutter_template
 
 class MainActivity
 ''',
@@ -155,22 +155,22 @@ class MainActivity
 <plist>
 <dict>
 <string>Cuboid Flutter Template</string>
-<string>com.cuboidinc.fleetgo</string>
-<string>FleetGo</string>
+<string>com.cuboidllc.cuboid_flutter_template</string>
+<string>Cuboid Flutter Template</string>
 </dict>
 </plist>
 ''');
     _writeFixture(root, 'ios/Runner.xcodeproj/project.pbxproj', '''
-INFOPLIST_KEY_CFBundleDisplayName = FleetGo;
-PRODUCT_BUNDLE_IDENTIFIER = com.cuboidinc.fleetgo;
-PRODUCT_BUNDLE_IDENTIFIER = com.cuboidinc.fleetgo.RunnerTests;
+INFOPLIST_KEY_CFBundleDisplayName = "Cuboid Flutter Template";
+PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template;
+PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template.RunnerTests;
 ''');
     _writeFixture(root, 'supabase/config.toml', '''
 project_id = "Cuboid Flutter Template"
-additional_redirect_urls = ["com.cuboidinc.fleetgo://auth-callback"]
+additional_redirect_urls = ["com.cuboidllc.cuboid_flutter_template://auth-callback"]
 ''');
     _writeFixture(root, 'supabase/functions/invite-staff/index.ts', '''
-const redirectTo = 'com.cuboidinc.fleetgo://auth-callback'
+const redirectTo = 'com.cuboidllc.cuboid_flutter_template://auth-callback'
 ''');
     _writeFixture(
       root,
@@ -178,12 +178,12 @@ const redirectTo = 'com.cuboidinc.fleetgo://auth-callback'
       "import 'package:cuboid_flutter_template/features/home/home_view.dart';\n",
     );
     _writeFixture(root, 'README.md', '''
-# FleetGo — UAE Transport Fleet MVP
-This repo contains the FleetGo Flutter app plus the product and system blueprint for a small UAE transport operator.
-FleetGo is a fleet operations & money app (Home / Work / Money / More): work orders, invoicing, supplier settlements, payments, and operational profit for a single pilot operator. Flutter + Stacked MVVM + Supabase.
+# Cuboid Flutter Template
+Reusable Flutter starter for Cuboid applications.
+This template is built with Stacked MVVM and Supabase. Use `tool/bootstrap.dart` to create an application-specific project identity before product development.
 ''');
     _writeFixture(root, '.vscode/launch.json', '''
-{"name":"FleetGo - Debug"},{"name":"FleetGo - Release"},{"name":"FleetGo - Profile"}
+{"name":"Cuboid Flutter Template - Debug"},{"name":"Cuboid Flutter Template - Release"},{"name":"Cuboid Flutter Template - Profile"}
 ''');
 
     final values = BootstrapValues(
@@ -200,7 +200,9 @@ FleetGo is a fleet operations & money app (Home / Work / Money / More): work ord
     expect(plan.modifiedFiles, contains('pubspec.yaml'));
     expect(
       plan.modifiedFiles,
-      contains('android/app/src/main/kotlin/com/cuboidinc/fleetgo'),
+      contains(
+        'android/app/src/main/kotlin/com/cuboidllc/cuboid_flutter_template',
+      ),
     );
     expect(plan.modifiedFiles, contains('lib/app/app.router.dart'));
     expect(
@@ -219,7 +221,9 @@ FleetGo is a fleet operations & money app (Home / Work / Money / More): work ord
     ).readAsStringSync();
     expect(
       inviteStaffSource,
-      contains("const redirectTo = 'com.cuboidinc.fleetgo://auth-callback'"),
+      contains(
+        "const redirectTo = 'com.cuboidllc.cuboid_flutter_template://auth-callback'",
+      ),
     );
     final inviteStaffRedirectReplacement = plan.replacements.singleWhere((
       replacement,
@@ -239,7 +243,7 @@ FleetGo is a fleet operations & money app (Home / Work / Money / More): work ord
     );
     expect(
       generatedInviteStaffSource,
-      isNot(contains('com.cuboidinc.fleetgo://auth-callback')),
+      isNot(contains('com.cuboidllc.cuboid_flutter_template://auth-callback')),
     );
     expect(
       plan.replacements,
@@ -331,15 +335,15 @@ abstract final class AppConfig {
 ''');
   _writeFixture(root, 'lib/core/constants/storage_keys.dart', '''
 abstract final class StorageKeys {
-  static const supabaseSession = 'fleetgo_supabase_session';
-  static const authStorageNamespace = 'fleetgo_auth';
+  static const supabaseSession = 'cuboid_flutter_template_supabase_session';
+  static const authStorageNamespace = 'cuboid_flutter_template_auth';
 }
 ''');
   _writeFixture(root, 'android/app/build.gradle.kts', '''
 android {
-    namespace = "com.cuboidinc.fleetgo"
+    namespace = "com.cuboidllc.cuboid_flutter_template"
     defaultConfig {
-        applicationId = "com.cuboidinc.fleetgo"
+        applicationId = "com.cuboidllc.cuboid_flutter_template"
     }
 }
 ''');
@@ -348,7 +352,7 @@ android {
     <application android:label="Cuboid Flutter Template">
         <activity>
             <intent-filter>
-                <data android:scheme="com.cuboidinc.fleetgo" />
+                <data android:scheme="com.cuboidllc.cuboid_flutter_template" />
             </intent-filter>
         </activity>
     </application>
@@ -356,9 +360,9 @@ android {
 ''');
   _writeFixture(
     root,
-    'android/app/src/main/kotlin/com/cuboidinc/fleetgo/MainActivity.kt',
+    'android/app/src/main/kotlin/com/cuboidllc/cuboid_flutter_template/MainActivity.kt',
     '''
-package com.cuboidinc.fleetgo
+package com.cuboidllc.cuboid_flutter_template
 
 class MainActivity
 ''',
@@ -367,29 +371,29 @@ class MainActivity
 <plist>
 <dict>
 <string>Cuboid Flutter Template</string>
-<string>com.cuboidinc.fleetgo</string>
-<string>FleetGo</string>
+<string>com.cuboidllc.cuboid_flutter_template</string>
+<string>Cuboid Flutter Template</string>
 </dict>
 </plist>
 ''');
   _writeFixture(root, 'ios/Runner.xcodeproj/project.pbxproj', '''
-INFOPLIST_KEY_CFBundleDisplayName = FleetGo;
-PRODUCT_BUNDLE_IDENTIFIER = com.cuboidinc.fleetgo;
-PRODUCT_BUNDLE_IDENTIFIER = com.cuboidinc.fleetgo.RunnerTests;
+INFOPLIST_KEY_CFBundleDisplayName = "Cuboid Flutter Template";
+PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template;
+PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template.RunnerTests;
 ''');
   _writeFixture(root, 'supabase/config.toml', '''
 project_id = "Cuboid Flutter Template"
-additional_redirect_urls = ["com.cuboidinc.fleetgo://auth-callback"]
+additional_redirect_urls = ["com.cuboidllc.cuboid_flutter_template://auth-callback"]
 ''');
   _writeFixture(root, 'supabase/functions/invite-staff/index.ts', '''
-const redirectTo = 'com.cuboidinc.fleetgo://auth-callback'
+const redirectTo = 'com.cuboidllc.cuboid_flutter_template://auth-callback'
 ''');
   _writeFixture(root, 'README.md', '''
-# FleetGo — UAE Transport Fleet MVP
-This repo contains the FleetGo Flutter app plus the product and system blueprint for a small UAE transport operator.
-FleetGo is a fleet operations & money app (Home / Work / Money / More): work orders, invoicing, supplier settlements, payments, and operational profit for a single pilot operator. Flutter + Stacked MVVM + Supabase.
+# Cuboid Flutter Template
+Reusable Flutter starter for Cuboid applications.
+This template is built with Stacked MVVM and Supabase. Use `tool/bootstrap.dart` to create an application-specific project identity before product development.
 ''');
   _writeFixture(root, '.vscode/launch.json', '''
-{"name":"FleetGo - Debug"},{"name":"FleetGo - Release"},{"name":"FleetGo - Profile"}
+{"name":"Cuboid Flutter Template - Debug"},{"name":"Cuboid Flutter Template - Release"},{"name":"Cuboid Flutter Template - Profile"}
 ''');
 }

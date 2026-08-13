@@ -2,7 +2,7 @@
 import { withSupabase } from 'npm:@supabase/server@1.4.0'
 
 const allowedPacks = new Set(['operations', 'master_data', 'money', 'reports'])
-const redirectTo = 'com.cuboidinc.fleetgo://auth-callback'
+const redirectTo = 'com.cuboidllc.cuboid_flutter_template://auth-callback'
 
 export default {
   fetch: withSupabase({ auth: 'user' }, async (req: Request, ctx: any) => {

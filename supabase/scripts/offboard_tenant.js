@@ -44,7 +44,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 async function main() {
   const rl = readline.createInterface({ input, output });
 
-  console.log(`\n${colors.bright}${colors.red}=== FleetGo Tenant Permanent Deletion Tool ===${colors.reset}`);
+  console.log(`\n${colors.bright}${colors.red}=== Cuboid Flutter Template Tenant Permanent Deletion Tool ===${colors.reset}`);
   console.log(`${colors.yellow}This permanently deletes a tenant and ALL of its data (parties, vehicles,`);
   console.log(`drivers, agreements, work orders, invoices, settlements, payments, staff).`);
   console.log(`There is no undo.${colors.reset}\n`);
