@@ -8,7 +8,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:cuboid_flutter_template/features/home/ui/views/shell_view.dart'
     as _i3;
-import 'package:cuboid_flutter_template/features/startup/ui/startup_view.dart'
+import 'package:cuboid_flutter_template/features/startup/ui/views/startup_view.dart'
     as _i2;
 import 'package:flutter/cupertino.dart' as _i5;
 import 'package:flutter/material.dart' as _i4;
