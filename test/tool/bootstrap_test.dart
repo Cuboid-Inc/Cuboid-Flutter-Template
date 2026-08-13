@@ -5,6 +5,92 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../tool/bootstrap.dart';
 
 void main() {
+  group('parseArguments', () {
+    test('accepts valid name and package', () {
+      final parsed = parseArguments([
+        '--name',
+        'Acme Starter',
+        '--package',
+        'com.cuboidllc.acme_starter',
+      ]);
+
+      expect(parsed.displayName, 'Acme Starter');
+      expect(parsed.packageIdentifier, 'com.cuboidllc.acme_starter');
+      expect(parsed.dryRun, isFalse);
+      expect(parsed.help, isFalse);
+    });
+
+    test('accepts dry-run with valid identity arguments', () {
+      final parsed = parseArguments([
+        '--dry-run',
+        '--name',
+        'Acme Starter',
+        '--package',
+        'com.cuboidllc.acme_starter',
+      ]);
+
+      expect(parsed.displayName, 'Acme Starter');
+      expect(parsed.packageIdentifier, 'com.cuboidllc.acme_starter');
+      expect(parsed.dryRun, isTrue);
+      expect(parsed.help, isFalse);
+    });
+
+    test('accepts help without identity arguments', () {
+      final parsed = parseArguments(['--help']);
+
+      expect(parsed.displayName, isEmpty);
+      expect(parsed.packageIdentifier, isEmpty);
+      expect(parsed.dryRun, isFalse);
+      expect(parsed.help, isTrue);
+      expect(buildUsage(), contains('dart run tool/bootstrap.dart'));
+    });
+
+    test('rejects missing name', () {
+      expect(
+        () => parseArguments(['--package', 'com.cuboidllc.acme_starter']),
+        throwsA(
+          isA<BootstrapException>().having(
+            (error) => error.message,
+            'message',
+            'Missing required argument: --name.',
+          ),
+        ),
+      );
+    });
+
+    test('rejects missing package', () {
+      expect(
+        () => parseArguments(['--name', 'Acme Starter']),
+        throwsA(
+          isA<BootstrapException>().having(
+            (error) => error.message,
+            'message',
+            'Missing required argument: --package.',
+          ),
+        ),
+      );
+    });
+
+    test('rejects unknown arguments', () {
+      expect(
+        () => parseArguments([
+          '--name',
+          'Acme Starter',
+          '--package',
+          'com.cuboidllc.acme_starter',
+          '--verbose',
+        ]),
+        throwsA(
+          isA<BootstrapException>().having(
+            (error) => error.message,
+            'message',
+            'Unknown argument: --verbose',
+          ),
+        ),
+      );
+    });
+  });
+
   group('deriveProjectName', () {
     test('converts a human name into a valid Dart project name', () {
       expect(deriveProjectName('Nemara Homes'), 'nemara_homes');

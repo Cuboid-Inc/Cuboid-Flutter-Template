@@ -95,11 +95,13 @@ class BootstrapArguments {
     required this.displayName,
     required this.packageIdentifier,
     required this.dryRun,
+    required this.help,
   });
 
   final String displayName;
   final String packageIdentifier;
   final bool dryRun;
+  final bool help;
 }
 
 class BootstrapValues {
@@ -188,6 +190,11 @@ class BootstrapException implements Exception {
 void main(List<String> args) {
   try {
     final parsed = parseArguments(args);
+    if (parsed.help) {
+      printUsage();
+      return;
+    }
+
     validateArguments(parsed);
 
     final values = BootstrapValues(
@@ -218,10 +225,13 @@ BootstrapArguments parseArguments(List<String> args) {
   String? name;
   String? package;
   var dryRun = false;
+  var help = false;
 
   for (var i = 0; i < args.length; i += 1) {
     final arg = args[i];
-    if (arg == '--dry-run') {
+    if (arg == '--help') {
+      help = true;
+    } else if (arg == '--dry-run') {
       dryRun = true;
     } else if (arg == '--name') {
       if (i + 1 >= args.length) {
@@ -238,6 +248,22 @@ BootstrapArguments parseArguments(List<String> args) {
     }
   }
 
+  if (!help && name == null) {
+    throw const BootstrapException('Missing required argument: --name.');
+  }
+  if (!help && package == null) {
+    throw const BootstrapException('Missing required argument: --package.');
+  }
+
+  if (help) {
+    return BootstrapArguments(
+      displayName: name ?? '',
+      packageIdentifier: package ?? '',
+      dryRun: dryRun,
+      help: help,
+    );
+  }
+
   if (name == null || package == null) {
     throw const BootstrapException('Required arguments: --name and --package.');
   }
@@ -246,6 +272,7 @@ BootstrapArguments parseArguments(List<String> args) {
     displayName: name,
     packageIdentifier: package,
     dryRun: dryRun,
+    help: help,
   );
 }
 
@@ -831,6 +858,23 @@ bool _nextBlockCommentState(String line, bool startsInBlockComment) {
 
 void printDryRun(BootstrapValues values, BootstrapPlan plan) {
   stdout.write(buildDryRunReport(values, plan));
+}
+
+void printUsage() {
+  stdout.write(buildUsage());
+}
+
+String buildUsage() {
+  return '''
+Usage:
+dart run tool/bootstrap.dart --name "App Name" --package "com.example.app" [--dry-run]
+
+Options:
+--name       Human-readable application name.
+--package    Application package identifier.
+--dry-run    Print planned changes without modifying files.
+--help       Print this help text.
+''';
 }
 
 String buildDryRunReport(BootstrapValues values, BootstrapPlan plan) {
