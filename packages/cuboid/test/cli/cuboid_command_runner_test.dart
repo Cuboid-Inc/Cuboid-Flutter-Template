@@ -14,6 +14,7 @@ void main() {
     expect(runner.commands, contains('create'));
     expect(runner.commands, contains('feature'));
     expect(runner.commands, contains('route'));
+    expect(runner.commands, contains('service'));
     expect(runner.commands, contains('view'));
   });
 
@@ -29,6 +30,7 @@ void main() {
     expect(output.content, contains('create'));
     expect(output.content, contains('feature'));
     expect(output.content, contains('route'));
+    expect(output.content, contains('service'));
     expect(output.content, contains('view'));
   });
 
@@ -74,6 +76,16 @@ void main() {
     expect(
       runner.commands['view']!.description,
       contains('Create an additional Stacked View'),
+    );
+  });
+
+  test('service command is registered', () async {
+    final runner = CuboidCommandRunner(stdout: _memorySink());
+
+    expect(runner.commands['service'], isA<ServiceCommand>());
+    expect(
+      runner.commands['service']!.description,
+      contains('Register an existing core service'),
     );
   });
 
@@ -268,6 +280,117 @@ void main() {
     expect(
       errorOutput.content,
       contains('lib/features/auth/ui/views/auth_view.dart was not found.'),
+    );
+  });
+
+  test(
+    'service dry-run reports planned registration without writing',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeServiceProject(temp, 'auth_session');
+      final before = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+      Directory.current = temp;
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        ['service', 'auth-session', '--dry-run'],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Dry run: no files were written.'));
+      expect(output.content, contains('Service: AuthSessionService'));
+      expect(output.content, contains('- lib/app/app.dart'));
+      expect(
+        output.content,
+        contains(
+          "import 'package:my_app/core/services/auth_session_service.dart';",
+        ),
+      );
+      expect(
+        output.content,
+        contains('LazySingleton(classType: AuthSessionService),'),
+      );
+      expect(errorOutput.content, isEmpty);
+      expect(File('${temp.path}/lib/app/app.dart').readAsStringSync(), before);
+    },
+  );
+
+  test('service command registers an existing core service', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeServiceProject(temp, 'auth_session');
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['service', 'AuthSession'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Registered service AuthSessionService.'));
+    expect(
+      output.content,
+      contains('Next step: dart run build_runner build -d'),
+    );
+    expect(errorOutput.content, isEmpty);
+    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    expect(
+      app,
+      contains(
+        "import 'package:my_app/core/services/auth_session_service.dart';",
+      ),
+    );
+    expect(app, contains('    LazySingleton(classType: AuthSessionService),'));
+  });
+
+  test('service validates required positional arguments', () async {
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['service'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(errorOutput.content, contains('Expected a service name.'));
+  });
+
+  test('service failures return non-zero and write stderr', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeServiceProject(temp, 'auth_session');
+    File(
+      '${temp.path}/lib/core/services/auth_session_service.dart',
+    ).deleteSync();
+    Directory.current = temp;
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['service', 'auth-session'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 1);
+    expect(
+      errorOutput.content,
+      contains('lib/core/services/auth_session_service.dart was not found.'),
     );
   });
 
@@ -470,6 +593,32 @@ void _writeViewProject(Directory root, String featureName) {
   Directory(
     '${root.path}/lib/features/$featureName',
   ).createSync(recursive: true);
+}
+
+void _writeServiceProject(Directory root, String serviceName) {
+  File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
+  File('${root.path}/lib/app/app.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('''
+import 'package:my_app/core/services/shell_service.dart';
+import 'package:stacked/stacked_annotations.dart';
+// @stacked-import
+
+@StackedApp(
+  dependencies: [
+    LazySingleton(classType: ShellService),
+    // @stacked-service
+  ],
+)
+class App {}
+''');
+  final className = serviceName
+      .split('_')
+      .map((word) => word[0].toUpperCase() + word.substring(1))
+      .join();
+  File('${root.path}/lib/core/services/${serviceName}_service.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('class ${className}Service {}\n');
 }
 
 List<String> _relativeFiles(Directory root) {

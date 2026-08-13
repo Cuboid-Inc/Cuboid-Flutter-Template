@@ -5,6 +5,7 @@ import 'package:cuboid/src/bootstrap/bootstrap.dart';
 import 'package:cuboid/src/create/create_project.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
 import 'package:cuboid/src/route/register_route.dart';
+import 'package:cuboid/src/service/register_service.dart';
 import 'package:cuboid/src/view/create_view.dart';
 
 const cuboidVersion = '0.1.0';
@@ -16,12 +17,15 @@ class CuboidCommandRunner extends CommandRunner<int> {
     CreateProjectService? createProjectService,
     CreateFeatureService? createFeatureService,
     RegisterRouteService? registerRouteService,
+    RegisterServiceService? registerServiceService,
     CreateViewService? createViewService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
        _createFeatureService = createFeatureService ?? CreateFeatureService(),
        _registerRouteService = registerRouteService ?? RegisterRouteService(),
+       _registerServiceService =
+           registerServiceService ?? RegisterServiceService(),
        _createViewService = createViewService ?? CreateViewService(),
        super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
     argParser.addFlag(
@@ -51,6 +55,13 @@ class CuboidCommandRunner extends CommandRunner<int> {
       ),
     );
     addCommand(
+      ServiceCommand(
+        stdout: _stdout,
+        stderr: _stderr,
+        registerServiceService: _registerServiceService,
+      ),
+    );
+    addCommand(
       ViewCommand(
         stdout: _stdout,
         stderr: _stderr,
@@ -64,6 +75,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final CreateProjectService _createProjectService;
   final CreateFeatureService _createFeatureService;
   final RegisterRouteService _registerRouteService;
+  final RegisterServiceService _registerServiceService;
   final CreateViewService _createViewService;
 
   @override
@@ -385,6 +397,77 @@ class ViewCommand extends Command<int> {
     _stdout.writeln('Files:');
     for (final file in plan.files) {
       _stdout.writeln('- $file');
+    }
+  }
+}
+
+class ServiceCommand extends Command<int> {
+  ServiceCommand({
+    IOSink? stdout,
+    IOSink? stderr,
+    RegisterServiceService? registerServiceService,
+  }) : _stdout = stdout ?? ioStdout,
+       _stderr = stderr ?? ioStderr,
+       _registerServiceService =
+           registerServiceService ?? RegisterServiceService() {
+    argParser.addFlag(
+      'dry-run',
+      negatable: false,
+      help: 'Print the service registration plan without writing files.',
+    );
+  }
+
+  final IOSink _stdout;
+  final IOSink _stderr;
+  final RegisterServiceService _registerServiceService;
+
+  @override
+  String get name => 'service';
+
+  @override
+  String get description => 'Register an existing core service.';
+
+  @override
+  String get invocation => 'cuboid service [options] <name>';
+
+  @override
+  Future<int> run() async {
+    final rest = argResults!.rest;
+    if (rest.length != 1) {
+      throw UsageException('Expected a service name.', usage);
+    }
+
+    final input = RegisterServiceInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _registerServiceService.register(input);
+      _writeResult(result);
+      return 0;
+    } on RegisterServiceException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  void _writeResult(RegisterServiceResult result) {
+    final plan = result.plan;
+    if (plan.dryRun) {
+      _stdout.writeln('Dry run: no files were written.');
+      _stdout.writeln('Service: ${plan.serviceClassName}');
+    } else {
+      _stdout.writeln('Registered service ${plan.serviceClassName}.');
+    }
+    _stdout.writeln('Files:');
+    _stdout.writeln('- ${plan.appPath}');
+    if (plan.dryRun) {
+      _stdout.writeln('Planned changes:');
+      _stdout.writeln('- ${plan.importLine}');
+      _stdout.writeln('- ${plan.serviceLine.trim()}');
+    } else {
+      _stdout.writeln('Next step: dart run build_runner build -d');
     }
   }
 }

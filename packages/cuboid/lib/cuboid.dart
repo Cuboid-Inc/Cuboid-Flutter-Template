@@ -37,6 +37,13 @@ export 'src/route/register_route.dart'
         RegisterRoutePlan,
         RegisterRouteResult,
         RegisterRouteService;
+export 'src/service/register_service.dart'
+    show
+        RegisterServiceException,
+        RegisterServiceInput,
+        RegisterServicePlan,
+        RegisterServiceResult,
+        RegisterServiceService;
 export 'src/view/create_view.dart'
     show
         CreateViewException,
