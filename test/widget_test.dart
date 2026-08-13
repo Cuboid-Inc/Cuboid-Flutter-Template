@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('renders without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: Text('FleetGo'))),
+      const MaterialApp(home: Scaffold(body: Text('Cuboid Flutter Template'))),
     );
-    expect(find.text('FleetGo'), findsOneWidget);
+    expect(find.text('Cuboid Flutter Template'), findsOneWidget);
   });
 }

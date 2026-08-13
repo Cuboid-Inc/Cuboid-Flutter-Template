@@ -1,21 +1,14 @@
 import 'dart:async';
 
-import 'package:fleetgo/app/app.bottomsheets.dart';
-import 'package:fleetgo/app/app.dialogs.dart';
-import 'package:fleetgo/app/app.locator.dart';
-import 'package:fleetgo/app/app.router.dart';
-import 'package:fleetgo/core/config/app_config.dart';
-import 'package:fleetgo/core/supabase/env.dart';
-import 'package:fleetgo/core/supabase/secure_local_storage.dart';
-import 'package:fleetgo/main.logger.dart';
-import 'package:fleetgo/ui/common/app_theme.dart';
-import 'package:fleetgo/ui/common/snackbar_ui.dart';
+import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/app/app.logger.dart';
+import 'package:cuboid_flutter_template/app/app_root.dart';
+import 'package:cuboid_flutter_template/core/config/env.dart';
+import 'package:cuboid_flutter_template/core/constants/asset_paths.dart';
+import 'package:cuboid_flutter_template/core/storage/secure_local_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:stacked/stacked_annotations.dart';
-import 'package:stacked_services/stacked_services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:upgrader/upgrader.dart';
 
 final _logger = AppLogger('AppStartup');
 
@@ -35,7 +28,7 @@ Future<void> main() async {
   } else if (kReleaseMode) {
     // Fail fast: a release build must never silently run in demo mode.
     final error = StateError(
-      'FleetGo release build without Supabase config. '
+      'Cuboid Flutter Template release build without Supabase config. '
       'Build with --dart-define-from-file=env/prod.json.',
     );
     _logger.e(
@@ -48,9 +41,6 @@ Future<void> main() async {
   }
 
   await setupLocator();
-  setupBottomSheetUi();
-  setupDialogUi();
-  setupSnackbarUi();
 
   await startupLogoReady;
   _logger.i('Startup assets and services ready');
@@ -59,7 +49,7 @@ Future<void> main() async {
 
 Future<void> _precacheStartupLogo() async {
   final stream = const AssetImage(
-    'assets/splash/logo_tile.png',
+    AssetPaths.startupLogo,
   ).resolve(ImageConfiguration.empty);
   final ready = Completer<void>();
   late final ImageStreamListener listener;
@@ -79,27 +69,5 @@ Future<void> _precacheStartupLogo() async {
     await ready.future;
   } finally {
     stream.removeListener(listener);
-  }
-}
-
-@StackedApp(
-  routes: [],
-  logger: StackedLogger(logHelperName: "AppLogger"),
-)
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConfig.appName,
-      theme: AppTheme.light,
-      navigatorKey: StackedService.navigatorKey,
-      onGenerateRoute: StackedRouter().onGenerateRoute,
-      initialRoute: Routes.startupView,
-      debugShowCheckedModeBanner: false,
-      builder: (context, child) =>
-          UpgradeAlert(child: child ?? const SizedBox()),
-    );
   }
 }
