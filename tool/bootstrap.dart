@@ -442,14 +442,6 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
       category: 'Supabase',
     ),
     Replacement(
-      path: 'supabase/functions/invite-staff/index.ts',
-      oldValue: "const redirectTo = '$oldPackageIdentifier://auth-callback'",
-      newValue:
-          "const redirectTo = '${values.packageIdentifier}://auth-callback'",
-      label: 'Supabase invite staff auth redirect URL',
-      category: 'Supabase',
-    ),
-    Replacement(
       path: 'README.md',
       oldValue: '# $oldProductName',
       newValue: '# ${values.displayName}',
@@ -458,7 +450,8 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
     ),
     Replacement(
       path: 'README.md',
-      oldValue: 'Reusable Flutter starter for Cuboid applications.',
+      oldValue:
+          'Reusable Flutter + Stacked starter template for Cuboid applications.',
       newValue: 'This project was created from the Cuboid Flutter Template.',
       label: 'README app summary',
       category: 'Documentation',
@@ -466,7 +459,9 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
     Replacement(
       path: 'README.md',
       oldValue:
-          'This template is built with Stacked MVVM and Supabase. Use `tool/bootstrap.dart` to create an application-specific project identity before product development.',
+          'This repository is infrastructure for starting a new app. It is not a production\n'
+          'domain application and does not contain application-specific business workflows,\n'
+          'database schema, or repository/data layers.',
       newValue:
           'It is a Flutter application built with Stacked MVVM and Supabase. Replace this section with product-specific documentation when the generated application is ready.',
       label: 'README app description',
@@ -524,7 +519,6 @@ BootstrapPlan createBootstrapPlan(Directory root, BootstrapValues values) {
     manualConfiguration: const [
       'Supabase project_id in supabase/config.toml.',
       'Supabase hosted project URL, anon key, and publishable keys in env files.',
-      'Supabase helper script production URLs and secret-key environment variables.',
       'Launcher icon and splash image artwork, if the new app needs different branding.',
       'Apple development team, signing, and provisioning settings.',
     ],

@@ -109,7 +109,6 @@ import 'package:cuboid_flutter_template/not_a_real_import.dart';
 abstract final class AppConfig {
   static const appName = 'Cuboid Flutter Template';
   static const locale = 'en_US';
-  static const currency = 'AED';
 }
 ''');
     _writeFixture(
@@ -169,9 +168,6 @@ PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template.RunnerTests;
 project_id = "Cuboid Flutter Template"
 additional_redirect_urls = ["com.cuboidllc.cuboid_flutter_template://auth-callback"]
 ''');
-    _writeFixture(root, 'supabase/functions/invite-staff/index.ts', '''
-const redirectTo = 'com.cuboidllc.cuboid_flutter_template://auth-callback'
-''');
     _writeFixture(
       root,
       'lib/app/app.router.dart',
@@ -179,8 +175,10 @@ const redirectTo = 'com.cuboidllc.cuboid_flutter_template://auth-callback'
     );
     _writeFixture(root, 'README.md', '''
 # Cuboid Flutter Template
-Reusable Flutter starter for Cuboid applications.
-This template is built with Stacked MVVM and Supabase. Use `tool/bootstrap.dart` to create an application-specific project identity before product development.
+Reusable Flutter + Stacked starter template for Cuboid applications.
+This repository is infrastructure for starting a new app. It is not a production
+domain application and does not contain application-specific business workflows,
+database schema, or repository/data layers.
 ''');
     _writeFixture(root, '.vscode/launch.json', '''
 {"name":"Cuboid Flutter Template - Debug"},{"name":"Cuboid Flutter Template - Release"},{"name":"Cuboid Flutter Template - Profile"}
@@ -215,35 +213,6 @@ This template is built with Stacked MVVM and Supabase. Use `tool/bootstrap.dart`
     expect(
       plan.manualConfiguration,
       contains('Supabase project_id in supabase/config.toml.'),
-    );
-    final inviteStaffSource = File(
-      '${root.path}/supabase/functions/invite-staff/index.ts',
-    ).readAsStringSync();
-    expect(
-      inviteStaffSource,
-      contains(
-        "const redirectTo = 'com.cuboidllc.cuboid_flutter_template://auth-callback'",
-      ),
-    );
-    final inviteStaffRedirectReplacement = plan.replacements.singleWhere((
-      replacement,
-    ) {
-      return replacement.path == 'supabase/functions/invite-staff/index.ts';
-    });
-    final generatedInviteStaffSource = replaceExactInContent(
-      inviteStaffSource,
-      inviteStaffRedirectReplacement.oldValue,
-      inviteStaffRedirectReplacement.newValue,
-    );
-    expect(
-      generatedInviteStaffSource,
-      contains(
-        "const redirectTo = 'com.cuboidllc.nemarahomes://auth-callback'",
-      ),
-    );
-    expect(
-      generatedInviteStaffSource,
-      isNot(contains('com.cuboidllc.cuboid_flutter_template://auth-callback')),
     );
     expect(
       plan.replacements,
@@ -417,13 +386,12 @@ PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template.RunnerTests;
 project_id = "Cuboid Flutter Template"
 additional_redirect_urls = ["com.cuboidllc.cuboid_flutter_template://auth-callback"]
 ''');
-  _writeFixture(root, 'supabase/functions/invite-staff/index.ts', '''
-const redirectTo = 'com.cuboidllc.cuboid_flutter_template://auth-callback'
-''');
   _writeFixture(root, 'README.md', '''
 # Cuboid Flutter Template
-Reusable Flutter starter for Cuboid applications.
-This template is built with Stacked MVVM and Supabase. Use `tool/bootstrap.dart` to create an application-specific project identity before product development.
+Reusable Flutter + Stacked starter template for Cuboid applications.
+This repository is infrastructure for starting a new app. It is not a production
+domain application and does not contain application-specific business workflows,
+database schema, or repository/data layers.
 ''');
   _writeFixture(root, '.vscode/launch.json', '''
 {"name":"Cuboid Flutter Template - Debug"},{"name":"Cuboid Flutter Template - Release"},{"name":"Cuboid Flutter Template - Profile"}

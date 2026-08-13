@@ -7,8 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 
-/// Root shell: the four tabs (Home/Work/Money/More) matching the design's
-/// TAB BAR, backed by an [IndexedStack] so each tab keeps its state.
+/// Root shell backed by an [IndexedStack] so each tab keeps its state.
 /// Styled as an iOS 26 frosted glass floating capsule navigation bar.
 class ShellView extends StackedView<ShellViewModel> {
   const ShellView({super.key});

@@ -1,38 +1,36 @@
 # Cuboid Flutter Template Architecture
 
-Status: Current template architecture and production extension target
+Status: current reusable template architecture
 
-This document defines the architecture of the reusable Cuboid Flutter Template.
+This document describes the architecture that exists in this repository and the
+boundaries a generated application should follow when it adds product-specific
+features.
 
-It distinguishes between:
+The repository is a generic Flutter + Stacked template. It does not currently
+contain a production business domain, production repository/data layer, active
+product migrations, or application-specific database schema.
 
-* **Current template** — code and structure that actually exist in this repository.
-* **Production target** — architecture an application generated from this template may grow into.
-
-Development and AI-agent implementation rules live in `RULES.md`. Product behavior and business rules live in the documents under `doc/`.
-
----
+Development and AI-agent implementation rules live in `RULES.md`. Design
+patterns that remain generic live under `doc/design/`.
 
 ## 1. Source-of-truth boundaries
 
-Use repository documents for different concerns:
+- `ARCHITECTURE.md` defines code structure, dependency direction, state flow,
+  generation rules, and backend boundaries.
+- `RULES.md` defines implementation, review, validation, and AI-agent rules.
+- `doc/design/` contains reusable UI guidance only.
+- Existing implementation is evidence of current state, not authority for adding
+  product scope.
 
-* `ARCHITECTURE.md` — code structure, dependency direction, state flow, and backend boundaries.
-* `RULES.md` — development, implementation, review, and AI-agent standards.
-* `doc/Transport_Fleet_MVP_Blueprint.md` — product/business rules, calculations, financial states, security, and acceptance scenarios.
-* `doc/Transport_Fleet_MVP_Design_Brief.md` — screen behavior, wording, accessibility, and interaction details.
+Deleted product references under `doc/` are archived history, not active
+authority for this template. Do not restore or cite removed product documents as
+current requirements.
 
-Existing implementation is evidence of the current state, not authority for changing product requirements.
+When sources conflict, stop and resolve the conflict before changing behavior.
 
-When sources conflict, stop and resolve the conflict rather than silently changing one source to match another.
-
----
-
-## 2. Current template architecture
+## 2. Current runtime shape
 
 The template uses Flutter with Stacked MVVM.
-
-The current repository is intentionally small. It provides application bootstrap, shared foundations, a startup flow, and a minimal home/shell experience.
 
 The current runtime flow is:
 
@@ -41,7 +39,7 @@ main.dart
     |
 AppRoot
     |
-Stacked App registration
+Stacked app registration
     |
 StartupView
     |
@@ -50,7 +48,10 @@ StartupViewModel
 ShellView
 ```
 
-### Current application structure
+The current repository provides application bootstrap, shared foundations, a
+startup flow, and a minimal shell/home experience.
+
+## 3. Current application structure
 
 ```text
 lib/
@@ -83,246 +84,180 @@ lib/
 |   `-- startup/
 |       `-- ui/
 |           |-- viewmodels/
-|           `-- views/
+|           |-- views/
+|           `-- widgets/
 `-- shared/
+    |-- bottom_sheets/
+    |-- dialogs/
     `-- widgets/
 ```
 
-The exact contents of `core/`, `features/`, and `shared/` may grow as an application is built from the template. New code must follow the conventions in `RULES.md`.
+Supporting folders:
 
-### Current feature structure
+```text
+test/        Unit, widget, and bootstrap tests
+tool/        Template bootstrap tooling
+supabase/    Optional Supabase configuration boundary
+doc/design/  Generic design guidance
+```
 
-Generated features use:
+Feature folders may grow as a generated application adds real product
+requirements.
+
+## 4. Feature structure
+
+Features use a feature-first Stacked layout:
 
 ```text
 lib/features/<feature>/
-|-- data/                  Optional
+|-- data/                  Optional; only when the feature owns persistent data
 `-- ui/
     |-- viewmodels/
     |-- views/
     `-- widgets/           Optional
 ```
 
-The current `home` feature demonstrates the UI structure with views, view models, and feature-specific widgets.
+Do not add domain, use-case, or other layer folders merely to make a feature
+look more layered. No UseCase layer is required.
 
-`startup` is an intentional application-bootstrap exception. Its current structure is:
+`startup` is an application-bootstrap feature and may stay narrower than a
+fully built product feature.
 
-```text
-lib/features/startup/ui/
-|-- viewmodels/
-`-- views/
-```
+## 5. Dependency direction
 
-Do not add domain, use-case, or other layer folders merely to make the feature appear more layered.
-
----
-
-## 3. Dependency direction
-
-The architecture follows a dependency direction toward shared code and infrastructure boundaries.
+Dependencies point toward shared code and infrastructure boundaries:
 
 ```text
 Feature UI
     |
     v
-Feature data/repositories      Production applications
+Feature repositories/data       Only when persistent feature data exists
     |
     v
 Core infrastructure
 ```
 
-The current template does not contain a feature repository/data layer.
+Rules:
 
-When persistent business data is introduced, repositories become the data boundary between view models and backend or local data sources.
+- Code under `lib/core/` must not import `lib/features/`.
+- Feature UI code may depend on `lib/core/` and `lib/shared/`.
+- One feature must not import another feature's UI.
+- Shared presentation widgets belong under `lib/shared/widgets/`.
+- Cross-feature models belong in the owning feature or in `lib/core/models/`
+  only when they are genuinely shared.
 
-### Core dependency rule
+## 6. Presentation architecture
 
-Code under `lib/core/` must not import:
-
-* `lib/features/`
-* `lib/ui/`
-
-Feature UI code may depend on core code.
-
-One feature must not import another feature's UI.
-
-Cross-feature models or data code must follow the ownership rules defined in `RULES.md`.
-
----
-
-## 4. Presentation architecture
-
-### Views
-
-Views are responsible for:
-
-* rendering state;
-* forwarding user actions;
-* composing widgets;
-* connecting the screen to its Stacked view model.
+Views render state, compose widgets, and forward user actions to their
+ViewModels.
 
 Views must not:
 
-* access repositories directly;
-* access Supabase directly;
-* contain business rules;
-* own persistent application state.
+- access repositories directly;
+- access Supabase directly;
+- contain application business rules;
+- own persistent application state.
 
-### ViewModels
-
-ViewModels own:
-
-* screen state;
-* asynchronous orchestration;
-* user-action handling;
-* navigation requests;
-* interaction with repositories or shared services.
+ViewModels own screen state, asynchronous orchestration, user-action handling,
+navigation requests, and interaction with repositories or shared services.
 
 ViewModels must not hold `BuildContext`.
 
-New ViewModels must not access Supabase directly. Production applications use repositories as the data boundary.
+ViewModels must not call Supabase directly for feature data. When persistent
+feature data is added, repositories own backend access.
 
-### Services
+## 7. Services
 
-A shared reactive service is appropriate only when multiple features require the same live application state.
+Shared reactive services are appropriate only when multiple features require the
+same live application state.
 
-The template currently includes `ShellService` for shared shell/navigation state.
+The template currently includes `ShellService` for shared shell/navigation
+state.
 
 Do not create services simply to wrap one method or one repository call.
 
----
+## 8. Navigation and generated Stacked code
 
-## 5. Navigation and generated Stacked code
+`lib/app/app.dart` is the editable Stacked composition root. It defines
+registration for routes, services, repositories, bottom sheets, and dialogs.
 
-`lib/app/app.dart` is the editable Stacked composition root.
-
-It defines application registration such as:
-
-* routes;
-* services;
-* repositories;
-* bottom sheets;
-* dialogs.
-
-Generated Stacked files are outputs and must not receive manual edits.
-
-Relevant generated files include:
+Generated Stacked files are outputs and must not receive manual edits:
 
 ```text
 lib/app/app.router.dart
 lib/app/app.locator.dart
-lib/app/app.dialogs.dart
-lib/app/app.bottomsheets.dart
+lib/app/app.logger.dart
 ```
 
-When registration or route annotations change:
+Depending on registered Stacked features, generated dialog or bottom-sheet files
+may also exist.
+
+When registration or route annotations change, regenerate output:
 
 ```bash
 dart run build_runner build -d
 ```
 
-Generated changes are committed when their editable source changed.
+Generated changes are kept only when their editable source changed.
 
----
-
-## 6. Current core foundations
-
-The current template provides these shared foundations.
-
-### Configuration
+## 9. Core foundations
 
 `lib/core/config/`
 
-Compile-time or application configuration shared across the app.
-
-### Constants
+Compile-time and runtime configuration helpers.
 
 `lib/core/constants/`
 
 Application constants, asset paths, storage keys, and related static values.
 
-### Enums
-
 `lib/core/enums/`
 
-Shared enums and their wire/serialization helpers.
-
-### Errors and results
+Shared enums and wire/serialization helpers when the template or generated app
+needs them.
 
 `lib/core/errors/`
 
-The template provides typed failures and `Result<T>` primitives for applications that need explicit success/failure handling.
-
-### Formatters
+Typed failures and `Result<T>` primitives for explicit success/failure handling.
 
 `lib/core/formatters/`
 
-Shared formatting helpers for values such as dates and display text.
-
-### Forms and validators
+Shared formatting helpers for dates, times, and display text.
 
 `lib/core/forms/` and `lib/core/validators/`
 
-Reusable validation rules and form-level helpers.
-
-### Models
+Reusable form and validation helpers.
 
 `lib/core/models/`
 
 Shared models that do not have a clear single feature owner.
 
-Do not move every feature model into `core/`. Promote a model when it is genuinely shared or promotion removes a real dependency problem.
-
-### Network
-
 `lib/core/network/`
 
-Network/backend boundary helpers.
-
-The current `SupabaseGuard` provides fail-fast handling when Supabase configuration is unavailable and maps backend failures into application failures.
-
-The existence of this guard does not mean the template already contains a complete production repository layer.
-
-### Services
+Network/backend boundary helpers. The current `SupabaseGuard` handles missing
+Supabase configuration and maps backend failures into application failures.
 
 `lib/core/services/`
 
-Application-wide services that genuinely require shared lifecycle or state.
-
-### Storage
+Application-wide services with shared lifecycle or state.
 
 `lib/core/storage/`
 
-Local storage abstractions used by the template.
-
-### Theme
+Local storage abstractions.
 
 `lib/core/theme/`
 
 Application theme, colors, and UI helpers.
 
-### Validators
+## 10. Shared presentation
 
-Shared validation logic that does not belong to a single feature.
-
----
-
-## 7. Shared presentation
-
-Shared presentation code belongs outside feature folders.
-
-The current repository uses:
+Reusable presentation code lives under:
 
 ```text
 lib/shared/widgets/
 ```
 
-for reusable widgets such as:
-
-* loading indicators;
-* empty states;
-* shared iOS app bars;
-* pagination widgets.
+Current examples include app bars, buttons, form controls, loading indicators,
+empty states, and paginated list widgets.
 
 Feature-specific widgets remain under:
 
@@ -330,15 +265,19 @@ Feature-specific widgets remain under:
 lib/features/<feature>/ui/widgets/
 ```
 
-Do not duplicate a shared widget inside a feature when the widget has no feature-specific responsibility.
+Do not duplicate a shared widget inside a feature when the widget has no
+feature-specific responsibility.
 
----
+## 11. Current data and backend boundary
 
-## 8. Current data and backend boundary
+The template currently has no production repository/data layer and no domain
+schema.
 
-The template contains Supabase configuration and a guard, but it does not currently contain the production application's full repository/data architecture.
+Supabase is retained as an optional infrastructure/auth/backend choice. The
+presence of `supabase/config.toml` and `SupabaseGuard` does not mean the
+template contains active product migrations or a complete backend.
 
-The intended production flow is:
+When a generated application introduces persistent feature data, use this flow:
 
 ```text
 View
@@ -347,150 +286,48 @@ ViewModel
   |
 Repository
   |
-Supabase / local read-only cache
+Supabase SDK or another approved data source
   |
-PostgreSQL + RLS
+Application-specific backend schema and policies
 ```
 
 Repositories should:
 
-* own backend data access;
-* map backend rows into application models;
-* return `Result<T>` where the operation is fallible;
-* prevent backend exceptions from crossing the repository boundary;
-* never import UI code.
+- own backend data access;
+- map backend rows into application models;
+- return `Result<T>` where the operation is fallible;
+- prevent backend exceptions from crossing the repository boundary;
+- never import UI code.
 
-ViewModels should consume repositories rather than calling Supabase directly.
+ViewModels consume repositories rather than calling backend SDKs directly for
+feature data.
 
-No UseCase layer is required.
+## 12. Supabase and database authority
 
----
+Supabase may be used by applications generated from this template for auth,
+database, storage, functions, and local development.
 
-## 9. Production Supabase target
+Current template state:
 
-Applications generated from this template may use Supabase as their production backend.
+- no domain schema;
+- no active product migrations;
+- no production feature repositories;
+- no application-specific RLS policy set;
+- no server-side business functions.
 
-The target architecture is:
+PostgreSQL schemas, RLS, authorization, privileged functions, and transactional
+rules become application-specific once a generated app introduces persistent
+domain data.
 
-```text
-Flutter
-  |
-Feature ViewModel
-  |
-Feature Repository
-  |
-Supabase SDK
-  |
-PostgreSQL + RLS
-```
+Server-side authority applies to application-specific financial, security, and
+data-integrity rules. It does not imply nonexistent template features.
 
-### Authentication
-
-Supabase Auth handles application authentication and session management.
-
-### Tenant isolation
-
-Multi-tenant applications must enforce tenant isolation using PostgreSQL Row Level Security.
-
-Client-side permission checks are UX only and are never the security boundary.
-
-### Database authority
-
-PostgreSQL owns authoritative:
-
-* financial state;
-* document numbering;
-* balances;
-* permissions;
-* immutable issued-document state;
-* transactional state changes.
-
-The Flutter client must not independently assign authoritative financial numbers or bypass server-side invariants.
-
-### Privileged operations
-
-Sensitive operations should use the smallest appropriate server-side boundary:
-
-* PostgreSQL functions for transactional database operations;
-* Supabase Edge Functions only when privileged server-side application logic is required.
-
-Service-role credentials must never be embedded in the Flutter application.
-
----
-
-## 10. Production data architecture
-
-When an application grows beyond the template's demonstration layer, feature data should follow:
-
-```text
-lib/features/<feature>/
-|-- data/
-|   |-- <model>_extension.dart
-|   `-- <repository>.dart
-`-- ui/
-    |-- viewmodels/
-    |-- views/
-    `-- widgets/
-```
-
-Repositories own query and persistence logic.
-
-Models remain pure when possible.
-
-Row mapping belongs in feature data extensions when the database representation differs from the application model.
-
-Do not introduce a DTO/entity/mapper stack without a real shape or boundary problem.
-
-Do not introduce a UseCase layer merely to add another abstraction.
-
----
-
-## 11. Production financial architecture
-
-Financial applications require server-owned truth.
-
-Production systems should ensure:
-
-* authoritative amounts use PostgreSQL `numeric`;
-* document numbers are assigned by PostgreSQL;
-* financial state transitions execute transactionally;
-* issued documents are immutable;
-* corrections use void-and-reissue workflows;
-* permissions are enforced by RLS and server-side functions;
-* balances are derived from authoritative persisted state;
-* audit records exist for material financial state transitions.
-
-Flutter may perform UI validation and display calculations, but it must not become the final authority for financial state.
-
----
-
-## 12. Offline and local storage target
-
-The template does not currently provide a full offline database.
-
-If an application requires offline support, follow the product-approved scope.
-
-The preferred initial target is read-only caching:
-
-```text
-Supabase
-    |
-Repository
-    |
-Read-only local cache
-    |
-ViewModel
-```
-
-Offline writes should not be introduced without explicit product and architectural approval.
-
-Do not add a local database merely because the application may need one in the future.
-
----
+Service-role credentials and backend secrets must never be embedded in Flutter
+code, assets, logs, tests, screenshots, or committed environment files.
 
 ## 13. Testing architecture
 
-The template currently contains focused unit and widget tests covering its implemented foundations and UI.
+The template contains focused tests for implemented foundations and UI.
 
 Tests live under:
 
@@ -501,61 +338,21 @@ test/shared/
 test/tool/
 ```
 
-Production applications should expand testing according to the boundaries they introduce.
+Generated applications should expand tests according to the boundaries they add.
 
-### Core tests
+Core tests cover result handling, failures, formatting, validation, storage
+behavior, network guards, services, and shared models.
 
-Test:
+ViewModel tests cover state transitions, orchestration, navigation requests,
+service interactions, and repository outcomes.
 
-* result handling;
-* failures;
-* formatting;
-* validation;
-* storage behavior;
-* network guards;
-* shared models.
+Widget tests cover rendering, user interaction, important states, and reusable
+widgets.
 
-### ViewModel tests
+Repository tests become relevant when repositories exist. They should cover row
+mapping, typed failures, persistence behavior, and authorization boundaries.
 
-Test:
-
-* state transitions;
-* orchestration;
-* navigation requests;
-* service interactions;
-* repository outcomes.
-
-### Widget tests
-
-Test:
-
-* rendering;
-* user interaction;
-* important states;
-* reusable widgets.
-
-### Repository tests
-
-When repositories exist, test:
-
-* row mapping;
-* typed failures;
-* persistence behavior;
-* tenant behavior;
-* important query boundaries.
-
-### Backend tests
-
-Supabase applications should test:
-
-* RLS;
-* tenant isolation;
-* privileged functions;
-* financial invariants;
-* document numbering;
-* immutable issued state.
-
----
+Backend tests become application-specific when a backend schema exists.
 
 ## 14. Architecture decisions
 
@@ -563,7 +360,8 @@ Supabase applications should test:
 
 Use feature-first folders with Stacked views and view models.
 
-This keeps screen ownership clear while allowing shared infrastructure under `core/` and shared presentation outside features.
+This keeps screen ownership clear while allowing shared infrastructure under
+`core/` and shared presentation under `shared/`.
 
 ### ADR-2: No mandatory UseCase layer
 
@@ -571,64 +369,53 @@ ViewModels may call repositories directly.
 
 Do not add pass-through UseCases.
 
-Introduce another application layer only when a real architectural boundary requires it.
+Introduce another application layer only when a real architectural boundary
+requires it.
 
-### ADR-3: Repositories are the production data boundary
+### ADR-3: Repositories are the persistent data boundary
 
-When persistent backend data exists, repositories isolate the UI from backend implementation details.
+When persistent feature data exists, repositories isolate UI code from backend
+implementation details.
 
-The starter template does not require repositories until a feature actually owns persistent data.
+The starter template does not require repositories until a feature actually owns
+persistent data.
 
-### ADR-4: Server-owned financial truth
+### ADR-4: Supabase remains optional infrastructure
 
-For financial applications, the server owns authoritative numbering, balances, permissions, state transitions, and immutable document state.
+Supabase is an available auth/backend option, not proof that the template has a
+domain schema or active product backend.
 
 ### ADR-5: No custom API server by default
 
-Supabase provides the backend boundary for applications using Supabase.
-
-Add a custom API server only when an explicit product or infrastructure requirement justifies it.
+For applications using Supabase, prefer Supabase's backend boundary unless an
+explicit product or infrastructure requirement justifies a custom server.
 
 ### ADR-6: Generated Stacked files remain generated
 
-Registration sources are edited manually; generated route and locator files are regenerated.
+Registration sources are edited manually; generated route and locator files are
+regenerated.
 
 Never place custom logic in generated files.
-
----
 
 ## 15. Current template limitations
 
 The current repository intentionally does not claim to contain:
 
-* a complete authentication feature;
-* a production repository layer;
-* a complete business domain;
-* production financial workflows;
-* a production reporting system;
-* a production PDF/document system;
-* production offline synchronization;
-* complete tenant/business functionality.
+- a complete authentication product flow;
+- a production repository layer;
+- a business domain;
+- product database migrations;
+- production reporting;
+- production document generation;
+- production offline synchronization;
+- product-specific security, financial, or compliance rules.
 
-The supporting MVP documents describe a transport-fleet product target. They are product references, not evidence that those features already exist in this reusable template.
-
----
+Those concerns belong to applications generated from the template.
 
 ## 16. Reference files
 
 Core architectural references:
 
-* `RULES.md` — development and AI-agent standards.
-* `lib/app/app.dart` — Stacked composition root.
-* `lib/main.dart` — application bootstrap.
-* `tool/bootstrap.dart` — application identity/bootstrap transformation.
-* `supabase/` — backend configuration and future/application database boundary.
-* `test/` — current automated tests.
-
-Product references:
-
-* `doc/Transport_Fleet_MVP_Blueprint.md`
-* `doc/Transport_Fleet_MVP_Design_Brief.md`
-* `doc/Transport_Fleet_MVP_Flow.svg`
-
-The reusable template identity is established by `tool/bootstrap.dart`; product-specific identity must not be hard-coded into the template.
+- `README.md`
+- `RULES.md`
+- `doc/design/ios_polish_pattern.md`
