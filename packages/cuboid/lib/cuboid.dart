@@ -30,3 +30,10 @@ export 'src/feature/create_feature.dart'
         CreateFeaturePlan,
         CreateFeatureResult,
         CreateFeatureService;
+export 'src/route/register_route.dart'
+    show
+        RegisterRouteException,
+        RegisterRouteInput,
+        RegisterRoutePlan,
+        RegisterRouteResult,
+        RegisterRouteService;
