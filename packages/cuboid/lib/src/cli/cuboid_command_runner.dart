@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
 import 'package:cuboid/src/create/create_project.dart';
+import 'package:cuboid/src/feature/create_feature.dart';
 
 const cuboidVersion = '0.1.0';
 
@@ -11,9 +12,11 @@ class CuboidCommandRunner extends CommandRunner<int> {
     IOSink? stdout,
     IOSink? stderr,
     CreateProjectService? createProjectService,
+    CreateFeatureService? createFeatureService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
+       _createFeatureService = createFeatureService ?? CreateFeatureService(),
        super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
     argParser.addFlag(
       'version',
@@ -27,11 +30,19 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createProjectService: _createProjectService,
       ),
     );
+    addCommand(
+      FeatureCommand(
+        stdout: _stdout,
+        stderr: _stderr,
+        createFeatureService: _createFeatureService,
+      ),
+    );
   }
 
   final IOSink _stdout;
   final IOSink _stderr;
   final CreateProjectService _createProjectService;
+  final CreateFeatureService _createFeatureService;
 
   @override
   Future<int?> run(Iterable<String> args) async {
@@ -150,6 +161,71 @@ class CreateCommand extends Command<int> {
       }
     }
     _stdout.writeln('Done.');
+  }
+}
+
+class FeatureCommand extends Command<int> {
+  FeatureCommand({
+    IOSink? stdout,
+    IOSink? stderr,
+    CreateFeatureService? createFeatureService,
+  }) : _stdout = stdout ?? ioStdout,
+       _stderr = stderr ?? ioStderr,
+       _createFeatureService = createFeatureService ?? CreateFeatureService() {
+    argParser.addFlag(
+      'dry-run',
+      negatable: false,
+      help: 'Print the feature creation plan without writing files.',
+    );
+  }
+
+  final IOSink _stdout;
+  final IOSink _stderr;
+  final CreateFeatureService _createFeatureService;
+
+  @override
+  String get name => 'feature';
+
+  @override
+  String get description => 'Create a new Cuboid feature scaffold.';
+
+  @override
+  String get invocation => 'cuboid feature [options] <name>';
+
+  @override
+  Future<int> run() async {
+    final rest = argResults!.rest;
+    if (rest.length != 1) {
+      throw UsageException('Expected a feature name.', usage);
+    }
+
+    final input = CreateFeatureInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _createFeatureService.create(input);
+      _writeResult(result);
+      return 0;
+    } on CreateFeatureException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  void _writeResult(CreateFeatureResult result) {
+    final plan = result.plan;
+    if (plan.dryRun) {
+      _stdout.writeln('Dry run: no files were written.');
+      _stdout.writeln('Feature: ${plan.displayName}');
+    } else {
+      _stdout.writeln('Created feature ${plan.displayName}.');
+    }
+    _stdout.writeln('Files:');
+    for (final file in plan.files) {
+      _stdout.writeln('- $file');
+    }
   }
 }
 

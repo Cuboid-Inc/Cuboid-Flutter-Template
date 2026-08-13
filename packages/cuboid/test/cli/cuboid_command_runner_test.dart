@@ -12,6 +12,7 @@ void main() {
 
     expect(runner.executableName, 'cuboid');
     expect(runner.commands, contains('create'));
+    expect(runner.commands, contains('feature'));
   });
 
   test('--help works', () async {
@@ -24,6 +25,7 @@ void main() {
       contains('Command-line tools for Cuboid Flutter projects.'),
     );
     expect(output.content, contains('create'));
+    expect(output.content, contains('feature'));
   });
 
   test('--version works', () async {
@@ -39,6 +41,16 @@ void main() {
 
     expect(runner.commands['create'], isA<CreateCommand>());
     expect(runner.commands['create']!.description, contains('Create a new'));
+  });
+
+  test('feature command is registered', () async {
+    final runner = CuboidCommandRunner(stdout: _memorySink());
+
+    expect(runner.commands['feature'], isA<FeatureCommand>());
+    expect(
+      runner.commands['feature']!.description,
+      contains('Create a new Cuboid feature'),
+    );
   });
 
   test(
@@ -86,6 +98,50 @@ void main() {
       errorOutput.content,
       contains('Expected a display name and package identifier.'),
     );
+  });
+
+  test('feature dry-run reports planned files without writing files', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    File('${temp.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['feature', 'auth', '--dry-run'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Feature: Auth'));
+    expect(
+      output.content,
+      contains('- lib/features/auth/ui/views/auth_view.dart'),
+    );
+    expect(
+      output.content,
+      contains('- lib/features/auth/ui/viewmodels/auth_viewmodel.dart'),
+    );
+    expect(errorOutput.content, isEmpty);
+    expect(Directory('${temp.path}/lib/features/auth').existsSync(), isFalse);
+  });
+
+  test('feature validates required positional arguments', () async {
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['feature'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(errorOutput.content, contains('Expected a feature name.'));
   });
 
   test('runner can use an injected create service', () async {

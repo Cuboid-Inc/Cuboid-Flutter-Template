@@ -23,3 +23,10 @@ export 'src/create/create_project.dart'
         CreateProjectService,
         PostStep,
         PostStepResult;
+export 'src/feature/create_feature.dart'
+    show
+        CreateFeatureException,
+        CreateFeatureInput,
+        CreateFeaturePlan,
+        CreateFeatureResult,
+        CreateFeatureService;
