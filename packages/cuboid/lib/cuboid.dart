@@ -37,3 +37,11 @@ export 'src/route/register_route.dart'
         RegisterRoutePlan,
         RegisterRouteResult,
         RegisterRouteService;
+export 'src/view/create_view.dart'
+    show
+        CreateViewException,
+        CreateViewInput,
+        CreateViewPlan,
+        CreateViewResult,
+        CreateViewService,
+        ViewFileWriter;

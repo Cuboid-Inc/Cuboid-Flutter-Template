@@ -14,6 +14,7 @@ void main() {
     expect(runner.commands, contains('create'));
     expect(runner.commands, contains('feature'));
     expect(runner.commands, contains('route'));
+    expect(runner.commands, contains('view'));
   });
 
   test('--help works', () async {
@@ -28,6 +29,7 @@ void main() {
     expect(output.content, contains('create'));
     expect(output.content, contains('feature'));
     expect(output.content, contains('route'));
+    expect(output.content, contains('view'));
   });
 
   test('--version works', () async {
@@ -62,6 +64,16 @@ void main() {
     expect(
       runner.commands['route']!.description,
       contains('Register an existing feature View'),
+    );
+  });
+
+  test('view command is registered', () async {
+    final runner = CuboidCommandRunner(stdout: _memorySink());
+
+    expect(runner.commands['view'], isA<ViewCommand>());
+    expect(
+      runner.commands['view']!.description,
+      contains('Create an additional Stacked View'),
     );
   });
 
@@ -259,6 +271,121 @@ void main() {
     );
   });
 
+  test('view dry-run reports planned files without writing', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeViewProject(temp, 'auth');
+    final beforeFiles = _relativeFiles(temp);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['view', 'auth', 'forgot-password', '--dry-run'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('View: Forgot Password'));
+    expect(output.content, contains('Feature: auth'));
+    expect(
+      output.content,
+      contains('- lib/features/auth/ui/views/forgot_password_view.dart'),
+    );
+    expect(
+      output.content,
+      contains(
+        '- lib/features/auth/ui/viewmodels/forgot_password_viewmodel.dart',
+      ),
+    );
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('view command creates an additional feature View', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeViewProject(temp, 'auth');
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['view', 'auth', 'forgot-password'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Created view Forgot Password.'));
+    expect(errorOutput.content, isEmpty);
+    final view = File(
+      '${temp.path}/lib/features/auth/ui/views/forgot_password_view.dart',
+    ).readAsStringSync();
+    final viewModel = File(
+      '${temp.path}/lib/features/auth/ui/viewmodels/forgot_password_viewmodel.dart',
+    ).readAsStringSync();
+    expect(
+      view,
+      contains(
+        "import 'package:my_app/features/auth/ui/viewmodels/forgot_password_viewmodel.dart';",
+      ),
+    );
+    expect(
+      view,
+      contains(
+        'class ForgotPasswordView extends StackedView<ForgotPasswordViewModel>',
+      ),
+    );
+    expect(
+      viewModel,
+      contains('class ForgotPasswordViewModel extends BaseViewModel {}'),
+    );
+  });
+
+  test('view validates required positional arguments', () async {
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['view', 'auth'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Expected a feature name and view name.'),
+    );
+  });
+
+  test('view service failures return non-zero and write stderr', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    File('${temp.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
+    Directory.current = temp;
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['view', 'auth', 'login'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 1);
+    expect(errorOutput.content, contains('lib/features/auth was not found.'));
+  });
+
   test('runner can use an injected create service', () async {
     final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
     addTearDown(() => temp.deleteSync(recursive: true));
@@ -336,6 +463,23 @@ class App {}
     )
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('class View {}\n');
+}
+
+void _writeViewProject(Directory root, String featureName) {
+  File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
+  Directory(
+    '${root.path}/lib/features/$featureName',
+  ).createSync(recursive: true);
+}
+
+List<String> _relativeFiles(Directory root) {
+  return root
+      .listSync(recursive: true, followLinks: false)
+      .whereType<File>()
+      .map((file) => file.path.substring(root.path.length + 1))
+      .map((path) => path.replaceAll(Platform.pathSeparator, '/'))
+      .toList()
+    ..sort();
 }
 
 class _MemorySink implements IOSink {
