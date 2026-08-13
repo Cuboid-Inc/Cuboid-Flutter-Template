@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
 
+typedef FeatureFileWriter = void Function(File file, String contents);
+
 class CreateFeatureInput {
   const CreateFeatureInput({
     required this.name,
@@ -52,6 +54,12 @@ class CreateFeatureException implements Exception {
 }
 
 class CreateFeatureService {
+  CreateFeatureService({FeatureFileWriter? fileWriter})
+    : _fileWriter =
+          fileWriter ?? ((file, contents) => file.writeAsStringSync(contents));
+
+  final FeatureFileWriter _fileWriter;
+
   Future<CreateFeaturePlan> plan(CreateFeatureInput input) async {
     final featureName = _normalizeFeatureName(input.name);
     final words = featureName.split('_');
@@ -87,23 +95,38 @@ class CreateFeatureService {
     }
 
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
-    final viewFile = File(
-      '${projectRoot.path}${Platform.pathSeparator}'
-      '${createPlan.files[0].replaceAll('/', Platform.pathSeparator)}',
-    );
-    final viewModelFile = File(
-      '${projectRoot.path}${Platform.pathSeparator}'
-      '${createPlan.files[1].replaceAll('/', Platform.pathSeparator)}',
-    );
+    final stagedFiles = <_StagedFeatureFile>[
+      _StagedFeatureFile(
+        file: _targetFile(projectRoot, createPlan.files[0]),
+        contents: _viewContents(createPlan),
+      ),
+      _StagedFeatureFile(
+        file: _targetFile(projectRoot, createPlan.files[1]),
+        contents: _viewModelContents(createPlan),
+      ),
+    ];
+    final createdFiles = <File>[];
+    final createdDirectories = <Directory>[];
 
     try {
-      viewFile.parent.createSync(recursive: true);
-      viewModelFile.parent.createSync(recursive: true);
-      viewFile.writeAsStringSync(_viewContents(createPlan));
-      viewModelFile.writeAsStringSync(_viewModelContents(createPlan));
+      for (final stagedFile in stagedFiles) {
+        _createParentDirectories(
+          projectRoot,
+          stagedFile.file.parent,
+          createdDirectories,
+        );
+        _fileWriter(stagedFile.file, stagedFile.contents);
+        createdFiles.add(stagedFile.file);
+      }
     } on FileSystemException catch (error) {
+      _rollback(createdFiles, createdDirectories);
       throw CreateFeatureException(
         'Unable to create feature ${createPlan.displayName}: ${error.message}',
+      );
+    } catch (error) {
+      _rollback(createdFiles, createdDirectories);
+      throw CreateFeatureException(
+        'Unable to create feature ${createPlan.displayName}: $error',
       );
     }
 
@@ -112,6 +135,8 @@ class CreateFeatureService {
 }
 
 void _validateTargets(CreateFeaturePlan plan) {
+  _validateNoAncestorSymlinks(plan.featureDirectory);
+
   if (plan.featureDirectory.existsSync() ||
       File(plan.featureDirectory.path).existsSync() ||
       Link(plan.featureDirectory.path).existsSync()) {
@@ -122,15 +147,80 @@ void _validateTargets(CreateFeaturePlan plan) {
 
   final projectRoot = plan.featureDirectory.parent.parent.parent;
   for (final path in plan.files) {
-    final target =
-        '${projectRoot.path}${Platform.pathSeparator}'
-        '${path.replaceAll('/', Platform.pathSeparator)}';
+    final target = _targetFile(projectRoot, path).path;
     if (File(target).existsSync() ||
         Directory(target).existsSync() ||
         Link(target).existsSync()) {
       throw CreateFeatureException('Target already exists: $path');
     }
   }
+}
+
+void _validateNoAncestorSymlinks(Directory featureDirectory) {
+  final projectRoot = featureDirectory.parent.parent.parent;
+  final lib = Directory('${projectRoot.path}${Platform.pathSeparator}lib');
+  final features = Directory('${lib.path}${Platform.pathSeparator}features');
+  for (final directory in [lib, features]) {
+    if (Link(directory.path).existsSync()) {
+      throw CreateFeatureException(
+        'Refusing to create feature through a symlink: '
+        '${_relativePath(projectRoot, directory.path)}',
+      );
+    }
+  }
+}
+
+File _targetFile(Directory projectRoot, String path) {
+  return File(
+    '${projectRoot.path}${Platform.pathSeparator}'
+    '${path.replaceAll('/', Platform.pathSeparator)}',
+  );
+}
+
+void _createParentDirectories(
+  Directory projectRoot,
+  Directory targetDirectory,
+  List<Directory> createdDirectories,
+) {
+  final missing = <Directory>[];
+  var current = targetDirectory;
+  while (current.path != projectRoot.path && !current.existsSync()) {
+    missing.add(current);
+    current = current.parent;
+  }
+
+  targetDirectory.createSync(recursive: true);
+  createdDirectories.addAll(missing);
+}
+
+void _rollback(List<File> createdFiles, List<Directory> createdDirectories) {
+  for (final file in createdFiles.reversed) {
+    try {
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+    } on FileSystemException {
+      // Best-effort cleanup; preserve the original creation failure.
+    }
+  }
+
+  final directories = createdDirectories.toSet().toList()
+    ..sort((a, b) => b.path.length.compareTo(a.path.length));
+  for (final directory in directories) {
+    try {
+      if (directory.existsSync() && directory.listSync().isEmpty) {
+        directory.deleteSync();
+      }
+    } on FileSystemException {
+      // Best-effort cleanup; preserve the original creation failure.
+    }
+  }
+}
+
+String _relativePath(Directory root, String path) {
+  return path
+      .substring(root.path.length + 1)
+      .replaceAll(Platform.pathSeparator, '/');
 }
 
 String _readPackageName(Directory projectRoot) {
@@ -241,4 +331,11 @@ import 'package:stacked/stacked.dart';
 
 class ${plan.viewModelClassName} extends BaseViewModel {}
 ''';
+}
+
+class _StagedFeatureFile {
+  const _StagedFeatureFile({required this.file, required this.contents});
+
+  final File file;
+  final String contents;
 }

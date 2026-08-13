@@ -47,6 +47,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         stdout: _stdout,
         stderr: _stderr,
         createProjectService: _createProjectService,
+        createFeatureService: _createFeatureService,
       ),
     );
     addCommand(
@@ -107,9 +108,11 @@ class CreateCommand extends Command<int> {
     IOSink? stdout,
     IOSink? stderr,
     CreateProjectService? createProjectService,
+    CreateFeatureService? createFeatureService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
-       _createProjectService = createProjectService ?? CreateProjectService() {
+       _createProjectService = createProjectService ?? CreateProjectService(),
+       _createFeatureService = createFeatureService ?? CreateFeatureService() {
     argParser
       ..addOption(
         'output-dir',
@@ -135,6 +138,7 @@ class CreateCommand extends Command<int> {
   final IOSink _stdout;
   final IOSink _stderr;
   final CreateProjectService _createProjectService;
+  final CreateFeatureService _createFeatureService;
 
   @override
   String get name => 'create';
@@ -149,10 +153,10 @@ class CreateCommand extends Command<int> {
   @override
   String get usageFooter =>
       'Canonical namespace: cuboid create <artifact> [arguments] [options]\n'
-      'Known artifact categories for future implementation: '
+      'Implemented artifact commands: cuboid create feature <name>.\n'
+      'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
-      'Phase 10 registers the namespace only; artifact commands are not yet '
-      'implemented.';
+      'other artifact commands are not yet implemented.';
 
   @override
   void printUsage() {
@@ -165,6 +169,9 @@ class CreateCommand extends Command<int> {
     if (rest.isNotEmpty) {
       final artifact = rest.first;
       if (_knownCreateArtifacts.contains(artifact)) {
+        if (artifact == 'feature') {
+          return _runCreateFeature(rest.skip(1).toList());
+        }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
       }
@@ -201,6 +208,26 @@ class CreateCommand extends Command<int> {
       _stderr.writeln(error.message);
       return 64;
     } on CreateProjectException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runCreateFeature(List<String> rest) async {
+    if (rest.length != 1) {
+      throw UsageException('Expected a feature name.', usage);
+    }
+
+    final input = CreateFeatureInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _createFeatureService.create(input);
+      writeFeatureResult(_stdout, result);
+      return 0;
+    } on CreateFeatureException catch (error) {
       _stderr.writeln(error.message);
       return 1;
     }
@@ -280,26 +307,26 @@ class FeatureCommand extends Command<int> {
 
     try {
       final result = await _createFeatureService.create(input);
-      _writeResult(result);
+      writeFeatureResult(_stdout, result);
       return 0;
     } on CreateFeatureException catch (error) {
       _stderr.writeln(error.message);
       return 1;
     }
   }
+}
 
-  void _writeResult(CreateFeatureResult result) {
-    final plan = result.plan;
-    if (plan.dryRun) {
-      _stdout.writeln('Dry run: no files were written.');
-      _stdout.writeln('Feature: ${plan.displayName}');
-    } else {
-      _stdout.writeln('Created feature ${plan.displayName}.');
-    }
-    _stdout.writeln('Files:');
-    for (final file in plan.files) {
-      _stdout.writeln('- $file');
-    }
+void writeFeatureResult(IOSink stdout, CreateFeatureResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Feature: ${plan.displayName}');
+  } else {
+    stdout.writeln('Created feature ${plan.displayName}.');
+  }
+  stdout.writeln('Files:');
+  for (final file in plan.files) {
+    stdout.writeln('- $file');
   }
 }
 

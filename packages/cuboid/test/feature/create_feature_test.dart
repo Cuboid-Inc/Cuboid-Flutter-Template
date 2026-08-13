@@ -239,6 +239,35 @@ void main() {
       ]);
     },
   );
+
+  test('rolls back generated files when a later write fails', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    var writes = 0;
+    final service = CreateFeatureService(
+      fileWriter: (file, contents) {
+        writes += 1;
+        if (writes == 2) {
+          throw const FileSystemException('simulated write failure');
+        }
+        file.writeAsStringSync(contents);
+      },
+    );
+
+    await expectLater(
+      service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
+      throwsA(
+        isA<CreateFeatureException>().having(
+          (error) => error.message,
+          'message',
+          contains('Unable to create feature Auth'),
+        ),
+      ),
+    );
+
+    expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
+    expect(_relativeFiles(root), ['pubspec.yaml']);
+  });
 }
 
 Directory _projectRoot({String pubspec = 'name: test_app\n'}) {

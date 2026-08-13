@@ -181,14 +181,197 @@ void main() {
       expect(output.content, contains('app, service, feature'));
       expect(
         output.content,
-        contains('artifact commands are not yet implemented'),
+        contains('other artifact commands are not yet implemented'),
       );
-      expect(output.content, isNot(contains('cuboid create feature <name>')));
+      expect(output.content, contains('cuboid create feature <name>'));
       expect(output.content, isNot(contains('cuboid create service <name>')));
     },
   );
 
-  for (final artifact in _knownCreateArtifacts) {
+  test(
+    'create feature command creates the canonical feature scaffold',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeFeatureProject(temp);
+      final beforeApp = File(
+        '${temp.path}/lib/app/app.dart',
+      ).readAsStringSync();
+      final beforePubspec = File(
+        '${temp.path}/pubspec.yaml',
+      ).readAsStringSync();
+      Directory.current = temp;
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        ['create', 'feature', 'auth'],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Created feature Auth.'));
+      expect(errorOutput.content, isEmpty);
+      expect(
+        File(
+          '${temp.path}/lib/features/auth/ui/views/auth_view.dart',
+        ).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(
+          '${temp.path}/lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
+        ).existsSync(),
+        isTrue,
+      );
+      expect(
+        File('${temp.path}/lib/app/app.dart').readAsStringSync(),
+        beforeApp,
+      );
+      expect(
+        File('${temp.path}/pubspec.yaml').readAsStringSync(),
+        beforePubspec,
+      );
+      expect(_relativeFiles(temp), [
+        'lib/app/app.dart',
+        'lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
+        'lib/features/auth/ui/views/auth_view.dart',
+        'pubspec.yaml',
+      ]);
+    },
+  );
+
+  test('create feature normalizes names and uses package imports', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeFeatureProject(temp, pubspec: "name: 'custom_app' # comment\n");
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'feature', 'user-profile'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(errorOutput.content, isEmpty);
+    final view = File(
+      '${temp.path}/lib/features/user_profile/ui/views/user_profile_view.dart',
+    ).readAsStringSync();
+    final viewModel = File(
+      '${temp.path}/lib/features/user_profile/ui/viewmodels/user_profile_viewmodel.dart',
+    ).readAsStringSync();
+    expect(
+      view,
+      contains(
+        "import 'package:custom_app/features/user_profile/ui/viewmodels/user_profile_viewmodel.dart';",
+      ),
+    );
+    expect(
+      view,
+      contains(
+        'class UserProfileView extends StackedView<UserProfileViewModel>',
+      ),
+    );
+    expect(
+      viewModel,
+      contains('class UserProfileViewModel extends BaseViewModel {}'),
+    );
+  });
+
+  test('create feature dry-run reports the plan and writes nothing', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeFeatureProject(temp);
+    final beforeFiles = _relativeFiles(temp);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'feature', 'auth', '--dry-run'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Feature: Auth'));
+    expect(
+      output.content,
+      contains('- lib/features/auth/ui/views/auth_view.dart'),
+    );
+    expect(
+      output.content,
+      contains('- lib/features/auth/ui/viewmodels/auth_viewmodel.dart'),
+    );
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create feature validates positional argument count', () async {
+    final errorOutput = _memorySink();
+
+    expect(
+      await runCuboid(
+        ['create', 'feature'],
+        stdout: _memorySink(),
+        stderr: errorOutput,
+      ),
+      64,
+    );
+    expect(errorOutput.content, contains('Expected a feature name.'));
+
+    final extraErrorOutput = _memorySink();
+    expect(
+      await runCuboid(
+        ['create', 'feature', 'auth', 'extra'],
+        stdout: _memorySink(),
+        stderr: extraErrorOutput,
+      ),
+      64,
+    );
+    expect(extraErrorOutput.content, contains('Expected a feature name.'));
+  });
+
+  test('create feature returns generation failure for invalid names', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeFeatureProject(temp);
+    Directory.current = temp;
+
+    for (final name in ['', '   ', '2fa', '_auth', 'user profile', 'class']) {
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        ['create', 'feature', name],
+        stdout: _memorySink(),
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 1, reason: name);
+      expect(errorOutput.content, isNotEmpty, reason: name);
+    }
+  });
+
+  for (final artifact in _knownCreateArtifacts.where(
+    (name) => name != 'feature',
+  )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
       final previousCurrent = Directory.current;
@@ -258,7 +441,7 @@ void main() {
     final output = _memorySink();
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['create', 'feature', 'auth', 'extra'],
+      ['create', 'service', 'auth', 'extra'],
       stdout: output,
       stderr: errorOutput,
     );
@@ -267,7 +450,7 @@ void main() {
     expect(output.content, isEmpty);
     expect(
       errorOutput.content,
-      contains('cuboid create feature is not implemented yet.'),
+      contains('cuboid create service is not implemented yet.'),
     );
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -284,7 +467,7 @@ void main() {
     final output = _memorySink();
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['create', '--dry-run', 'feature', 'auth'],
+      ['create', '--dry-run', 'service', 'auth'],
       stdout: output,
       stderr: errorOutput,
     );
@@ -293,7 +476,7 @@ void main() {
     expect(output.content, isEmpty);
     expect(
       errorOutput.content,
-      contains('cuboid create feature is not implemented yet.'),
+      contains('cuboid create service is not implemented yet.'),
     );
     expect(errorOutput.content, isNot(contains('Destination:')));
     expect(_relativeFiles(temp), beforeFiles);
@@ -809,6 +992,14 @@ void _writeViewProject(Directory root, String featureName) {
   Directory(
     '${root.path}/lib/features/$featureName',
   ).createSync(recursive: true);
+}
+
+void _writeFeatureProject(Directory root, {String pubspec = 'name: my_app\n'}) {
+  File('${root.path}/pubspec.yaml').writeAsStringSync(pubspec);
+  File('${root.path}/lib/app/app.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('app registration\n');
+  Directory('${root.path}/lib/features').createSync(recursive: true);
 }
 
 void _writeServiceProject(Directory root, String serviceName) {
