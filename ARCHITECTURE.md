@@ -65,7 +65,6 @@ lib/
 |-- core/
 |   |-- config/
 |   |-- constants/
-|   |-- enums/
 |   |-- errors/
 |   |-- formatters/
 |   |-- forms/
@@ -79,16 +78,12 @@ lib/
 |   |-- home/
 |   |   `-- ui/
 |   |       |-- viewmodels/
-|   |       |-- views/
-|   |       `-- widgets/
+|   |       `-- views/
 |   `-- startup/
 |       `-- ui/
 |           |-- viewmodels/
-|           |-- views/
-|           `-- widgets/
+|           `-- views/
 `-- shared/
-    |-- bottom_sheets/
-    |-- dialogs/
     `-- widgets/
 ```
 
@@ -192,6 +187,10 @@ lib/app/app.logger.dart
 Depending on registered Stacked features, generated dialog or bottom-sheet files
 may also exist.
 
+Optional Stacked registration folders such as `lib/shared/dialogs/` and
+`lib/shared/bottom_sheets/` should be added only when the generated application
+registers dialogs or bottom sheets.
+
 When registration or route annotations change, regenerate output:
 
 ```bash
@@ -210,7 +209,7 @@ Compile-time and runtime configuration helpers.
 
 Application constants, asset paths, storage keys, and related static values.
 
-`lib/core/enums/`
+Optional `lib/core/enums/`
 
 Shared enums and wire/serialization helpers when the template or generated app
 needs them.
