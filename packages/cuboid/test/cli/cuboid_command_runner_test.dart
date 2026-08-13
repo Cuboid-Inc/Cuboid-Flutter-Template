@@ -6,6 +6,16 @@ import 'package:args/command_runner.dart';
 import 'package:cuboid/cuboid.dart';
 import 'package:test/test.dart';
 
+const _knownCreateArtifacts = <String>[
+  'app',
+  'service',
+  'feature',
+  'bottomsheet',
+  'dialog',
+  'storage',
+  'database',
+];
+
 void main() {
   test('command runner starts', () {
     final runner = CuboidCommandRunner(stdout: _memorySink());
@@ -134,6 +144,212 @@ void main() {
       errorOutput.content,
       contains('Expected a display name and package identifier.'),
     );
+  });
+
+  test('bare create keeps existing project creation usage behavior', () async {
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Expected a display name and package identifier.'),
+    );
+    expect(errorOutput.content, contains('Usage: cuboid create'));
+  });
+
+  test(
+    'create help describes namespace without claiming artifacts work',
+    () async {
+      final output = _memorySink();
+      final exitCode = await runCuboid(
+        ['create', '--help'],
+        stdout: output,
+        stderr: _memorySink(),
+      );
+
+      expect(exitCode, 0);
+      expect(
+        output.content,
+        contains('Canonical namespace: cuboid create <artifact>'),
+      );
+      expect(output.content, contains('Known artifact categories'));
+      expect(output.content, contains('app, service, feature'));
+      expect(
+        output.content,
+        contains('artifact commands are not yet implemented'),
+      );
+      expect(output.content, isNot(contains('cuboid create feature <name>')));
+      expect(output.content, isNot(contains('cuboid create service <name>')));
+    },
+  );
+
+  for (final artifact in _knownCreateArtifacts) {
+    test('create $artifact fails cleanly as unimplemented', () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      Directory.current = temp;
+      final beforeFiles = _relativeFiles(temp);
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        ['create', artifact],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 64);
+      expect(output.content, isEmpty);
+      expect(
+        errorOutput.content,
+        contains('cuboid create $artifact is not implemented yet.'),
+      );
+      expect(_relativeFiles(temp), beforeFiles);
+    });
+
+    test(
+      'create $artifact with arguments does not fall back to app creation',
+      () async {
+        final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+        final previousCurrent = Directory.current;
+        addTearDown(() {
+          Directory.current = previousCurrent;
+          temp.deleteSync(recursive: true);
+        });
+        Directory.current = temp;
+        final beforeFiles = _relativeFiles(temp);
+        final output = _memorySink();
+        final errorOutput = _memorySink();
+        final exitCode = await runCuboid(
+          ['create', artifact, 'auth'],
+          stdout: output,
+          stderr: errorOutput,
+        );
+
+        expect(exitCode, 64);
+        expect(output.content, isEmpty);
+        expect(
+          errorOutput.content,
+          contains('cuboid create $artifact is not implemented yet.'),
+        );
+        expect(errorOutput.content, isNot(contains('Destination:')));
+        expect(_relativeFiles(temp), beforeFiles);
+      },
+    );
+  }
+
+  test('create known artifact with multiple arguments fails cleanly', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'feature', 'auth', 'extra'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(output.content, isEmpty);
+    expect(
+      errorOutput.content,
+      contains('cuboid create feature is not implemented yet.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create known artifact with dry-run still fails cleanly', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', '--dry-run', 'feature', 'auth'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(output.content, isEmpty);
+    expect(
+      errorOutput.content,
+      contains('cuboid create feature is not implemented yet.'),
+    );
+    expect(errorOutput.content, isNot(contains('Destination:')));
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create unknown artifact fails cleanly', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'gizmo'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(output.content, isEmpty);
+    expect(errorOutput.content, contains('Unknown create artifact "gizmo".'));
+    expect(errorOutput.content, contains('Known artifacts:'));
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create preserves legacy app creation for non-artifact names', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      [
+        'create',
+        '--dry-run',
+        '--output-dir',
+        temp.path,
+        'Customer Portal',
+        'com.example.customer',
+      ],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(
+      output.content,
+      contains('Destination: ${temp.absolute.path}/customer_portal'),
+    );
+    expect(output.content, contains('App package: com.example.customer'));
+    expect(errorOutput.content, isEmpty);
+    expect(Directory('${temp.path}/customer_portal').existsSync(), isFalse);
   });
 
   test('feature dry-run reports planned files without writing files', () async {

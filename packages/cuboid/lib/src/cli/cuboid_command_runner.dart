@@ -9,6 +9,15 @@ import 'package:cuboid/src/service/register_service.dart';
 import 'package:cuboid/src/view/create_view.dart';
 
 const cuboidVersion = '0.1.0';
+const _knownCreateArtifacts = <String>[
+  'app',
+  'service',
+  'feature',
+  'bottomsheet',
+  'dialog',
+  'storage',
+  'database',
+];
 
 class CuboidCommandRunner extends CommandRunner<int> {
   CuboidCommandRunner({
@@ -138,8 +147,35 @@ class CreateCommand extends Command<int> {
       'cuboid create [options] <display-name> <package-identifier>';
 
   @override
+  String get usageFooter =>
+      'Canonical namespace: cuboid create <artifact> [arguments] [options]\n'
+      'Known artifact categories for future implementation: '
+      '${_knownCreateArtifacts.join(', ')}.\n'
+      'Phase 10 registers the namespace only; artifact commands are not yet '
+      'implemented.';
+
+  @override
+  void printUsage() {
+    _stdout.writeln(usage);
+  }
+
+  @override
   Future<int> run() async {
     final rest = argResults!.rest;
+    if (rest.isNotEmpty) {
+      final artifact = rest.first;
+      if (_knownCreateArtifacts.contains(artifact)) {
+        _stderr.writeln('cuboid create $artifact is not implemented yet.');
+        return 64;
+      }
+      if (rest.length == 1 && _looksLikeCreateArtifact(artifact)) {
+        _stderr.writeln('Unknown create artifact "$artifact".');
+        _stderr.writeln(
+          'Known artifacts: ${_knownCreateArtifacts.join(', ')}.',
+        );
+        return 64;
+      }
+    }
     if (rest.length != 2) {
       throw UsageException(
         'Expected a display name and package identifier.',
@@ -196,6 +232,10 @@ class CreateCommand extends Command<int> {
     }
     _stdout.writeln('Done.');
   }
+}
+
+bool _looksLikeCreateArtifact(String value) {
+  return RegExp(r'^[a-z][a-z0-9_-]*$').hasMatch(value);
 }
 
 class FeatureCommand extends Command<int> {
