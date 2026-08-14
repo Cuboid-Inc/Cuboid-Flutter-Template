@@ -192,6 +192,7 @@ void main() {
       expect(output.content, contains('cuboid create route <feature>'));
       expect(output.content, contains('cuboid create view <feature> <name>'));
       expect(output.content, contains('cuboid create repository <name>'));
+      expect(output.content, contains('cuboid create model <name>'));
     },
   );
 
@@ -386,7 +387,8 @@ void main() {
         name != 'database' &&
         name != 'route' &&
         name != 'view' &&
-        name != 'repository',
+        name != 'repository' &&
+        name != 'model',
   )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -1366,6 +1368,84 @@ void main() {
     expect(_relativeFiles(temp), beforeFiles);
   });
 
+  test('create model with dry-run creates no files', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeModelProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', '--dry-run', 'model', 'invoice'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Model: Invoice'));
+    expect(output.content, contains('- lib/core/models/invoice.dart'));
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create model creates a bare model shell', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeModelProject(temp);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'model', 'invoice'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Created model Invoice.'));
+    expect(errorOutput.content, isEmpty);
+    final model = File(
+      '${temp.path}/lib/core/models/invoice.dart',
+    ).readAsStringSync();
+    expect(model, contains('class Invoice {'));
+    expect(model, contains('const Invoice();'));
+  });
+
+  test('create model rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeModelProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'model', 'invoice', '--directory', 'ignored'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Only --dry-run is supported for cuboid create model.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
   test('create unknown artifact fails cleanly', () async {
     final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
     final previousCurrent = Directory.current;
@@ -1984,6 +2064,10 @@ Future<void> main() async {
 }
 
 void _writeStorageProject(Directory root) {
+  File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
+}
+
+void _writeModelProject(Directory root) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
 }
 

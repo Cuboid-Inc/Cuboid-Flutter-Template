@@ -54,6 +54,14 @@ export 'src/feature/create_feature.dart'
         CreateFeaturePlan,
         CreateFeatureResult,
         CreateFeatureService;
+export 'src/model/create_model.dart'
+    show
+        CreateModelException,
+        CreateModelInput,
+        CreateModelPlan,
+        CreateModelResult,
+        CreateModelService,
+        ModelFileWriter;
 export 'src/repository/create_repository.dart'
     show
         CreateRepositoryException,

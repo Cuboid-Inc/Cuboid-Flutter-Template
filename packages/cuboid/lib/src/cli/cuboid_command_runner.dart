@@ -7,6 +7,7 @@ import 'package:cuboid/src/create/create_project.dart';
 import 'package:cuboid/src/database/create_database.dart';
 import 'package:cuboid/src/dialog/create_dialog.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
+import 'package:cuboid/src/model/create_model.dart';
 import 'package:cuboid/src/repository/create_repository.dart';
 import 'package:cuboid/src/route/register_route.dart';
 import 'package:cuboid/src/service/register_service.dart';
@@ -25,6 +26,7 @@ const _knownCreateArtifacts = <String>[
   'route',
   'view',
   'repository',
+  'model',
 ];
 
 class CuboidCommandRunner extends CommandRunner<int> {
@@ -41,6 +43,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
     RegisterServiceService? registerServiceService,
     CreateViewService? createViewService,
     CreateRepositoryService? createRepositoryService,
+    CreateModelService? createModelService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -57,6 +60,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
        _createViewService = createViewService ?? CreateViewService(),
        _createRepositoryService =
            createRepositoryService ?? CreateRepositoryService(),
+       _createModelService = createModelService ?? CreateModelService(),
        super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
     argParser.addFlag(
       'version',
@@ -77,6 +81,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         registerRouteService: _registerRouteService,
         createViewService: _createViewService,
         createRepositoryService: _createRepositoryService,
+        createModelService: _createModelService,
       ),
     );
     addCommand(
@@ -121,6 +126,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final RegisterServiceService _registerServiceService;
   final CreateViewService _createViewService;
   final CreateRepositoryService _createRepositoryService;
+  final CreateModelService _createModelService;
 
   @override
   Future<int?> run(Iterable<String> args) async {
@@ -151,6 +157,7 @@ class CreateCommand extends Command<int> {
     RegisterRouteService? registerRouteService,
     CreateViewService? createViewService,
     CreateRepositoryService? createRepositoryService,
+    CreateModelService? createModelService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -166,7 +173,8 @@ class CreateCommand extends Command<int> {
        _registerRouteService = registerRouteService ?? RegisterRouteService(),
        _createViewService = createViewService ?? CreateViewService(),
        _createRepositoryService =
-           createRepositoryService ?? CreateRepositoryService() {
+           createRepositoryService ?? CreateRepositoryService(),
+       _createModelService = createModelService ?? CreateModelService() {
     argParser
       ..addOption(
         'output-dir',
@@ -201,6 +209,7 @@ class CreateCommand extends Command<int> {
   final RegisterRouteService _registerRouteService;
   final CreateViewService _createViewService;
   final CreateRepositoryService _createRepositoryService;
+  final CreateModelService _createModelService;
 
   @override
   String get name => 'create';
@@ -223,7 +232,8 @@ class CreateCommand extends Command<int> {
       'cuboid create database <provider>, '
       'cuboid create route <feature>, '
       'cuboid create view <feature> <name>, '
-      'cuboid create repository <name>.\n'
+      'cuboid create repository <name>, '
+      'cuboid create model <name>.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -265,6 +275,9 @@ class CreateCommand extends Command<int> {
         }
         if (artifact == 'repository') {
           return _runCreateRepository(rest.skip(1).toList());
+        }
+        if (artifact == 'model') {
+          return _runCreateModel(rest.skip(1).toList());
         }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
@@ -552,6 +565,34 @@ class CreateCommand extends Command<int> {
     }
   }
 
+  Future<int> _runCreateModel(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create model.',
+        usage,
+      );
+    }
+    if (rest.length != 1) {
+      throw UsageException('Expected a model name.', usage);
+    }
+
+    final input = CreateModelInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _createModelService.create(input);
+      writeModelResult(_stdout, result);
+      return 0;
+    } on CreateModelException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
   void _writeResult(CreateProjectResult result) {
     final plan = result.plan;
     if (plan.dryRun) {
@@ -817,6 +858,18 @@ void writeRepositoryResult(IOSink stdout, CreateRepositoryResult result) {
       '- supabase db push (or `supabase migration up` for local dev)',
     );
   }
+}
+
+void writeModelResult(IOSink stdout, CreateModelResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Model: ${plan.className}');
+  } else {
+    stdout.writeln('Created model ${plan.className}.');
+  }
+  stdout.writeln('Files:');
+  stdout.writeln('- ${plan.path}');
 }
 
 class RouteCommand extends Command<int> {
