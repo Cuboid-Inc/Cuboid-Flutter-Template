@@ -233,7 +233,9 @@ class CreateCommand extends Command<int> {
   @override
   String get usageFooter =>
       'Canonical namespace: cuboid create <artifact> [arguments] [options]\n'
-      'Implemented artifact commands: cuboid create feature <name>, '
+      'Implemented artifact commands: '
+      'cuboid create app <display-name> <package-identifier>, '
+      'cuboid create feature <name>, '
       'cuboid create service <name>, '
       'cuboid create bottomsheet <name>, '
       'cuboid create dialog <name>, '
@@ -260,6 +262,9 @@ class CreateCommand extends Command<int> {
     if (rest.isNotEmpty) {
       final artifact = rest.first;
       if (_knownCreateArtifacts.contains(artifact)) {
+        if (artifact == 'app') {
+          return _runCreateApp(rest.skip(1).toList());
+        }
         if (artifact == 'feature') {
           return _runCreateFeature(rest.skip(1).toList());
         }
@@ -304,6 +309,10 @@ class CreateCommand extends Command<int> {
         return 64;
       }
     }
+    return _runCreateApp(rest);
+  }
+
+  Future<int> _runCreateApp(List<String> rest) async {
     if (rest.length != 2) {
       throw UsageException(
         'Expected a display name and package identifier.',

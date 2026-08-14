@@ -131,6 +131,81 @@ void main() {
     },
   );
 
+  test(
+    'create app dry-run reports the planned project without writing files',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        [
+          'create',
+          '--dry-run',
+          '--output-dir',
+          temp.path,
+          'app',
+          'Some App',
+          'com.someapp.someapp',
+        ],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Dry run: no files were written.'));
+      expect(
+        output.content,
+        contains('Destination: ${temp.absolute.path}/some_app'),
+      );
+      expect(errorOutput.content, isEmpty);
+      expect(Directory('${temp.path}/some_app').existsSync(), isFalse);
+    },
+  );
+
+  test('create app validates required positional arguments', () async {
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'app', 'Some App'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Expected a display name and package identifier.'),
+    );
+  });
+
+  test(
+    'create app rejects a package identifier with digits or underscores',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        [
+          'create',
+          '--dry-run',
+          '--output-dir',
+          temp.path,
+          'app',
+          'Some App',
+          'com.some_app.someapp',
+        ],
+        stdout: _memorySink(),
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 64);
+      expect(
+        errorOutput.content,
+        contains('Invalid package component "some_app"'),
+      );
+    },
+  );
+
   test('create validates required positional arguments', () async {
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
@@ -380,6 +455,7 @@ void main() {
 
   for (final artifact in _knownCreateArtifacts.where(
     (name) =>
+        name != 'app' &&
         name != 'feature' &&
         name != 'service' &&
         name != 'bottomsheet' &&

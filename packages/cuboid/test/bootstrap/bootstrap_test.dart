@@ -38,6 +38,18 @@ void main() {
         () => validatePackageIdentifier('com.example.my app'),
         throwsA(isA<BootstrapException>()),
       );
+      expect(
+        () => validatePackageIdentifier('com.example.my_app'),
+        throwsA(isA<BootstrapException>()),
+      );
+      expect(
+        () => validatePackageIdentifier('com.example.myapp2'),
+        throwsA(isA<BootstrapException>()),
+      );
+      expect(
+        () => validatePackageIdentifier('com.example2.myapp'),
+        throwsA(isA<BootstrapException>()),
+      );
     });
 
     test('accepts valid package identifiers', () {
@@ -46,7 +58,7 @@ void main() {
         returnsNormally,
       );
       expect(
-        () => validatePackageIdentifier('com.example.my_app2'),
+        () => validatePackageIdentifier('com.someapp.someapp'),
         returnsNormally,
       );
     });
@@ -96,7 +108,7 @@ void main() {
       const values = BootstrapValues(
         displayName: 'Bob\'s <App> & "Co"',
         dartProjectName: 'bobs_app_co',
-        packageIdentifier: 'com.example.bobs_app',
+        packageIdentifier: 'com.example.bobsapp',
         storageNamespace: 'bobs_app_co',
       );
 
