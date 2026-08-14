@@ -191,6 +191,7 @@ void main() {
       expect(output.content, contains('cuboid create database <provider>'));
       expect(output.content, contains('cuboid create route <feature>'));
       expect(output.content, contains('cuboid create view <feature> <name>'));
+      expect(output.content, contains('cuboid create repository <name>'));
     },
   );
 
@@ -384,7 +385,8 @@ void main() {
         name != 'storage' &&
         name != 'database' &&
         name != 'route' &&
-        name != 'view',
+        name != 'view' &&
+        name != 'repository',
   )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -1264,6 +1266,104 @@ void main() {
       errorOutput.content,
       contains('Expected a feature name and view name.'),
     );
+  });
+
+  test('create repository with dry-run creates no files', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDatabaseProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', '--dry-run', 'repository', 'todo'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Repository: TodoRepository'));
+    expect(output.content, contains('Table: todos'));
+    expect(output.content, contains('- lib/supabase/todo_repository.dart'));
+    expect(
+      output.content,
+      contains('LazySingleton(classType: TodoRepository),'),
+    );
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create repository generates a new entity and registers it', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDatabaseProject(temp);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'repository', 'category'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Created repository CategoryRepository.'));
+    expect(output.content, contains('Table: categories'));
+    expect(output.content, contains('- dart run build_runner build -d'));
+    expect(output.content, contains('supabase db push'));
+    expect(errorOutput.content, isEmpty);
+    final repository = File(
+      '${temp.path}/lib/supabase/category_repository.dart',
+    ).readAsStringSync();
+    expect(repository, contains('class CategoryRepository {'));
+    expect(repository, contains("static const _table = 'categories';"));
+    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    expect(
+      app,
+      contains("import 'package:my_app/supabase/category_repository.dart';"),
+    );
+    expect(app, contains('LazySingleton(classType: CategoryRepository),'));
+    expect(
+      Directory(
+        '${temp.path}/supabase/migrations',
+      ).listSync().whereType<File>().length,
+      1,
+    );
+  });
+
+  test('create repository rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDatabaseProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'repository', 'todo', '--directory', 'ignored'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Only --dry-run is supported for cuboid create repository.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
   });
 
   test('create unknown artifact fails cleanly', () async {

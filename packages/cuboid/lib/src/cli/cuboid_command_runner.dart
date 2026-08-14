@@ -7,6 +7,7 @@ import 'package:cuboid/src/create/create_project.dart';
 import 'package:cuboid/src/database/create_database.dart';
 import 'package:cuboid/src/dialog/create_dialog.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
+import 'package:cuboid/src/repository/create_repository.dart';
 import 'package:cuboid/src/route/register_route.dart';
 import 'package:cuboid/src/service/register_service.dart';
 import 'package:cuboid/src/storage/create_storage.dart';
@@ -23,6 +24,7 @@ const _knownCreateArtifacts = <String>[
   'database',
   'route',
   'view',
+  'repository',
 ];
 
 class CuboidCommandRunner extends CommandRunner<int> {
@@ -38,6 +40,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
     RegisterRouteService? registerRouteService,
     RegisterServiceService? registerServiceService,
     CreateViewService? createViewService,
+    CreateRepositoryService? createRepositoryService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -52,6 +55,8 @@ class CuboidCommandRunner extends CommandRunner<int> {
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
        _createViewService = createViewService ?? CreateViewService(),
+       _createRepositoryService =
+           createRepositoryService ?? CreateRepositoryService(),
        super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
     argParser.addFlag(
       'version',
@@ -71,6 +76,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         registerServiceService: _registerServiceService,
         registerRouteService: _registerRouteService,
         createViewService: _createViewService,
+        createRepositoryService: _createRepositoryService,
       ),
     );
     addCommand(
@@ -114,6 +120,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final RegisterRouteService _registerRouteService;
   final RegisterServiceService _registerServiceService;
   final CreateViewService _createViewService;
+  final CreateRepositoryService _createRepositoryService;
 
   @override
   Future<int?> run(Iterable<String> args) async {
@@ -143,6 +150,7 @@ class CreateCommand extends Command<int> {
     RegisterServiceService? registerServiceService,
     RegisterRouteService? registerRouteService,
     CreateViewService? createViewService,
+    CreateRepositoryService? createRepositoryService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -156,7 +164,9 @@ class CreateCommand extends Command<int> {
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
        _registerRouteService = registerRouteService ?? RegisterRouteService(),
-       _createViewService = createViewService ?? CreateViewService() {
+       _createViewService = createViewService ?? CreateViewService(),
+       _createRepositoryService =
+           createRepositoryService ?? CreateRepositoryService() {
     argParser
       ..addOption(
         'output-dir',
@@ -190,6 +200,7 @@ class CreateCommand extends Command<int> {
   final RegisterServiceService _registerServiceService;
   final RegisterRouteService _registerRouteService;
   final CreateViewService _createViewService;
+  final CreateRepositoryService _createRepositoryService;
 
   @override
   String get name => 'create';
@@ -211,7 +222,8 @@ class CreateCommand extends Command<int> {
       'cuboid create storage <name>, '
       'cuboid create database <provider>, '
       'cuboid create route <feature>, '
-      'cuboid create view <feature> <name>.\n'
+      'cuboid create view <feature> <name>, '
+      'cuboid create repository <name>.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -250,6 +262,9 @@ class CreateCommand extends Command<int> {
         }
         if (artifact == 'view') {
           return _runCreateView(rest.skip(1).toList());
+        }
+        if (artifact == 'repository') {
+          return _runCreateRepository(rest.skip(1).toList());
         }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
@@ -509,6 +524,34 @@ class CreateCommand extends Command<int> {
     }
   }
 
+  Future<int> _runCreateRepository(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create repository.',
+        usage,
+      );
+    }
+    if (rest.length != 1) {
+      throw UsageException('Expected a repository name.', usage);
+    }
+
+    final input = CreateRepositoryInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _createRepositoryService.create(input);
+      writeRepositoryResult(_stdout, result);
+      return 0;
+    } on CreateRepositoryException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
   void _writeResult(CreateProjectResult result) {
     final plan = result.plan;
     if (plan.dryRun) {
@@ -746,6 +789,33 @@ void writeViewResult(IOSink stdout, CreateViewResult result) {
   stdout.writeln('Files:');
   for (final file in plan.files) {
     stdout.writeln('- $file');
+  }
+}
+
+void writeRepositoryResult(IOSink stdout, CreateRepositoryResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Repository: ${plan.repositoryClassName}');
+  } else {
+    stdout.writeln('Created repository ${plan.repositoryClassName}.');
+  }
+  stdout.writeln('Table: ${plan.tableName}');
+  stdout.writeln('Files:');
+  for (final file in plan.files) {
+    stdout.writeln('- $file');
+  }
+  stdout.writeln('- ${plan.appPath}');
+  if (plan.dryRun) {
+    stdout.writeln('Planned changes:');
+    stdout.writeln('- ${plan.repositoryImportLine}');
+    stdout.writeln('- ${plan.repositoryLine.trim()}');
+  } else {
+    stdout.writeln('Next steps:');
+    stdout.writeln('- dart run build_runner build -d');
+    stdout.writeln(
+      '- supabase db push (or `supabase migration up` for local dev)',
+    );
   }
 }
 
