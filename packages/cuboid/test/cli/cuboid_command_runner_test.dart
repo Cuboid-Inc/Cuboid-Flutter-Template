@@ -189,6 +189,7 @@ void main() {
       expect(output.content, contains('cuboid create dialog <name>'));
       expect(output.content, contains('cuboid create storage <name>'));
       expect(output.content, contains('cuboid create database <provider>'));
+      expect(output.content, contains('cuboid create route <feature>'));
     },
   );
 
@@ -380,7 +381,8 @@ void main() {
         name != 'bottomsheet' &&
         name != 'dialog' &&
         name != 'storage' &&
-        name != 'database',
+        name != 'database' &&
+        name != 'route',
   )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -1054,6 +1056,91 @@ void main() {
     expect(
       errorOutput.content,
       contains('Only --dry-run is supported for cuboid create database.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create route with dry-run reports the plan without writing', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeRouteProject(temp, 'user_profile');
+    final before = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', '--dry-run', 'route', 'user-profile'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Route: UserProfileView'));
+    expect(output.content, contains('MaterialRoute(page: UserProfileView),'));
+    expect(errorOutput.content, isEmpty);
+    expect(File('${temp.path}/lib/app/app.dart').readAsStringSync(), before);
+  });
+
+  test('create route registers an existing feature View', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeRouteProject(temp, 'auth');
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'route', 'auth'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Registered route AuthView.'));
+    expect(
+      output.content,
+      contains('Next step: dart run build_runner build -d'),
+    );
+    expect(errorOutput.content, isEmpty);
+    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    expect(
+      app,
+      contains(
+        "import 'package:my_app/features/auth/ui/views/auth_view.dart';",
+      ),
+    );
+    expect(app, contains('    MaterialRoute(page: AuthView),'));
+  });
+
+  test('create route rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeRouteProject(temp, 'auth');
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'route', 'auth', '--directory', 'ignored'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Only --dry-run is supported for cuboid create route.'),
     );
     expect(_relativeFiles(temp), beforeFiles);
   });

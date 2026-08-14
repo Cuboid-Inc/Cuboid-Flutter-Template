@@ -21,6 +21,7 @@ const _knownCreateArtifacts = <String>[
   'dialog',
   'storage',
   'database',
+  'route',
 ];
 
 class CuboidCommandRunner extends CommandRunner<int> {
@@ -67,6 +68,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createStorageService: _createStorageService,
         createDatabaseService: _createDatabaseService,
         registerServiceService: _registerServiceService,
+        registerRouteService: _registerRouteService,
       ),
     );
     addCommand(
@@ -137,6 +139,7 @@ class CreateCommand extends Command<int> {
     CreateStorageService? createStorageService,
     CreateDatabaseService? createDatabaseService,
     RegisterServiceService? registerServiceService,
+    RegisterRouteService? registerRouteService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -148,7 +151,8 @@ class CreateCommand extends Command<int> {
        _createDatabaseService =
            createDatabaseService ?? CreateDatabaseService(),
        _registerServiceService =
-           registerServiceService ?? RegisterServiceService() {
+           registerServiceService ?? RegisterServiceService(),
+       _registerRouteService = registerRouteService ?? RegisterRouteService() {
     argParser
       ..addOption(
         'output-dir',
@@ -180,6 +184,7 @@ class CreateCommand extends Command<int> {
   final CreateStorageService _createStorageService;
   final CreateDatabaseService _createDatabaseService;
   final RegisterServiceService _registerServiceService;
+  final RegisterRouteService _registerRouteService;
 
   @override
   String get name => 'create';
@@ -199,7 +204,8 @@ class CreateCommand extends Command<int> {
       'cuboid create bottomsheet <name>, '
       'cuboid create dialog <name>, '
       'cuboid create storage <name>, '
-      'cuboid create database <provider>.\n'
+      'cuboid create database <provider>, '
+      'cuboid create route <feature>.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -232,6 +238,9 @@ class CreateCommand extends Command<int> {
         }
         if (artifact == 'database') {
           return _runCreateDatabase(rest.skip(1).toList());
+        }
+        if (artifact == 'route') {
+          return _runCreateRoute(rest.skip(1).toList());
         }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
@@ -429,6 +438,34 @@ class CreateCommand extends Command<int> {
       writeDatabaseResult(_stdout, result);
       return 0;
     } on CreateDatabaseException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runCreateRoute(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create route.',
+        usage,
+      );
+    }
+    if (rest.length != 1) {
+      throw UsageException('Expected a feature name.', usage);
+    }
+
+    final input = RegisterRouteInput(
+      feature: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _registerRouteService.register(input);
+      writeRouteResult(_stdout, result);
+      return 0;
+    } on RegisterRouteException catch (error) {
       _stderr.writeln(error.message);
       return 1;
     }
@@ -637,6 +674,25 @@ void writeDatabaseResult(IOSink stdout, CreateDatabaseResult result) {
     stdout.writeln(
       '- supabase db push (or `supabase migration up` for local dev)',
     );
+  }
+}
+
+void writeRouteResult(IOSink stdout, RegisterRouteResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Route: ${plan.viewClassName}');
+  } else {
+    stdout.writeln('Registered route ${plan.viewClassName}.');
+  }
+  stdout.writeln('Files:');
+  stdout.writeln('- ${plan.appPath}');
+  if (plan.dryRun) {
+    stdout.writeln('Planned changes:');
+    stdout.writeln('- ${plan.importLine}');
+    stdout.writeln('- ${plan.routeLine.trim()}');
+  } else {
+    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 
