@@ -171,8 +171,10 @@ API framework, or general service layer without an approved architecture change.
 DEP-06. Do not add a package for string helpers, collection helpers, validation
 wrappers, simple storage wrappers, or a small widget.
 
-DEP-07. Supabase may be used as an auth/backend SDK, but the template currently
-has no domain schema or active product migrations.
+DEP-07. Supabase may be introduced as an opt-in auth/backend SDK via `cuboid
+create database supabase` (see ARCHITECTURE.md §9); the base template does not
+include it by default and has no domain schema or active product migrations
+until a generated app adds one.
 
 DEP-08. Run flutter pub get after pubspec.yaml changes. Do not hand-edit
 pubspec.lock.
@@ -218,8 +220,9 @@ DATA-11. Repository caches must have explicit invalidation behavior on writes.
 
 ERR-01. Every fallible repository operation returns Result<T>.
 
-ERR-02. Wrap Supabase calls with shared backend guards such as
-lib/core/network/supabase_guard.dart.
+ERR-02. Wrap backend SDK calls with a shared guard (for example
+lib/core/network/supabase_guard.dart, added when a project introduces
+Supabase).
 
 ERR-03. No backend exception crosses a repository boundary.
 

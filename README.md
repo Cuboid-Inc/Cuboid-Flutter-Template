@@ -10,7 +10,9 @@ database schema, or repository/data layers.
 
 - Flutter and Dart
 - Stacked MVVM, routing, service locator, dialogs, and bottom sheets
-- Optional Supabase client configuration for auth/backend use
+- Technology-neutral base: no backend or storage technology is pre-installed;
+  add one explicitly via the Cuboid CLI (e.g. `cuboid create database
+  supabase`, `cuboid create storage <name>`) when a project actually needs one
 - Focused unit and widget tests
 - Bootstrap tooling for renaming a generated app from the template
 
@@ -18,21 +20,24 @@ database schema, or repository/data layers.
 
 ```text
 lib/
-|-- app/                  Stacked registration, router, locator, app root
-|-- core/                 Config, constants, errors, formatters, forms,
-|                         models, network guards, services, storage, theme,
-|                         and validators
+|-- app/                  Stacked registration, router, locator, app root,
+|                         and the app-level navigation shell (ShellView)
+|-- core/                 Constants, errors, formatters, forms, models,
+|                         services, storage, theme, and validators
 |-- features/
 |   |-- startup/          Startup view and view model
-|   `-- home/             Minimal shell/home experience
+|   `-- home/             Home feature (reachable through the shell)
 `-- shared/
     `-- widgets/          Reusable UI widgets
 
 test/                     Unit, widget, and bootstrap tests
 tool/                     Template bootstrap tooling
-supabase/                 Optional Supabase local configuration boundary
 doc/design/               Generic design guidance
 ```
+
+`lib/core/config/` and `lib/core/network/` are not part of the base
+template -- they're added once a generated app needs backend configuration or
+network guards. See [ARCHITECTURE.md §10](ARCHITECTURE.md#10-core-foundations).
 
 Generated Stacked files live under `lib/app/` and should be regenerated from
 their editable sources, not edited by hand.
@@ -104,7 +109,7 @@ flutter pub get
 Run the app:
 
 ```bash
-flutter run --dart-define-from-file=env/dev.json
+flutter run
 ```
 
 Regenerate Stacked output after changing Stacked registration or route
@@ -114,16 +119,26 @@ annotations:
 dart run build_runner build -d
 ```
 
-## Optional Supabase setup
+## Optional backend/storage setup
 
-Supabase is retained as an optional infrastructure/auth/backend choice. The
-template currently has no domain schema, no active product migrations, and no
-production repository layer.
+The base template has no backend or storage technology installed. Add one
+explicitly when a project actually needs it:
 
-When an app introduces persistent feature data:
+```bash
+cuboid create database supabase   # Supabase example model, repository, migration
+cuboid create storage <name>      # A local key-value/secure storage wrapper
+```
+
+`cuboid create database supabase` requires the Supabase foundation (the
+`supabase_flutter` dependency and `lib/core/network/supabase_guard.dart`) to
+already exist in the project -- it does not install Supabase from nothing. See
+[ARCHITECTURE.md §12-13](ARCHITECTURE.md#12-current-data-and-backend-boundary)
+for the full contract.
+
+Once a project has persistent feature data:
 
 - repositories own backend access and row/model mapping;
-- ViewModels consume repositories instead of calling Supabase directly;
+- ViewModels consume repositories instead of calling a backend SDK directly;
 - PostgreSQL schemas, RLS policies, privileged functions, and server authority
   are application-specific and must be documented with that app's product rules;
 - service-role keys and secrets must never be embedded in the Flutter app.
