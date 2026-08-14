@@ -101,3 +101,11 @@ export 'src/view/create_view.dart'
         CreateViewResult,
         CreateViewService,
         ViewFileWriter;
+export 'src/widget/create_widget.dart'
+    show
+        CreateWidgetException,
+        CreateWidgetInput,
+        CreateWidgetPlan,
+        CreateWidgetResult,
+        CreateWidgetService,
+        WidgetFileWriter;

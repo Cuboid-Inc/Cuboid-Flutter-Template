@@ -193,6 +193,7 @@ void main() {
       expect(output.content, contains('cuboid create view <feature> <name>'));
       expect(output.content, contains('cuboid create repository <name>'));
       expect(output.content, contains('cuboid create model <name>'));
+      expect(output.content, contains('cuboid create widget <name>'));
     },
   );
 
@@ -388,7 +389,8 @@ void main() {
         name != 'route' &&
         name != 'view' &&
         name != 'repository' &&
-        name != 'model',
+        name != 'model' &&
+        name != 'widget',
   )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -1442,6 +1444,136 @@ void main() {
     expect(
       errorOutput.content,
       contains('Only --dry-run is supported for cuboid create model.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create widget with one argument creates a shared widget', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeModelProject(temp);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'widget', 'status_badge'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Created widget StatusBadge.'));
+    expect(errorOutput.content, isEmpty);
+    expect(output.content, isNot(contains('Feature:')));
+    final widget = File(
+      '${temp.path}/lib/shared/widgets/status_badge.dart',
+    ).readAsStringSync();
+    expect(widget, contains('class StatusBadge extends StatelessWidget {'));
+  });
+
+  test(
+    'create widget with two arguments creates a feature-scoped widget',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeViewProject(temp, 'auth');
+      Directory.current = temp;
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        ['create', 'widget', 'auth', 'password_field'],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Created widget PasswordField.'));
+      expect(output.content, contains('Feature: auth'));
+      expect(errorOutput.content, isEmpty);
+      final widget = File(
+        '${temp.path}/lib/features/auth/ui/widgets/password_field.dart',
+      ).readAsStringSync();
+      expect(widget, contains('class PasswordField extends StatelessWidget {'));
+    },
+  );
+
+  test('create widget with dry-run creates no files', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeModelProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', '--dry-run', 'widget', 'status_badge'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('- lib/shared/widgets/status_badge.dart'));
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create widget rejects an invalid argument count', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeModelProject(temp);
+    Directory.current = temp;
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'widget', 'a', 'b', 'c'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Expected a widget name, or a feature name and widget name.'),
+    );
+  });
+
+  test('create widget rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeModelProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'widget', 'status_badge', '--directory', 'ignored'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Only --dry-run is supported for cuboid create widget.'),
     );
     expect(_relativeFiles(temp), beforeFiles);
   });

@@ -13,6 +13,7 @@ import 'package:cuboid/src/route/register_route.dart';
 import 'package:cuboid/src/service/register_service.dart';
 import 'package:cuboid/src/storage/create_storage.dart';
 import 'package:cuboid/src/view/create_view.dart';
+import 'package:cuboid/src/widget/create_widget.dart';
 
 const cuboidVersion = '0.1.0';
 const _knownCreateArtifacts = <String>[
@@ -27,6 +28,7 @@ const _knownCreateArtifacts = <String>[
   'view',
   'repository',
   'model',
+  'widget',
 ];
 
 class CuboidCommandRunner extends CommandRunner<int> {
@@ -44,6 +46,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
     CreateViewService? createViewService,
     CreateRepositoryService? createRepositoryService,
     CreateModelService? createModelService,
+    CreateWidgetService? createWidgetService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -61,6 +64,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
        _createRepositoryService =
            createRepositoryService ?? CreateRepositoryService(),
        _createModelService = createModelService ?? CreateModelService(),
+       _createWidgetService = createWidgetService ?? CreateWidgetService(),
        super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
     argParser.addFlag(
       'version',
@@ -82,6 +86,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createViewService: _createViewService,
         createRepositoryService: _createRepositoryService,
         createModelService: _createModelService,
+        createWidgetService: _createWidgetService,
       ),
     );
     addCommand(
@@ -127,6 +132,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final CreateViewService _createViewService;
   final CreateRepositoryService _createRepositoryService;
   final CreateModelService _createModelService;
+  final CreateWidgetService _createWidgetService;
 
   @override
   Future<int?> run(Iterable<String> args) async {
@@ -158,6 +164,7 @@ class CreateCommand extends Command<int> {
     CreateViewService? createViewService,
     CreateRepositoryService? createRepositoryService,
     CreateModelService? createModelService,
+    CreateWidgetService? createWidgetService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -174,7 +181,8 @@ class CreateCommand extends Command<int> {
        _createViewService = createViewService ?? CreateViewService(),
        _createRepositoryService =
            createRepositoryService ?? CreateRepositoryService(),
-       _createModelService = createModelService ?? CreateModelService() {
+       _createModelService = createModelService ?? CreateModelService(),
+       _createWidgetService = createWidgetService ?? CreateWidgetService() {
     argParser
       ..addOption(
         'output-dir',
@@ -210,6 +218,7 @@ class CreateCommand extends Command<int> {
   final CreateViewService _createViewService;
   final CreateRepositoryService _createRepositoryService;
   final CreateModelService _createModelService;
+  final CreateWidgetService _createWidgetService;
 
   @override
   String get name => 'create';
@@ -233,7 +242,9 @@ class CreateCommand extends Command<int> {
       'cuboid create route <feature>, '
       'cuboid create view <feature> <name>, '
       'cuboid create repository <name>, '
-      'cuboid create model <name>.\n'
+      'cuboid create model <name>, '
+      'cuboid create widget <name> (shared) or '
+      'cuboid create widget <feature> <name> (feature-scoped).\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -278,6 +289,9 @@ class CreateCommand extends Command<int> {
         }
         if (artifact == 'model') {
           return _runCreateModel(rest.skip(1).toList());
+        }
+        if (artifact == 'widget') {
+          return _runCreateWidget(rest.skip(1).toList());
         }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
@@ -593,6 +607,43 @@ class CreateCommand extends Command<int> {
     }
   }
 
+  Future<int> _runCreateWidget(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create widget.',
+        usage,
+      );
+    }
+    if (rest.length != 1 && rest.length != 2) {
+      throw UsageException(
+        'Expected a widget name, or a feature name and widget name.',
+        usage,
+      );
+    }
+
+    final input = rest.length == 1
+        ? CreateWidgetInput(
+            name: rest[0],
+            dryRun: argResults!['dry-run'] as bool,
+          )
+        : CreateWidgetInput(
+            feature: rest[0],
+            name: rest[1],
+            dryRun: argResults!['dry-run'] as bool,
+          );
+
+    try {
+      final result = await _createWidgetService.create(input);
+      writeWidgetResult(_stdout, result);
+      return 0;
+    } on CreateWidgetException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
   void _writeResult(CreateProjectResult result) {
     final plan = result.plan;
     if (plan.dryRun) {
@@ -867,6 +918,21 @@ void writeModelResult(IOSink stdout, CreateModelResult result) {
     stdout.writeln('Model: ${plan.className}');
   } else {
     stdout.writeln('Created model ${plan.className}.');
+  }
+  stdout.writeln('Files:');
+  stdout.writeln('- ${plan.path}');
+}
+
+void writeWidgetResult(IOSink stdout, CreateWidgetResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Widget: ${plan.className}');
+  } else {
+    stdout.writeln('Created widget ${plan.className}.');
+  }
+  if (!plan.isShared) {
+    stdout.writeln('Feature: ${plan.feature}');
   }
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.path}');
