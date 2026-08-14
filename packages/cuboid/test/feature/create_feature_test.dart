@@ -188,6 +188,51 @@ void main() {
     expect(File('${existing.path}/keep.txt').readAsStringSync(), 'keep\n');
   });
 
+  test(
+    'refuses to create a feature through a symlinked features dir',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final target = Directory('${root.path}/target_features')..createSync();
+      Directory('${root.path}/lib/features').deleteSync(recursive: true);
+      Link('${root.path}/lib/features').createSync(target.path);
+      final service = CreateFeatureService();
+
+      await expectLater(
+        service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
+        throwsA(
+          isA<CreateFeatureException>().having(
+            (error) => error.message,
+            'message',
+            contains('Refusing to create feature through a symlink'),
+          ),
+        ),
+      );
+      expect(Directory('${target.path}/auth').existsSync(), isFalse);
+    },
+  );
+
+  test('refuses to create a feature through a symlinked lib dir', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final target = Directory('${root.path}/target_lib')..createSync();
+    Directory('${root.path}/lib').deleteSync(recursive: true);
+    Link('${root.path}/lib').createSync(target.path);
+    final service = CreateFeatureService();
+
+    await expectLater(
+      service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
+      throwsA(
+        isA<CreateFeatureException>().having(
+          (error) => error.message,
+          'message',
+          contains('Refusing to create feature through a symlink'),
+        ),
+      ),
+    );
+    expect(Directory('${target.path}/features').existsSync(), isFalse);
+  });
+
   test('detects existing features during dry-run', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));

@@ -1,5 +1,6 @@
 name: cuboid
 description: Command-line tools for Cuboid Flutter projects.
+publish_to: 'none' # Private tool; install via `dart pub global activate --source path/git`.
 version: 0.1.0
 repository: https://github.com/Cuboid-Inc/cuboid-flutter-template
 

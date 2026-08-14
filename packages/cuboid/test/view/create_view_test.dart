@@ -549,6 +549,14 @@ void main() {
       isFalse,
     );
     expect(unrelated.readAsStringSync(), 'keep\n');
+    expect(
+      Directory('${root.path}/lib/features/auth/ui/views').existsSync(),
+      isFalse,
+    );
+    expect(
+      Directory('${root.path}/lib/features/auth/ui/viewmodels').existsSync(),
+      isFalse,
+    );
   });
 
   test('cleans up first file when second final publish fails', () async {
@@ -594,6 +602,14 @@ void main() {
       isFalse,
     );
     expect(unrelated.readAsStringSync(), 'keep\n');
+    expect(
+      Directory('${root.path}/lib/features/auth/ui/views').existsSync(),
+      isFalse,
+    );
+    expect(
+      Directory('${root.path}/lib/features/auth/ui/viewmodels').existsSync(),
+      isFalse,
+    );
   });
 }
 

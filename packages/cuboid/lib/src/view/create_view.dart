@@ -104,15 +104,25 @@ class CreateViewService {
 
     final viewFile = _targetFile(projectRoot, createPlan.files[0]);
     final viewModelFile = _targetFile(projectRoot, createPlan.files[1]);
+    final createdDirectories = <Directory>[];
 
     try {
-      viewFile.parent.createSync(recursive: true);
-      viewModelFile.parent.createSync(recursive: true);
+      _createParentDirectories(
+        projectRoot,
+        viewFile.parent,
+        createdDirectories,
+      );
+      _createParentDirectories(
+        projectRoot,
+        viewModelFile.parent,
+        createdDirectories,
+      );
       _fileWriter(viewFile, viewContents);
       _fileWriter(viewModelFile, viewModelContents);
     } on FileSystemException catch (error) {
       _deleteCreatedFile(viewFile);
       _deleteCreatedFile(viewModelFile);
+      _pruneCreatedDirectories(createdDirectories);
       throw CreateViewException(
         'Unable to create view ${createPlan.displayName}: ${error.message}',
       );
@@ -338,5 +348,35 @@ void _deleteCreatedFile(File file) {
     }
   } on FileSystemException {
     // Best-effort cleanup; preserve the original publish failure.
+  }
+}
+
+void _createParentDirectories(
+  Directory projectRoot,
+  Directory targetDirectory,
+  List<Directory> createdDirectories,
+) {
+  final missing = <Directory>[];
+  var current = targetDirectory;
+  while (current.path != projectRoot.path && !current.existsSync()) {
+    missing.add(current);
+    current = current.parent;
+  }
+
+  targetDirectory.createSync(recursive: true);
+  createdDirectories.addAll(missing);
+}
+
+void _pruneCreatedDirectories(List<Directory> createdDirectories) {
+  final directories = createdDirectories.toSet().toList()
+    ..sort((a, b) => b.path.length.compareTo(a.path.length));
+  for (final directory in directories) {
+    try {
+      if (directory.existsSync() && directory.listSync().isEmpty) {
+        directory.deleteSync();
+      }
+    } on FileSystemException {
+      // Best-effort cleanup; preserve the original creation failure.
+    }
   }
 }

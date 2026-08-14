@@ -527,7 +527,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///
 /// Replace this with your own domain repository once you introduce real
 /// persistent data; this exists as a working starting point wired to
-/// Result<T>, guard(), and the Stacked locator.
+/// `Result<T>`, guard(), and the Stacked locator.
 class ${plan.repositoryClassName} {
   const ${plan.repositoryClassName}();
 

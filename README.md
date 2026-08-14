@@ -48,6 +48,51 @@ dart run tool/bootstrap.dart --help
 The bootstrap updates the template identity for a new application. Review the
 resulting diff before adding product code.
 
+## Cuboid CLI
+
+`packages/cuboid` is a Dart CLI (`cuboid`) that stamps out new projects from
+this template and scaffolds artifacts inside a generated project. It is not
+published to pub.dev; install it locally from a checkout of this repository:
+
+```bash
+dart pub global activate --source path packages/cuboid
+```
+
+Create a new project (an alternative to `tool/bootstrap.dart` for starting a
+brand-new project directory, rather than renaming this checkout in place):
+
+```bash
+cuboid create app "My App" com.example.myapp
+```
+
+Package identifiers (`com.example.myapp`) may use letters and numbers, each
+dot-separated segment must start with a letter.
+
+Inside a generated project, scaffold artifacts with `cuboid create <artifact>`:
+
+```text
+cuboid create feature <name>
+cuboid create service <name>
+cuboid create bottomsheet <name>
+cuboid create dialog <name>
+cuboid create storage <name>
+cuboid create database supabase
+cuboid create route <feature>
+cuboid create view <feature> <name>
+cuboid create repository <name>
+cuboid create model <name>
+cuboid create widget <name>            # shared, under lib/shared/widgets/
+cuboid create widget <feature> <name>  # feature-scoped
+```
+
+Every command supports `--dry-run` to preview the plan without writing
+anything. Commands that register an artifact with Stacked (`service`,
+`bottomsheet`, `dialog`, `database`, `route`, `repository`) print the
+`dart run build_runner build -d` step to run afterward instead of running it
+automatically. Full per-command contracts (generated files, registration
+behavior, safety guarantees) live in
+[ARCHITECTURE.md §9](ARCHITECTURE.md#9-cuboid-cli-command-contract).
+
 ## Local development
 
 Install dependencies:
