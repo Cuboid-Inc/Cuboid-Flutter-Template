@@ -187,6 +187,7 @@ void main() {
       expect(output.content, contains('cuboid create service <name>'));
       expect(output.content, contains('cuboid create bottomsheet <name>'));
       expect(output.content, contains('cuboid create dialog <name>'));
+      expect(output.content, contains('cuboid create storage <name>'));
     },
   );
 
@@ -376,7 +377,8 @@ void main() {
         name != 'feature' &&
         name != 'service' &&
         name != 'bottomsheet' &&
-        name != 'dialog',
+        name != 'dialog' &&
+        name != 'storage',
   )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -837,6 +839,96 @@ void main() {
     expect(
       errorOutput.content,
       contains('Only --dry-run is supported for cuboid create dialog.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create storage with dry-run creates no files', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeStorageProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', '--dry-run', 'storage', 'user-prefs'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Storage: UserPrefsStorage'));
+    expect(
+      output.content,
+      contains('- lib/core/storage/user_prefs_storage.dart'),
+    );
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create storage creates a secure key-value wrapper', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeStorageProject(temp);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'storage', 'user_prefs'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Created storage UserPrefsStorage.'));
+    expect(
+      output.content,
+      contains('- lib/core/storage/user_prefs_storage.dart'),
+    );
+    expect(errorOutput.content, isEmpty);
+    final storage = File(
+      '${temp.path}/lib/core/storage/user_prefs_storage.dart',
+    ).readAsStringSync();
+    expect(
+      storage,
+      contains(
+        "import 'package:flutter_secure_storage/flutter_secure_storage.dart';",
+      ),
+    );
+    expect(storage, contains('class UserPrefsStorage {'));
+  });
+
+  test('create storage rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeStorageProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'storage', 'cache', '--directory', 'ignored'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Only --dry-run is supported for cuboid create storage.'),
     );
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -1456,6 +1548,10 @@ Future<void> main() async {
   await setupLocator();
 }
 ''');
+}
+
+void _writeStorageProject(Directory root) {
+  File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
 }
 
 List<String> _relativeFiles(Directory root) {

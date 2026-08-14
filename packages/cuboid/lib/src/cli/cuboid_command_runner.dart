@@ -8,6 +8,7 @@ import 'package:cuboid/src/dialog/create_dialog.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
 import 'package:cuboid/src/route/register_route.dart';
 import 'package:cuboid/src/service/register_service.dart';
+import 'package:cuboid/src/storage/create_storage.dart';
 import 'package:cuboid/src/view/create_view.dart';
 
 const cuboidVersion = '0.1.0';
@@ -29,6 +30,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
     CreateFeatureService? createFeatureService,
     CreateBottomSheetService? createBottomSheetService,
     CreateDialogService? createDialogService,
+    CreateStorageService? createStorageService,
     RegisterRouteService? registerRouteService,
     RegisterServiceService? registerServiceService,
     CreateViewService? createViewService,
@@ -39,6 +41,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
        _createBottomSheetService =
            createBottomSheetService ?? CreateBottomSheetService(),
        _createDialogService = createDialogService ?? CreateDialogService(),
+       _createStorageService = createStorageService ?? CreateStorageService(),
        _registerRouteService = registerRouteService ?? RegisterRouteService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
@@ -57,6 +60,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createFeatureService: _createFeatureService,
         createBottomSheetService: _createBottomSheetService,
         createDialogService: _createDialogService,
+        createStorageService: _createStorageService,
         registerServiceService: _registerServiceService,
       ),
     );
@@ -96,6 +100,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final CreateFeatureService _createFeatureService;
   final CreateBottomSheetService _createBottomSheetService;
   final CreateDialogService _createDialogService;
+  final CreateStorageService _createStorageService;
   final RegisterRouteService _registerRouteService;
   final RegisterServiceService _registerServiceService;
   final CreateViewService _createViewService;
@@ -123,6 +128,7 @@ class CreateCommand extends Command<int> {
     CreateFeatureService? createFeatureService,
     CreateBottomSheetService? createBottomSheetService,
     CreateDialogService? createDialogService,
+    CreateStorageService? createStorageService,
     RegisterServiceService? registerServiceService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
@@ -131,6 +137,7 @@ class CreateCommand extends Command<int> {
        _createBottomSheetService =
            createBottomSheetService ?? CreateBottomSheetService(),
        _createDialogService = createDialogService ?? CreateDialogService(),
+       _createStorageService = createStorageService ?? CreateStorageService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService() {
     argParser
@@ -161,6 +168,7 @@ class CreateCommand extends Command<int> {
   final CreateFeatureService _createFeatureService;
   final CreateBottomSheetService _createBottomSheetService;
   final CreateDialogService _createDialogService;
+  final CreateStorageService _createStorageService;
   final RegisterServiceService _registerServiceService;
 
   @override
@@ -179,7 +187,8 @@ class CreateCommand extends Command<int> {
       'Implemented artifact commands: cuboid create feature <name>, '
       'cuboid create service <name>, '
       'cuboid create bottomsheet <name>, '
-      'cuboid create dialog <name>.\n'
+      'cuboid create dialog <name>, '
+      'cuboid create storage <name>.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -206,6 +215,9 @@ class CreateCommand extends Command<int> {
         }
         if (artifact == 'dialog') {
           return _runCreateDialog(rest.skip(1).toList());
+        }
+        if (artifact == 'storage') {
+          return _runCreateStorage(rest.skip(1).toList());
         }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
@@ -347,6 +359,34 @@ class CreateCommand extends Command<int> {
       writeDialogResult(_stdout, result);
       return 0;
     } on CreateDialogException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runCreateStorage(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create storage.',
+        usage,
+      );
+    }
+    if (rest.length != 1) {
+      throw UsageException('Expected a storage name.', usage);
+    }
+
+    final input = CreateStorageInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _createStorageService.create(input);
+      writeStorageResult(_stdout, result);
+      return 0;
+    } on CreateStorageException catch (error) {
       _stderr.writeln(error.message);
       return 1;
     }
@@ -518,6 +558,18 @@ void writeDialogResult(IOSink stdout, CreateDialogResult result) {
   } else {
     stdout.writeln('Next step: dart run build_runner build -d');
   }
+}
+
+void writeStorageResult(IOSink stdout, CreateStorageResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Storage: ${plan.className}');
+  } else {
+    stdout.writeln('Created storage ${plan.className}.');
+  }
+  stdout.writeln('Files:');
+  stdout.writeln('- ${plan.path}');
 }
 
 class RouteCommand extends Command<int> {

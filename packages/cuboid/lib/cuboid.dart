@@ -61,6 +61,14 @@ export 'src/service/register_service.dart'
         RegisterServiceResult,
         RegisterServiceService,
         ServiceFileWriter;
+export 'src/storage/create_storage.dart'
+    show
+        CreateStorageException,
+        CreateStorageInput,
+        CreateStoragePlan,
+        CreateStorageResult,
+        CreateStorageService,
+        StorageFileWriter;
 export 'src/view/create_view.dart'
     show
         CreateViewException,
