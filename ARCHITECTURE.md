@@ -199,7 +199,94 @@ dart run build_runner build -d
 
 Generated changes are kept only when their editable source changed.
 
-## 9. Core foundations
+## 9. Cuboid CLI command contract
+
+The public CLI is artifact-oriented under a canonical `create` namespace:
+
+```text
+cuboid create <artifact> [arguments] [options]
+```
+
+All 12 known artifact categories are implemented and shipped:
+
+```text
+app, feature, service, bottomsheet, dialog, storage, database, route, view,
+repository, model, widget
+```
+
+None fall through to an unimplemented state; `cuboid create <artifact>` for any
+of the twelve dispatches to a real generator or registration service. Adding a
+13th artifact still requires explicit contract evidence before implementation —
+that discipline is unchanged. What has changed is that the twelve above are no
+longer speculative: they are implemented, tested (`packages/cuboid/test/`), and
+live-smoke-tested against a real generated project as part of release
+verification.
+
+Shipped `create` command family:
+
+| Command | Generates | Modifies | Registration | Requires build_runner |
+| --- | --- | --- | --- | --- |
+| `cuboid create app <display> <package>` | New Flutter project from the template payload | — | Bootstraps package identifiers, Dart project name, bundle IDs | Runs `flutter pub get`, `build_runner`, `dart format` as post-steps (skippable with `--no-post-steps`) |
+| `cuboid create feature <name>` | `lib/features/<name>/ui/views/<name>_view.dart` + `.../ui/viewmodels/<name>_viewmodel.dart` | — | None | No |
+| `cuboid create service <name>` | `lib/core/services/<name>_service.dart` | `lib/app/app.dart` | Registers the service as a `LazySingleton` | Yes |
+| `cuboid create bottomsheet <name>` | `lib/shared/bottom_sheets/<name>/<name>_sheet.dart` + `_sheet_model.dart` | `lib/app/app.dart`, `lib/main.dart` | Registers the sheet + `setupBottomSheetUi()` call | Yes |
+| `cuboid create dialog <name>` | `lib/shared/dialogs/<name>/<name>_dialog.dart` + `_dialog_model.dart` | `lib/app/app.dart`, `lib/main.dart` | Registers the dialog + `setupDialogUi()` call | Yes |
+| `cuboid create storage <name>` | `lib/core/storage/<name>_storage.dart` | — | None | No |
+| `cuboid create database <provider>` | `lib/supabase/example_model.dart`, `example_repository.dart`, a timestamped migration under `supabase/migrations/` (provider must be `supabase`; no other provider is currently supported) | `lib/app/app.dart` | Registers the example repository | Yes, plus `supabase db push` |
+| `cuboid create route <feature>` | — (the feature's view must already exist) | `lib/app/app.dart` | Registers the existing view as a route | Yes |
+| `cuboid create view <feature> <name>` | Additional `..._view.dart` + `..._viewmodel.dart` pair inside an existing feature | — | None | No |
+| `cuboid create repository <name>` | `lib/supabase/<name>_model.dart`, `<name>_repository.dart`, a timestamped migration (table name is naively pluralized from `<name>`) | `lib/app/app.dart` | Registers the repository | Yes, plus `supabase db push` |
+| `cuboid create model <name>` | `lib/core/models/<name>.dart` | — | None | No |
+| `cuboid create widget <name>` or `<feature> <name>` | `lib/shared/widgets/<name>.dart` (shared) or `lib/features/<feature>/ui/widgets/<name>.dart` (feature-scoped; the feature must already exist) | — | None | No |
+
+`database`/`repository` require the Supabase foundation (dependency +
+foundation files) to already be present in the project; they refuse to run
+otherwise rather than silently scaffolding it.
+
+Dual command surfaces exist for `feature`, `service`, `route`, and `view`:
+each also has a legacy top-level form (`cuboid feature <name>`,
+`cuboid service <name>`, `cuboid route <feature>`, `cuboid view <feature>
+<name>`). For `service` specifically, the two surfaces are **not** aliases:
+`cuboid create service <name>` generates the service file and registers it;
+the legacy `cuboid service <name>` only registers an already-existing service
+file. `feature`, `route`, and `view` behave identically under both surfaces.
+The legacy top-level forms are retained implementation history, not deprecated
+— no migration or removal has been decided.
+
+Every command above supports `--dry-run`, which validates and reports the
+plan without writing anything (verified: dry-run never creates files or
+directories).
+
+Safety guarantees enforced uniformly across all 12 generators (verified by
+source inspection and tests, not assumed):
+
+- Name normalization rejects path separators, `.`/`..` traversal, empty names,
+  and Dart keywords; accepted names are letters/numbers joined by `_`/`-`,
+  normalized to lower snake_case.
+- Collision protection: existing target files/directories/symlinks are
+  refused before any write.
+- Symlink/traversal protection: every generator that creates files validates
+  that each ancestor path segment between the project root and the target
+  stays a real directory (not a symlink, not outside the project).
+- Rollback: a failure partway through a multi-file write deletes files it had
+  already created, restores any registration file (`app.dart`/`main.dart`) to
+  its original contents, and prunes any parent directories the operation
+  itself created (empty-only; pre-existing directories are left alone).
+- No generator runs `build_runner` automatically. Where regeneration is
+  required, the CLI prints the exact next command instead.
+- Generated Stacked files (`lib/app/app.router.dart`, `.locator.dart`,
+  `.logger.dart`) are never hand-edited by a generator; only the editable
+  source (`lib/app/app.dart`) is patched.
+
+A new artifact command (a 13th category, or a new option on an existing one)
+still requires: command syntax, required/optional arguments, normalized names,
+generated files, modified files, registration/configuration side effects,
+dependencies, dry-run behavior, no-overwrite behavior, failure conditions,
+rollback/atomicity expectations, filesystem/path safety, package-name
+resolution, and exit-code behavior — defined explicitly before implementation,
+matching the standard the 12 shipped commands were held to.
+
+## 10. Core foundations
 
 `lib/core/config/`
 
@@ -247,7 +334,7 @@ Local storage abstractions.
 
 Application theme, colors, and UI helpers.
 
-## 10. Shared presentation
+## 11. Shared presentation
 
 Reusable presentation code lives under:
 
@@ -267,7 +354,7 @@ lib/features/<feature>/ui/widgets/
 Do not duplicate a shared widget inside a feature when the widget has no
 feature-specific responsibility.
 
-## 11. Current data and backend boundary
+## 12. Current data and backend boundary
 
 The template currently has no production repository/data layer and no domain
 schema.
@@ -301,7 +388,7 @@ Repositories should:
 ViewModels consume repositories rather than calling backend SDKs directly for
 feature data.
 
-## 12. Supabase and database authority
+## 13. Supabase and database authority
 
 Supabase may be used by applications generated from this template for auth,
 database, storage, functions, and local development.
@@ -324,7 +411,7 @@ data-integrity rules. It does not imply nonexistent template features.
 Service-role credentials and backend secrets must never be embedded in Flutter
 code, assets, logs, tests, screenshots, or committed environment files.
 
-## 13. Testing architecture
+## 14. Testing architecture
 
 The template contains focused tests for implemented foundations and UI.
 
@@ -353,7 +440,7 @@ mapping, typed failures, persistence behavior, and authorization boundaries.
 
 Backend tests become application-specific when a backend schema exists.
 
-## 14. Architecture decisions
+## 15. Architecture decisions
 
 ### ADR-1: Feature-first Stacked MVVM
 
@@ -396,7 +483,7 @@ regenerated.
 
 Never place custom logic in generated files.
 
-## 15. Current template limitations
+## 16. Current template limitations
 
 The current repository intentionally does not claim to contain:
 
@@ -411,7 +498,7 @@ The current repository intentionally does not claim to contain:
 
 Those concerns belong to applications generated from the template.
 
-## 16. Reference files
+## 17. Reference files
 
 Core architectural references:
 

@@ -1,0 +1,809 @@
+{
+  "template_name": "cuboid_flutter_app",
+  "template_version": 1,
+  "source_commit": "1a6b581fc2e816184e04e693027116ce3bc23cb2",
+  "archive_sha256": "24fc1e2d0d5413664cc7590399dfa48553accc89b91fd86b79b3566083610ee2",
+  "files": [
+    {
+      "path": ".gitignore",
+      "size": 810,
+      "sha256": "26fa5b256a22b45e57dc0a0eb53740dcf81fffae9c72cc806bced366916ec61d"
+    },
+    {
+      "path": ".metadata",
+      "size": 1114,
+      "sha256": "bcc061622b45710173b542923f0d38ef073a39141124261c65e414849a1e5b39"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "size": 20429,
+      "sha256": "324487d0ef60b918a18ec296b8e83d6979773100dfe9c37d2d8e7384a1ef2e30"
+    },
+    {
+      "path": "README.md",
+      "size": 3409,
+      "sha256": "e57d334444758c199e93eedc8a6658330b03c0a9fe85a1163816746a49ac2ef8"
+    },
+    {
+      "path": "RULES.md",
+      "size": 20569,
+      "sha256": "2d5363507ea360d618169a4856a6b97602da972ff9bbe84e79d8f948d8abb63e"
+    },
+    {
+      "path": "analysis_options.yaml",
+      "size": 1640,
+      "sha256": "abfd98725bfc6c872bf7b12cc25a6f640bcf7d965c505a5f8ba2ad9b9d3e10b6"
+    },
+    {
+      "path": "android/.gitignore",
+      "size": 253,
+      "sha256": "b027c9de1011765c015e5819bf857c0d75bfcd0886fb01721c091159012e50f1"
+    },
+    {
+      "path": "android/app/build.gradle.kts",
+      "size": 1422,
+      "sha256": "28bf82239a6fe67b89beec06a2d26a104eadb181b6072c41b8e04a3bdf74145a"
+    },
+    {
+      "path": "android/app/src/debug/AndroidManifest.xml",
+      "size": 378,
+      "sha256": "30b0832ed8b92dfbd6ae2abfa939ccf26333d37600056b1572bd4a397a18a74b"
+    },
+    {
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "size": 2676,
+      "sha256": "06dee95ff8595e20c0f5a5cafb4e7718fdadf415ad94878e01108f6a86563d1c"
+    },
+    {
+      "path": "android/app/src/main/kotlin/com/cuboidllc/cuboid_flutter_template/MainActivity.kt",
+      "size": 139,
+      "sha256": "f8deec9c306d2195634ea4040d15f05ea379ad49f982e3057a55402147f1e01b"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-hdpi/android12splash.png",
+      "size": 2882,
+      "sha256": "91884d263e625b249547e37d25b7d4353b9a1f2a7e97fbc6acb02c0b47bbd358"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-hdpi/splash.png",
+      "size": 2882,
+      "sha256": "91884d263e625b249547e37d25b7d4353b9a1f2a7e97fbc6acb02c0b47bbd358"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-mdpi/android12splash.png",
+      "size": 1626,
+      "sha256": "874696ebde5b1f71ce7ec90f7a20e029a184089211c107dd07c1cb98fb7716af"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-mdpi/splash.png",
+      "size": 1626,
+      "sha256": "874696ebde5b1f71ce7ec90f7a20e029a184089211c107dd07c1cb98fb7716af"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-night-hdpi/android12splash.png",
+      "size": 2882,
+      "sha256": "91884d263e625b249547e37d25b7d4353b9a1f2a7e97fbc6acb02c0b47bbd358"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-night-mdpi/android12splash.png",
+      "size": 1626,
+      "sha256": "874696ebde5b1f71ce7ec90f7a20e029a184089211c107dd07c1cb98fb7716af"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-night-v21/launch_background.xml",
+      "size": 321,
+      "sha256": "42b8d099f0a6d79e90a67949d7a655c09458c734aa1bd8c4d7c73a79b28397ea"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-night-xhdpi/android12splash.png",
+      "size": 2409,
+      "sha256": "d223be60f2e3f431e6db37aee241fe65a8297c114b8da0c09d09c8d75be21696"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-night-xxhdpi/android12splash.png",
+      "size": 4317,
+      "sha256": "7eae1edf803558082c2bfd0fb230884082979bfd5396db8933ae365a5051d577"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-night-xxxhdpi/android12splash.png",
+      "size": 4710,
+      "sha256": "77bc3a692aecfd043dbd7ba6683320a03f9fa1c3c7799b78022e440422f2e7fb"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-night/launch_background.xml",
+      "size": 321,
+      "sha256": "42b8d099f0a6d79e90a67949d7a655c09458c734aa1bd8c4d7c73a79b28397ea"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-v21/background.png",
+      "size": 5091,
+      "sha256": "bb1f7e4bc5dfbc86115ba8b6349d468ec0568ce860490adf965203864b32ff7a"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-v21/launch_background.xml",
+      "size": 321,
+      "sha256": "42b8d099f0a6d79e90a67949d7a655c09458c734aa1bd8c4d7c73a79b28397ea"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-xhdpi/android12splash.png",
+      "size": 2409,
+      "sha256": "d223be60f2e3f431e6db37aee241fe65a8297c114b8da0c09d09c8d75be21696"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-xhdpi/splash.png",
+      "size": 2409,
+      "sha256": "d223be60f2e3f431e6db37aee241fe65a8297c114b8da0c09d09c8d75be21696"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-xxhdpi/android12splash.png",
+      "size": 4317,
+      "sha256": "7eae1edf803558082c2bfd0fb230884082979bfd5396db8933ae365a5051d577"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-xxhdpi/splash.png",
+      "size": 4317,
+      "sha256": "7eae1edf803558082c2bfd0fb230884082979bfd5396db8933ae365a5051d577"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-xxxhdpi/android12splash.png",
+      "size": 4710,
+      "sha256": "77bc3a692aecfd043dbd7ba6683320a03f9fa1c3c7799b78022e440422f2e7fb"
+    },
+    {
+      "path": "android/app/src/main/res/drawable-xxxhdpi/splash.png",
+      "size": 4710,
+      "sha256": "77bc3a692aecfd043dbd7ba6683320a03f9fa1c3c7799b78022e440422f2e7fb"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/background.png",
+      "size": 5091,
+      "sha256": "bb1f7e4bc5dfbc86115ba8b6349d468ec0568ce860490adf965203864b32ff7a"
+    },
+    {
+      "path": "android/app/src/main/res/drawable/launch_background.xml",
+      "size": 321,
+      "sha256": "42b8d099f0a6d79e90a67949d7a655c09458c734aa1bd8c4d7c73a79b28397ea"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+      "size": 1875,
+      "sha256": "5e757127e058760ea59a0d5fbd68103f190cabb34f9d3917354d576b634ff5f4"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "size": 1432,
+      "sha256": "b16d1a14bc02c1cf18efc25f2050bbbba6cbc4572ddaf2c3158cb34b719c2e29"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+      "size": 2497,
+      "sha256": "6561fba606ae5ea551b402a6b533a29d7bd9ad98f7ea5d63b82fc41448baed89"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+      "size": 3142,
+      "sha256": "5e00a4091deec256df0851efc84be84c16956a34d977ab595caf653187178ca1"
+    },
+    {
+      "path": "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "size": 4524,
+      "sha256": "dabca22e77e3dcc3350c274e78faf29933f732454e1a27c090b6339485c58f94"
+    },
+    {
+      "path": "android/app/src/main/res/values-night-v31/styles.xml",
+      "size": 1222,
+      "sha256": "7e6356b255e66eb1729582dff3ba32e9bbc3374ad0609759c6751530bb517bb3"
+    },
+    {
+      "path": "android/app/src/main/res/values-night/styles.xml",
+      "size": 1264,
+      "sha256": "359b76f252fe3d3a32950c2ba219d91e5fe07c10bed8365830add0648956d738"
+    },
+    {
+      "path": "android/app/src/main/res/values-v31/styles.xml",
+      "size": 1223,
+      "sha256": "d30f375965830e56da0f0405ea89e7668fbfbd5bfa15c8771509c88c25ad094f"
+    },
+    {
+      "path": "android/app/src/main/res/values/styles.xml",
+      "size": 1265,
+      "sha256": "92577b5b03b0092dcf299293386819ae5a63ba605f8dbc2c70954cda9dc12f2e"
+    },
+    {
+      "path": "android/app/src/profile/AndroidManifest.xml",
+      "size": 378,
+      "sha256": "30b0832ed8b92dfbd6ae2abfa939ccf26333d37600056b1572bd4a397a18a74b"
+    },
+    {
+      "path": "android/build.gradle.kts",
+      "size": 537,
+      "sha256": "6a26dba2cb8dfba1e74f540b0d17a89d96c1301d3c3bfda14348bed257fddcba"
+    },
+    {
+      "path": "android/gradle.properties",
+      "size": 138,
+      "sha256": "5539cf5f17c53900a72cf0065e450f0a8ba5b929dd2b364724c1296d0285d9dc"
+    },
+    {
+      "path": "android/gradle/wrapper/gradle-wrapper.properties",
+      "size": 201,
+      "sha256": "297c9e63b6fa6e7e8b221900fa1787c1a0e38869d8957da66389fd0f6b00f78e"
+    },
+    {
+      "path": "android/settings.gradle.kts",
+      "size": 772,
+      "sha256": "a9b5756048f668d4ebf355116678fd334cd5f2169b7d4518ad19b8df14d3af36"
+    },
+    {
+      "path": "assets/icon/app_icon.png",
+      "size": 5091,
+      "sha256": "bb1f7e4bc5dfbc86115ba8b6349d468ec0568ce860490adf965203864b32ff7a"
+    },
+    {
+      "path": "assets/logo.png",
+      "size": 5091,
+      "sha256": "bb1f7e4bc5dfbc86115ba8b6349d468ec0568ce860490adf965203864b32ff7a"
+    },
+    {
+      "path": "assets/splash/background.png",
+      "size": 5091,
+      "sha256": "bb1f7e4bc5dfbc86115ba8b6349d468ec0568ce860490adf965203864b32ff7a"
+    },
+    {
+      "path": "assets/splash/logo_tile.png",
+      "size": 5091,
+      "sha256": "bb1f7e4bc5dfbc86115ba8b6349d468ec0568ce860490adf965203864b32ff7a"
+    },
+    {
+      "path": "devtools_options.yaml",
+      "size": 202,
+      "sha256": "c0164dad08bc8afbcf6f05b8b8a5b59dee4425d17742a0d72e80a16292d055bc"
+    },
+    {
+      "path": "ios/.gitignore",
+      "size": 569,
+      "sha256": "37380775aeb2499662b7aca80f4ac4c95ae827c3ba2bfa179aa3e9af4812c623"
+    },
+    {
+      "path": "ios/Flutter/AppFrameworkInfo.plist",
+      "size": 720,
+      "sha256": "da12038f9b2688a8a26160fea2609fa8fcb11421448c109f09c0f573efe7698d"
+    },
+    {
+      "path": "ios/Flutter/Debug.xcconfig",
+      "size": 107,
+      "sha256": "690b8a8b1ae15ddd29b241429963e971bbc6720ab22f154cf8cf6b085b6d4925"
+    },
+    {
+      "path": "ios/Flutter/Release.xcconfig",
+      "size": 109,
+      "sha256": "75abb819a9de1e0e41c835e7307bc64a506cac25a9a5c0b0d8253fa1c3d5d422"
+    },
+    {
+      "path": "ios/Podfile",
+      "size": 1389,
+      "sha256": "08451597ca3b1600761b0ee68df4dbd1a642e9d96458799f162291d5a63dd919"
+    },
+    {
+      "path": "ios/Podfile.lock",
+      "size": 1944,
+      "sha256": "25dbb009771a9c93565b42408a7626848be8bca43630c7cd1630e138b39a28da"
+    },
+    {
+      "path": "ios/Runner.xcodeproj/project.pbxproj",
+      "size": 33090,
+      "sha256": "66096a4546282d4cf3bb38bf75a4f0a2867929b537be8c612e67cf581880a720"
+    },
+    {
+      "path": "ios/Runner.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+      "size": 135,
+      "sha256": "7f3b00b5c3fdb45242d7b87e1e5c4e25d1fa8129a16c94295ecc4e8ea2235c5f"
+    },
+    {
+      "path": "ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+      "size": 238,
+      "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+    },
+    {
+      "path": "ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+      "size": 226,
+      "sha256": "11b247bc6796892d67c9a821d18604db4dd6a880981b34f38460b9866e6b247f"
+    },
+    {
+      "path": "ios/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme",
+      "size": 3833,
+      "sha256": "2dd28b879e66081e28a3324cf2bee7ab2f70be9a3e50e08926b7366dadff7d6e"
+    },
+    {
+      "path": "ios/Runner.xcworkspace/contents.xcworkspacedata",
+      "size": 224,
+      "sha256": "465e6de5660384eb6832e8078920ba6cd5305c445cb29a24a86a2fda4aa6b67e"
+    },
+    {
+      "path": "ios/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+      "size": 238,
+      "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+    },
+    {
+      "path": "ios/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+      "size": 226,
+      "sha256": "11b247bc6796892d67c9a821d18604db4dd6a880981b34f38460b9866e6b247f"
+    },
+    {
+      "path": "ios/Runner/AppDelegate.swift",
+      "size": 539,
+      "sha256": "451c6d9ba0a2b3ff43092ea349c60fa79a91f1158b915eb29dbdd357cb95d7b8"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json",
+      "size": 2097,
+      "sha256": "59aee64f32dab46ad775da6ea2f3fc4efe6e8a78289a9185cd0d2d7e055845dd"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png",
+      "size": 76596,
+      "sha256": "6dacacf93662b8735700e6ed69ecd8fd495f4b2bcd77cceb49dc078e178eff72"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png",
+      "size": 407,
+      "sha256": "02bf3988551410ace6bf9f3253154749b8bc26947bc726fd575af01e44aa2d6e"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png",
+      "size": 716,
+      "sha256": "26956527aadc55b7b7061e21a4e7a06f2622dddeccd2365fa6f36e5268d76942"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png",
+      "size": 1083,
+      "sha256": "5c53f067a5f5e53ab47e50ad683c1a079e8ec8492218db029b15137dc1fab9ea"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png",
+      "size": 732,
+      "sha256": "67e0ae7b9b0e15a3316e76bca30613630d486cdb68f8646d4bc0d9151a4ae8f2"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png",
+      "size": 1406,
+      "sha256": "6e08e547a1662c986a2fbc2eb72e392319efdd94427d274d0fff270205fbd251"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png",
+      "size": 2101,
+      "sha256": "15d5b78609dbf8913f8b28d86c2091894eefe6322652aa9940d9288b3e736529"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png",
+      "size": 716,
+      "sha256": "26956527aadc55b7b7061e21a4e7a06f2622dddeccd2365fa6f36e5268d76942"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png",
+      "size": 1439,
+      "sha256": "70c8ed767da7b19401f430882f706601c9717afcd2efd01e7a55ec99765684e6"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png",
+      "size": 2112,
+      "sha256": "8c9cbe9d1c618cbb175dd2522edccae9b4b7f70681b3062d0ed8cc9913448d9c"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@1x.png",
+      "size": 1160,
+      "sha256": "3b9b19071406b06e69822a586bbd6584159b0cbf8df7d979bee6dc96592341f7"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-50x50@2x.png",
+      "size": 1958,
+      "sha256": "de6179fbc926a9202cf3621c2fea80f611c8501ae404f4a513d1f34eb424e039"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@1x.png",
+      "size": 1385,
+      "sha256": "c276cf2f6e6c6b96711640541f8e51709282f8fad88f6dc50dc36cb8c2843d6f"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-57x57@2x.png",
+      "size": 2600,
+      "sha256": "f216478971c8a5049964d8d197a9d78e906ad1537692c44e1cf2f311e35dbc13"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png",
+      "size": 2112,
+      "sha256": "8c9cbe9d1c618cbb175dd2522edccae9b4b7f70681b3062d0ed8cc9913448d9c"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png",
+      "size": 3101,
+      "sha256": "741173df9fa32bc6bbd64a1d286918c8115f5460a6fe1ce6f804271a5f6a3787"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@1x.png",
+      "size": 1614,
+      "sha256": "5ccc5277450fa1820ce58279860c6477c9ecc938ded82bf4715b2e47c6370280"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-72x72@2x.png",
+      "size": 2891,
+      "sha256": "37e251a1defb5a36b44126b74a81a223cb663725d73c8074c3825e3713a81b42"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png",
+      "size": 1883,
+      "sha256": "38d5decf390b95d8be495bc06b36a8a7fe952d037e3a194f3c37c728b03c8243"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png",
+      "size": 3313,
+      "sha256": "15d90ceaef247ddb9a8dd302989cd09d56fe4b7f36414c90b7ac60e6eed842b6"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png",
+      "size": 3599,
+      "sha256": "0587afcef118c9e709853e4acb1f3aebb8e96848566a85351166abbe1ee250f5"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/LaunchBackground.imageset/Contents.json",
+      "size": 308,
+      "sha256": "8acdea4656c6df21249f0a3532e3f2a4de6ad3686caa0a1861c87b0727a09593"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/LaunchBackground.imageset/background.png",
+      "size": 5091,
+      "sha256": "bb1f7e4bc5dfbc86115ba8b6349d468ec0568ce860490adf965203864b32ff7a"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json",
+      "size": 391,
+      "sha256": "0305caab0a081d319e4f70c23635d7e56189d42bcc05180d3212aa1e9ad29664"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage.png",
+      "size": 1626,
+      "sha256": "874696ebde5b1f71ce7ec90f7a20e029a184089211c107dd07c1cb98fb7716af"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@2x.png",
+      "size": 2409,
+      "sha256": "d223be60f2e3f431e6db37aee241fe65a8297c114b8da0c09d09c8d75be21696"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage@3x.png",
+      "size": 4317,
+      "sha256": "7eae1edf803558082c2bfd0fb230884082979bfd5396db8933ae365a5051d577"
+    },
+    {
+      "path": "ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md",
+      "size": 336,
+      "sha256": "a985b626c4f7546a8ba392d135e9226c3547c8e2b46895f5f2bdf40d7b14ef9f"
+    },
+    {
+      "path": "ios/Runner/Base.lproj/LaunchScreen.storyboard",
+      "size": 3487,
+      "sha256": "2cc20edd25d9b948d528f2847f6ab0f8680689566897b12926551891bd4ed472"
+    },
+    {
+      "path": "ios/Runner/Base.lproj/Main.storyboard",
+      "size": 1605,
+      "sha256": "fd367b6c43006d61b730f674970dd48b9f662c8f2264e52ffc1558102a2c9f2d"
+    },
+    {
+      "path": "ios/Runner/Info.plist",
+      "size": 2667,
+      "sha256": "6ad3d508208ea120521930b110927674003f850601cf6ac3a38dfcf612198066"
+    },
+    {
+      "path": "ios/Runner/Runner-Bridging-Header.h",
+      "size": 38,
+      "sha256": "1a8d11d01d1cc92c650c9c9ed35299240052d4683a15a719a2315ef44185e074"
+    },
+    {
+      "path": "ios/Runner/SceneDelegate.swift",
+      "size": 76,
+      "sha256": "add68b905971dedfcc0d0b5b7118030de5925ba8c081ad9815463699e3a444ad"
+    },
+    {
+      "path": "ios/RunnerTests/RunnerTests.swift",
+      "size": 285,
+      "sha256": "5e8f4908dacea6f29b2a790e4d38bf5fded69096063f9a27a2f21584d62b30c0"
+    },
+    {
+      "path": "lib/app/app.dart",
+      "size": 719,
+      "sha256": "6ba94ee7e90873ba1cac45ad38dff5d20253415b5b9b31068e45649d8d3a2249"
+    },
+    {
+      "path": "lib/app/app.locator.dart",
+      "size": 949,
+      "sha256": "7d1773b06a5239f3dbbcda97911a058370f075352f6ec5ffb725bc9a6dcd5768"
+    },
+    {
+      "path": "lib/app/app.logger.dart",
+      "size": 5179,
+      "sha256": "1217666c8ffc9189c08c381edbef86c0e37ed635cb75f16ede1351f75be13239"
+    },
+    {
+      "path": "lib/app/app.router.dart",
+      "size": 4701,
+      "sha256": "4587115af578c72db17693e1f3485b139496b67765f8b565e350b6fd3f82a851"
+    },
+    {
+      "path": "lib/app/app_root.dart",
+      "size": 840,
+      "sha256": "6d4d46c0288cbde0939cf308a8f5628de48fa9ff6df45d0ea39d32cd0eb2e082"
+    },
+    {
+      "path": "lib/core/config/env.dart",
+      "size": 356,
+      "sha256": "ff9000c7c7fd543d49491e5e9bc848e08777af4fbddc0e93b0af142565b08107"
+    },
+    {
+      "path": "lib/core/constants/app_constants.dart",
+      "size": 421,
+      "sha256": "d31325d9da935e953c19740437f44acd8314bfa687fafa48751faa2d2373326a"
+    },
+    {
+      "path": "lib/core/constants/asset_paths.dart",
+      "size": 96,
+      "sha256": "c4777f5a23589ba67d507d30c4dae169f439333b289dedfdda4fa7faa7507d06"
+    },
+    {
+      "path": "lib/core/constants/storage_keys.dart",
+      "size": 184,
+      "sha256": "0e5126ef16bc27a8e744156c5ac3ef3ecd9ec1d1bdeddb9c03a7e27ecce0d58b"
+    },
+    {
+      "path": "lib/core/errors/failures.dart",
+      "size": 740,
+      "sha256": "84e56d3b297ad2e5404aa0d757568b3be321bcc4d6e1b45468ced515840dcec4"
+    },
+    {
+      "path": "lib/core/errors/result.dart",
+      "size": 539,
+      "sha256": "181e3c9115010bcabd36c530ba990de36628ddc065931eec5aab26192c077819"
+    },
+    {
+      "path": "lib/core/formatters/formatters.dart",
+      "size": 747,
+      "sha256": "ef9ec8ded05436172caedc52e2a9ae846257a36877ad4311337ce26730cb55b6"
+    },
+    {
+      "path": "lib/core/forms/form_validators.dart",
+      "size": 1677,
+      "sha256": "fb5e1b0a39c21186709ee8e6b9a83ec907ebe72874e8c7d05e792195ac76b187"
+    },
+    {
+      "path": "lib/core/models/paginated_result.dart",
+      "size": 351,
+      "sha256": "4ca8bcd4319fbd1393caf68c5bd5aff57dcda7bf3663d1b0f5199097ccdeaa29"
+    },
+    {
+      "path": "lib/core/network/supabase_guard.dart",
+      "size": 2291,
+      "sha256": "95a1308608f7fd3dacb501a5c3e25f11b15a2b62bd3aa32d31928eee55336277"
+    },
+    {
+      "path": "lib/core/services/shell_service.dart",
+      "size": 299,
+      "sha256": "75d57c36fbccaade54521bc1466706f1829751cbb82896e8929a680e9c91715d"
+    },
+    {
+      "path": "lib/core/storage/cache_entry.dart",
+      "size": 1035,
+      "sha256": "869e5d955ea00b185affec5dd5c25e81dc2e16a83f50da0e722ec4869623efd5"
+    },
+    {
+      "path": "lib/core/storage/secure_local_storage.dart",
+      "size": 1076,
+      "sha256": "ed5091b1dbb2b0a5315180a73fb3871b75997c7a77a82872e74f295ad2b0dadb"
+    },
+    {
+      "path": "lib/core/theme/app_colors.dart",
+      "size": 1421,
+      "sha256": "7846a07fb74704ac77d5febfc880525bf9dffa21f08de7e09dbb5faa4bd6edcf"
+    },
+    {
+      "path": "lib/core/theme/app_theme.dart",
+      "size": 3331,
+      "sha256": "dea7edc22883fc25e8db26c427adcb654f17e7a6a8241ac06b3183b2e76d8feb"
+    },
+    {
+      "path": "lib/core/theme/ui_helpers.dart",
+      "size": 367,
+      "sha256": "3f215f46b497f672bc1ecbbff1d8396e64950ac98ea0ffb8713f68b7b9ccb617"
+    },
+    {
+      "path": "lib/core/validators/auth_validation.dart",
+      "size": 342,
+      "sha256": "3c73cdbc927fd323a17d5e430df6bda116bfa982f028ddd11b1846b0253ca4cf"
+    },
+    {
+      "path": "lib/features/home/ui/viewmodels/home_viewmodel.dart",
+      "size": 85,
+      "sha256": "fa20cca87d383ec5384f966cff665f71e390645a34fbd96b6a6f67e2591bc24d"
+    },
+    {
+      "path": "lib/features/home/ui/viewmodels/shell_viewmodel.dart",
+      "size": 475,
+      "sha256": "7f5c5eb583a117331cb7033d48540b1b27030b2c4927bfdd6a39ecd4d84c309e"
+    },
+    {
+      "path": "lib/features/home/ui/views/home_view.dart",
+      "size": 580,
+      "sha256": "342efcf74d18016b8ff4a1b2257a38cf8b676086defec6d6e1dd4b9839fc7dd1"
+    },
+    {
+      "path": "lib/features/home/ui/views/shell_view.dart",
+      "size": 4910,
+      "sha256": "9954188a72fe6b3a15d0690fdc86f3e8ede3ab4deb5a1958cfe4dfab5001c7ca"
+    },
+    {
+      "path": "lib/features/startup/ui/viewmodels/startup_viewmodel.dart",
+      "size": 425,
+      "sha256": "1b0b5003c07dead82471f4aa7497a490c5b1e7c3e6877cb3fbabc9484d3057fa"
+    },
+    {
+      "path": "lib/features/startup/ui/views/startup_view.dart",
+      "size": 2277,
+      "sha256": "1a4011aa4b3c24a62423dd4dd103f982e1b841ae774f2a6c83bae4193e402633"
+    },
+    {
+      "path": "lib/main.dart",
+      "size": 2232,
+      "sha256": "f6037faea05d717ee2448f028a9e92e438b846e0518eb53945e237c4887e4335"
+    },
+    {
+      "path": "lib/shared/widgets/app_bar_ios.dart",
+      "size": 2728,
+      "sha256": "7cea77407e7f405e6b5980e2053e57f5ac3cafefa5e37848aca869435f14cb6e"
+    },
+    {
+      "path": "lib/shared/widgets/app_button.dart",
+      "size": 2537,
+      "sha256": "55299451885df84022bfda2c73456bcbd17320dfa3204442981ee160246d9496"
+    },
+    {
+      "path": "lib/shared/widgets/app_combo_box.dart",
+      "size": 18721,
+      "sha256": "0bfa0fe262bd81c7168552efd4416574c8200e80164b99997c0ca871e356a1f0"
+    },
+    {
+      "path": "lib/shared/widgets/app_date_time_picker.dart",
+      "size": 6090,
+      "sha256": "f7aeeee22386abe1806f6f13ceaf779f4279d2827dc60ddc6c2223232e3b8c0e"
+    },
+    {
+      "path": "lib/shared/widgets/app_dropdown.dart",
+      "size": 4485,
+      "sha256": "11a329ec0976e2fada0eb7f1595abf193568fc438cdbf1c0b9816ad12965860f"
+    },
+    {
+      "path": "lib/shared/widgets/app_loading_indicator.dart",
+      "size": 3230,
+      "sha256": "2eb929f1a425e98a654cae9b85d610628ff3c698fee04cc5f813fb950fa44bcd"
+    },
+    {
+      "path": "lib/shared/widgets/app_text_field.dart",
+      "size": 4056,
+      "sha256": "58a95fc753b578cbdf02e0059d7d30623c770fd9f2f62a1d69eeb201d67215fa"
+    },
+    {
+      "path": "lib/shared/widgets/chip_selector.dart",
+      "size": 1269,
+      "sha256": "42feac9f2b70a8f89a409929e3f89769312aaef2cc565dc6012c1abf6d41f08c"
+    },
+    {
+      "path": "lib/shared/widgets/empty_state.dart",
+      "size": 2040,
+      "sha256": "cf65ba5716a5fc897c326e74053b3d960e3cc11092c8acc62b03716ed4bd7b09"
+    },
+    {
+      "path": "lib/shared/widgets/paginated_list/paginated_list_view.dart",
+      "size": 5093,
+      "sha256": "44c18b29739165508a1ad250acff99c0f3bcf959743e0ab966868ad514d37b0f"
+    },
+    {
+      "path": "lib/shared/widgets/paginated_list/pagination_controller.dart",
+      "size": 4580,
+      "sha256": "d2167a224e3afb3e084182df18a0e381c69e03a7fcbded5e8874e47e44f816fb"
+    },
+    {
+      "path": "pubspec.lock",
+      "size": 36323,
+      "sha256": "711bb8da409177e6155baa847d3b157ff902f2185dd0595fe8b0c85981169623"
+    },
+    {
+      "path": "pubspec.yaml",
+      "size": 1171,
+      "sha256": "76588444c70d48f593f143996d167fe4db7227b146cd1e396229abae4b95c2a7"
+    },
+    {
+      "path": "stacked.json",
+      "size": 330,
+      "sha256": "1daa8cef25b211df3243965a98ae06fff7f4302a03bb7b3cfca32d45e4f983b9"
+    },
+    {
+      "path": "supabase/.gitignore",
+      "size": 59,
+      "sha256": "c8ef9646ed4b1337f882ee498dd63cca0409b3a57e942248bfbce59b1777c617"
+    },
+    {
+      "path": "supabase/config.toml",
+      "size": 15645,
+      "sha256": "93eb6b5746deeeafae5b8c67588a13d7b750cf387a212deea34c9550ca69f233"
+    },
+    {
+      "path": "test/core/models/paginated_result_test.dart",
+      "size": 564,
+      "sha256": "064fe6299721c7db0f65dbf4832e8f17ac4ef84cf1774df00d4de209aa7a6d68"
+    },
+    {
+      "path": "test/core/network/supabase_guard_test.dart",
+      "size": 2941,
+      "sha256": "0884d4f3bdd708eef8ad8727538eb9f2d978dc10fe0df21d2a8d00cb841b9e1e"
+    },
+    {
+      "path": "test/core/services/shell_service_test.dart",
+      "size": 638,
+      "sha256": "6fcbdcf7fff36bd0fbadd9be79cb56d289ae71b2bae5ece083d135bb8e725087"
+    },
+    {
+      "path": "test/core/storage/cache_entry_test.dart",
+      "size": 966,
+      "sha256": "65b3130d6b5470b93b24a6de55274a8dc52693bba681273cfb5d5d38c881690d"
+    },
+    {
+      "path": "test/features/home/ui/viewmodels/shell_viewmodel_test.dart",
+      "size": 689,
+      "sha256": "c580fb70e783b8da1e75a1a56ff0983eb21c13ea9c82b121d5aa14b2f598c10a"
+    },
+    {
+      "path": "test/helpers/stacked_service_mocks.dart",
+      "size": 393,
+      "sha256": "e1c964fe554a3dcc429cddc805aafa2814f56d43974cda79da7402e84af6e71a"
+    },
+    {
+      "path": "test/shared/widgets/paginated_list/pagination_controller_test.dart",
+      "size": 4491,
+      "sha256": "6dbb46dec41e6b63a978c439cdadcae47eec23b7fc5988eab3d82e4621f2652a"
+    },
+    {
+      "path": "test/widget_test.dart",
+      "size": 366,
+      "sha256": "f87745070b98157102503a6cf42836bb986114d1c0790eeeb424be81f253547f"
+    }
+  ],
+  "excluded_patterns": [
+    ".git/**",
+    ".dart_tool/**",
+    ".pub/**",
+    ".pub-cache/**",
+    ".flutter-plugins-dependencies",
+    ".vscode/**",
+    ".agents/**",
+    ".codex/**",
+    ".claude/**",
+    "build/**",
+    "coverage/**",
+    "doc/**",
+    "env/**",
+    "packages/cuboid/**",
+    "tool/**",
+    "skills-lock.json",
+    "**/.DS_Store",
+    "**/*.env",
+    "**/.env",
+    "**/.env.*",
+    "**/local.properties",
+    "**/Pods/**",
+    "**/.symlinks/**",
+    "**/.last_build_id",
+    "**/Generated.xcconfig",
+    "**/GeneratedPluginRegistrant.*",
+    "**/flutter_export_environment.sh",
+    "**/ephemeral/**",
+    "test/tool/**"
+  ]
+}
