@@ -31,6 +31,14 @@ export 'src/create/create_project.dart'
         CreateProjectService,
         PostStep,
         PostStepResult;
+export 'src/dialog/create_dialog.dart'
+    show
+        CreateDialogException,
+        CreateDialogInput,
+        CreateDialogPlan,
+        CreateDialogResult,
+        CreateDialogService,
+        DialogFileWriter;
 export 'src/feature/create_feature.dart'
     show
         CreateFeatureException,

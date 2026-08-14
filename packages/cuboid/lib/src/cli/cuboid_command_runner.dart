@@ -4,6 +4,7 @@ import 'package:args/command_runner.dart';
 import 'package:cuboid/src/bottomsheet/create_bottomsheet.dart';
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
 import 'package:cuboid/src/create/create_project.dart';
+import 'package:cuboid/src/dialog/create_dialog.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
 import 'package:cuboid/src/route/register_route.dart';
 import 'package:cuboid/src/service/register_service.dart';
@@ -27,6 +28,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
     CreateProjectService? createProjectService,
     CreateFeatureService? createFeatureService,
     CreateBottomSheetService? createBottomSheetService,
+    CreateDialogService? createDialogService,
     RegisterRouteService? registerRouteService,
     RegisterServiceService? registerServiceService,
     CreateViewService? createViewService,
@@ -36,6 +38,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
        _createFeatureService = createFeatureService ?? CreateFeatureService(),
        _createBottomSheetService =
            createBottomSheetService ?? CreateBottomSheetService(),
+       _createDialogService = createDialogService ?? CreateDialogService(),
        _registerRouteService = registerRouteService ?? RegisterRouteService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
@@ -53,6 +56,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createProjectService: _createProjectService,
         createFeatureService: _createFeatureService,
         createBottomSheetService: _createBottomSheetService,
+        createDialogService: _createDialogService,
         registerServiceService: _registerServiceService,
       ),
     );
@@ -91,6 +95,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final CreateProjectService _createProjectService;
   final CreateFeatureService _createFeatureService;
   final CreateBottomSheetService _createBottomSheetService;
+  final CreateDialogService _createDialogService;
   final RegisterRouteService _registerRouteService;
   final RegisterServiceService _registerServiceService;
   final CreateViewService _createViewService;
@@ -117,6 +122,7 @@ class CreateCommand extends Command<int> {
     CreateProjectService? createProjectService,
     CreateFeatureService? createFeatureService,
     CreateBottomSheetService? createBottomSheetService,
+    CreateDialogService? createDialogService,
     RegisterServiceService? registerServiceService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
@@ -124,6 +130,7 @@ class CreateCommand extends Command<int> {
        _createFeatureService = createFeatureService ?? CreateFeatureService(),
        _createBottomSheetService =
            createBottomSheetService ?? CreateBottomSheetService(),
+       _createDialogService = createDialogService ?? CreateDialogService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService() {
     argParser
@@ -153,6 +160,7 @@ class CreateCommand extends Command<int> {
   final CreateProjectService _createProjectService;
   final CreateFeatureService _createFeatureService;
   final CreateBottomSheetService _createBottomSheetService;
+  final CreateDialogService _createDialogService;
   final RegisterServiceService _registerServiceService;
 
   @override
@@ -170,7 +178,8 @@ class CreateCommand extends Command<int> {
       'Canonical namespace: cuboid create <artifact> [arguments] [options]\n'
       'Implemented artifact commands: cuboid create feature <name>, '
       'cuboid create service <name>, '
-      'cuboid create bottomsheet <name>.\n'
+      'cuboid create bottomsheet <name>, '
+      'cuboid create dialog <name>.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -194,6 +203,9 @@ class CreateCommand extends Command<int> {
         }
         if (artifact == 'bottomsheet') {
           return _runCreateBottomSheet(rest.skip(1).toList());
+        }
+        if (artifact == 'dialog') {
+          return _runCreateDialog(rest.skip(1).toList());
         }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
@@ -307,6 +319,34 @@ class CreateCommand extends Command<int> {
       writeBottomSheetResult(_stdout, result);
       return 0;
     } on CreateBottomSheetException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runCreateDialog(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create dialog.',
+        usage,
+      );
+    }
+    if (rest.length != 1) {
+      throw UsageException('Expected a dialog name.', usage);
+    }
+
+    final input = CreateDialogInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _createDialogService.create(input);
+      writeDialogResult(_stdout, result);
+      return 0;
+    } on CreateDialogException catch (error) {
       _stderr.writeln(error.message);
       return 1;
     }
@@ -449,6 +489,31 @@ void writeBottomSheetResult(IOSink stdout, CreateBottomSheetResult result) {
     stdout.writeln('- ${plan.bottomSheetLine.trim()}');
     stdout.writeln('- ${plan.serviceLine.trim()}');
     stdout.writeln('- ${plan.bottomSheetsImportLine}');
+    stdout.writeln('- ${plan.setupLine.trim()}');
+  } else {
+    stdout.writeln('Next step: dart run build_runner build -d');
+  }
+}
+
+void writeDialogResult(IOSink stdout, CreateDialogResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Dialog: ${plan.dialogClassName}');
+  } else {
+    stdout.writeln('Created dialog ${plan.dialogClassName}.');
+  }
+  stdout.writeln('Files:');
+  stdout.writeln('- ${plan.dialogPath}');
+  stdout.writeln('- ${plan.modelPath}');
+  stdout.writeln('- ${plan.appPath}');
+  stdout.writeln('- ${plan.mainPath}');
+  if (plan.dryRun) {
+    stdout.writeln('Planned changes:');
+    stdout.writeln('- ${plan.dialogImportLine}');
+    stdout.writeln('- ${plan.dialogLine.trim()}');
+    stdout.writeln('- ${plan.serviceLine.trim()}');
+    stdout.writeln('- ${plan.dialogsImportLine}');
     stdout.writeln('- ${plan.setupLine.trim()}');
   } else {
     stdout.writeln('Next step: dart run build_runner build -d');

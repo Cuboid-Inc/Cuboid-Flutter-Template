@@ -186,6 +186,7 @@ void main() {
       expect(output.content, contains('cuboid create feature <name>'));
       expect(output.content, contains('cuboid create service <name>'));
       expect(output.content, contains('cuboid create bottomsheet <name>'));
+      expect(output.content, contains('cuboid create dialog <name>'));
     },
   );
 
@@ -371,7 +372,11 @@ void main() {
   });
 
   for (final artifact in _knownCreateArtifacts.where(
-    (name) => name != 'feature' && name != 'service' && name != 'bottomsheet',
+    (name) =>
+        name != 'feature' &&
+        name != 'service' &&
+        name != 'bottomsheet' &&
+        name != 'dialog',
   )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -695,6 +700,143 @@ void main() {
     expect(
       errorOutput.content,
       contains('Only --dry-run is supported for cuboid create bottomsheet.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create dialog with dry-run creates no files', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDialogProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', '--dry-run', 'dialog', 'confirm-delete'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Dialog: ConfirmDeleteDialog'));
+    expect(
+      output.content,
+      contains(
+        '- lib/shared/dialogs/confirm_delete/'
+        'confirm_delete_dialog.dart',
+      ),
+    );
+    expect(
+      output.content,
+      contains(
+        '- lib/shared/dialogs/confirm_delete/'
+        'confirm_delete_dialog_model.dart',
+      ),
+    );
+    expect(output.content, contains('- lib/app/app.dart'));
+    expect(output.content, contains('- lib/main.dart'));
+    expect(output.content, contains('StackedDialog('));
+    expect(output.content, contains('classType: ConfirmDeleteDialog,'));
+    expect(
+      output.content,
+      contains('LazySingleton(classType: DialogService),'),
+    );
+    expect(
+      output.content,
+      contains("import 'package:my_app/app/app.dialogs.dart';"),
+    );
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create dialog creates files and registrations', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDialogProject(temp);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'dialog', 'confirm_delete'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Created dialog ConfirmDeleteDialog.'));
+    expect(
+      output.content,
+      contains('Next step: dart run build_runner build -d'),
+    );
+    expect(errorOutput.content, isEmpty);
+    final dialog = File(
+      '${temp.path}/lib/shared/dialogs/confirm_delete/'
+      'confirm_delete_dialog.dart',
+    ).readAsStringSync();
+    expect(
+      dialog,
+      contains(
+        'class ConfirmDeleteDialog extends '
+        'StackedView<ConfirmDeleteDialogModel>',
+      ),
+    );
+    expect(dialog, contains('DialogRequest<dynamic> request'));
+    expect(dialog, contains('DialogResponse<dynamic> response'));
+    final model = File(
+      '${temp.path}/lib/shared/dialogs/confirm_delete/'
+      'confirm_delete_dialog_model.dart',
+    ).readAsStringSync();
+    expect(
+      model,
+      contains('class ConfirmDeleteDialogModel extends BaseViewModel {}'),
+    );
+    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    expect(
+      app,
+      contains(
+        "import 'package:my_app/shared/dialogs/confirm_delete/"
+        "confirm_delete_dialog.dart';",
+      ),
+    );
+    expect(app, contains('  dialogs: ['));
+    expect(app, contains('      classType: ConfirmDeleteDialog,'));
+    expect(app, contains('    LazySingleton(classType: DialogService),'));
+    final main = File('${temp.path}/lib/main.dart').readAsStringSync();
+    expect(main, contains("import 'package:my_app/app/app.dialogs.dart';"));
+    expect(main, contains('  await setupLocator();\n  setupDialogUi();'));
+  });
+
+  test('create dialog rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDialogProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'dialog', 'confirm', '--directory', 'ignored'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Only --dry-run is supported for cuboid create dialog.'),
     );
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -1253,6 +1395,38 @@ class App {}
 }
 
 void _writeBottomSheetProject(Directory root) {
+  File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
+  File('${root.path}/lib/app/app.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('''
+import 'package:my_app/core/services/shell_service.dart';
+import 'package:stacked/stacked_annotations.dart';
+import 'package:stacked_services/stacked_services.dart';
+// @stacked-import
+
+@StackedApp(
+  routes: [
+    // @stacked-route
+  ],
+  dependencies: [
+    LazySingleton(classType: ShellService),
+    // @stacked-service
+  ],
+)
+class App {}
+''');
+  File('${root.path}/lib/main.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('''
+import 'package:my_app/app/app.locator.dart';
+
+Future<void> main() async {
+  await setupLocator();
+}
+''');
+}
+
+void _writeDialogProject(Directory root) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
   File('${root.path}/lib/app/app.dart')
     ..parent.createSync(recursive: true)
