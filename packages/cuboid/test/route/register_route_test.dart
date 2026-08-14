@@ -19,9 +19,7 @@ void main() {
     final app = _appFile(root).readAsStringSync();
     expect(
       app,
-      contains(
-        "import 'package:test_app/features/auth/ui/views/auth_view.dart';",
-      ),
+      contains("import 'package:test_app/features/auth/ui/auth_view.dart';"),
     );
     expect(app, contains('    MaterialRoute(page: AuthView),'));
     expect(
@@ -50,7 +48,7 @@ void main() {
     expect(
       app,
       contains(
-        "import 'package:test_app/features/user_profile/ui/views/user_profile_view.dart';",
+        "import 'package:test_app/features/user_profile/ui/user_profile_view.dart';",
       ),
     );
     expect(app, contains('    MaterialRoute(page: UserProfileView),'));
@@ -83,7 +81,7 @@ void main() {
     expect(
       _appFile(root).readAsStringSync(),
       contains(
-        "import 'package:custom_app/features/billing/ui/views/billing_view.dart';",
+        "import 'package:custom_app/features/billing/ui/billing_view.dart';",
       ),
     );
   });
@@ -195,7 +193,7 @@ void main() {
         isA<RegisterRouteException>().having(
           (error) => error.message,
           'message',
-          'lib/features/auth/ui/views/auth_view.dart was not found.',
+          'lib/features/auth/ui/auth_view.dart was not found.',
         ),
       ),
     );
@@ -205,7 +203,7 @@ void main() {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     Directory(
-      '${root.path}/lib/features/auth/ui/views/auth_view.dart',
+      '${root.path}/lib/features/auth/ui/auth_view.dart',
     ).createSync(recursive: true);
     final service = RegisterRouteService();
 
@@ -220,7 +218,7 @@ void main() {
     addTearDown(() => root.deleteSync(recursive: true));
     final target = File('${root.path}/target_view.dart')
       ..writeAsStringSync('// target\n');
-    final link = Link('${root.path}/lib/features/auth/ui/views/auth_view.dart');
+    final link = Link('${root.path}/lib/features/auth/ui/auth_view.dart');
     link.parent.createSync(recursive: true);
     link.createSync(target.path);
     final service = RegisterRouteService();
@@ -340,7 +338,7 @@ void main() {
     final root = _projectRoot(
       app: _appContents().replaceFirst(
         '// @stacked-import',
-        "import 'package:test_app/features/auth/ui/views/auth_view.dart';\n"
+        "import 'package:test_app/features/auth/ui/auth_view.dart';\n"
             '// @stacked-import',
       ),
     );
@@ -404,7 +402,7 @@ void main() {
     expect(
       app,
       contains(
-        "import 'package:test_app/features/auth/ui/views/auth_view.dart';\r\n"
+        "import 'package:test_app/features/auth/ui/auth_view.dart';\r\n"
         '// @stacked-import',
       ),
     );
@@ -524,16 +522,14 @@ void _writeFeatureView(Directory root, String featureName) {
       .split('_')
       .map((word) => word[0].toUpperCase() + word.substring(1))
       .join();
-  File(
-      '${root.path}/lib/features/$featureName/ui/views/${featureName}_view.dart',
-    )
+  File('${root.path}/lib/features/$featureName/ui/${featureName}_view.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('class ${className}View {}\n');
 }
 
 String _appContents({String extra = ''}) {
   return '''
-import 'package:test_app/features/startup/ui/views/startup_view.dart';
+import 'package:test_app/features/startup/ui/startup_view.dart';
 import 'package:stacked/stacked_annotations.dart';
 // @stacked-import
 

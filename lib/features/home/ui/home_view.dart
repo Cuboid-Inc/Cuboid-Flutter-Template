@@ -1,4 +1,4 @@
-import 'package:cuboid_flutter_template/features/home/ui/viewmodels/home_viewmodel.dart';
+import 'package:cuboid_flutter_template/features/home/ui/home_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 

@@ -23,21 +23,21 @@ void main() {
     expect(result.plan.viewClassName, 'ForgotPasswordView');
     expect(result.plan.viewModelClassName, 'ForgotPasswordViewModel');
     expect(result.plan.files, [
-      'lib/features/auth/ui/views/forgot_password_view.dart',
-      'lib/features/auth/ui/viewmodels/forgot_password_viewmodel.dart',
+      'lib/features/auth/ui/forgot_password_view.dart',
+      'lib/features/auth/ui/forgot_password_viewmodel.dart',
     ]);
 
     final view = File(
-      '${root.path}/lib/features/auth/ui/views/forgot_password_view.dart',
+      '${root.path}/lib/features/auth/ui/forgot_password_view.dart',
     ).readAsStringSync();
     final viewModel = File(
-      '${root.path}/lib/features/auth/ui/viewmodels/forgot_password_viewmodel.dart',
+      '${root.path}/lib/features/auth/ui/forgot_password_viewmodel.dart',
     ).readAsStringSync();
 
     expect(
       view,
       contains(
-        "import 'package:test_app/features/auth/ui/viewmodels/forgot_password_viewmodel.dart';",
+        "import 'package:test_app/features/auth/ui/forgot_password_viewmodel.dart';",
       ),
     );
     expect(
@@ -81,7 +81,7 @@ void main() {
     expect(result.plan.viewClassName, 'InviteMemberView');
     expect(
       File(
-        '${root.path}/lib/features/user_profile/ui/views/invite_member_view.dart',
+        '${root.path}/lib/features/user_profile/ui/invite_member_view.dart',
       ).existsSync(),
       isTrue,
     );
@@ -101,13 +101,13 @@ void main() {
     );
 
     final view = File(
-      '${root.path}/lib/features/auth/ui/views/reset_password_view.dart',
+      '${root.path}/lib/features/auth/ui/reset_password_view.dart',
     ).readAsStringSync();
 
     expect(
       view,
       contains(
-        "import 'package:custom_app/features/auth/ui/viewmodels/reset_password_viewmodel.dart';",
+        "import 'package:custom_app/features/auth/ui/reset_password_viewmodel.dart';",
       ),
     );
   });
@@ -126,13 +126,13 @@ void main() {
     );
 
     final view = File(
-      '${root.path}/lib/features/auth/ui/views/reset_password_view.dart',
+      '${root.path}/lib/features/auth/ui/reset_password_view.dart',
     ).readAsStringSync();
 
     expect(
       view,
       contains(
-        "import 'package:custom_app/features/auth/ui/viewmodels/reset_password_viewmodel.dart';",
+        "import 'package:custom_app/features/auth/ui/reset_password_viewmodel.dart';",
       ),
     );
   });
@@ -154,8 +154,8 @@ void main() {
 
     expect(result.plan.dryRun, isTrue);
     expect(result.plan.files, [
-      'lib/features/auth/ui/views/forgot_password_view.dart',
-      'lib/features/auth/ui/viewmodels/forgot_password_viewmodel.dart',
+      'lib/features/auth/ui/forgot_password_view.dart',
+      'lib/features/auth/ui/forgot_password_viewmodel.dart',
     ]);
     expect(_relativeFiles(root), beforeFiles);
     expect(
@@ -352,10 +352,9 @@ void main() {
   test('rejects existing View files without mutation', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    final target =
-        File('${root.path}/lib/features/auth/ui/views/login_view.dart')
-          ..parent.createSync(recursive: true)
-          ..writeAsStringSync('keep\n');
+    final target = File('${root.path}/lib/features/auth/ui/login_view.dart')
+      ..parent.createSync(recursive: true)
+      ..writeAsStringSync('keep\n');
     final service = CreateViewService();
 
     await expectLater(
@@ -367,7 +366,7 @@ void main() {
     expect(target.readAsStringSync(), 'keep\n');
     expect(
       File(
-        '${root.path}/lib/features/auth/ui/viewmodels/login_viewmodel.dart',
+        '${root.path}/lib/features/auth/ui/login_viewmodel.dart',
       ).existsSync(),
       isFalse,
     );
@@ -377,9 +376,7 @@ void main() {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final target =
-        File(
-            '${root.path}/lib/features/auth/ui/viewmodels/login_viewmodel.dart',
-          )
+        File('${root.path}/lib/features/auth/ui/login_viewmodel.dart')
           ..parent.createSync(recursive: true)
           ..writeAsStringSync('keep\n');
     final service = CreateViewService();
@@ -392,9 +389,7 @@ void main() {
     );
     expect(target.readAsStringSync(), 'keep\n');
     expect(
-      File(
-        '${root.path}/lib/features/auth/ui/views/login_view.dart',
-      ).existsSync(),
+      File('${root.path}/lib/features/auth/ui/login_view.dart').existsSync(),
       isFalse,
     );
   });
@@ -403,7 +398,7 @@ void main() {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     Directory(
-      '${root.path}/lib/features/auth/ui/views/login_view.dart',
+      '${root.path}/lib/features/auth/ui/login_view.dart',
     ).createSync(recursive: true);
     final service = CreateViewService();
 
@@ -417,9 +412,7 @@ void main() {
     Directory('${root.path}/lib/features/auth/ui').deleteSync(recursive: true);
     final target = File('${root.path}/target_view.dart')
       ..writeAsStringSync('// target\n');
-    final link = Link(
-      '${root.path}/lib/features/auth/ui/views/login_view.dart',
-    );
+    final link = Link('${root.path}/lib/features/auth/ui/login_view.dart');
     link.parent.createSync(recursive: true);
     link.createSync(target.path);
 
@@ -435,7 +428,7 @@ void main() {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     Directory(
-      '${root.path}/lib/features/auth/ui/viewmodels/login_viewmodel.dart',
+      '${root.path}/lib/features/auth/ui/login_viewmodel.dart',
     ).createSync(recursive: true);
     final service = CreateViewService();
 
@@ -446,18 +439,14 @@ void main() {
       throwsA(isA<CreateViewException>()),
     );
     expect(
-      File(
-        '${root.path}/lib/features/auth/ui/views/login_view.dart',
-      ).existsSync(),
+      File('${root.path}/lib/features/auth/ui/login_view.dart').existsSync(),
       isFalse,
     );
 
     Directory('${root.path}/lib/features/auth/ui').deleteSync(recursive: true);
     final target = File('${root.path}/target_viewmodel.dart')
       ..writeAsStringSync('// target\n');
-    final link = Link(
-      '${root.path}/lib/features/auth/ui/viewmodels/login_viewmodel.dart',
-    );
+    final link = Link('${root.path}/lib/features/auth/ui/login_viewmodel.dart');
     link.parent.createSync(recursive: true);
     link.createSync(target.path);
 
@@ -468,9 +457,7 @@ void main() {
       throwsA(isA<CreateViewException>()),
     );
     expect(
-      File(
-        '${root.path}/lib/features/auth/ui/views/login_view.dart',
-      ).existsSync(),
+      File('${root.path}/lib/features/auth/ui/login_view.dart').existsSync(),
       isFalse,
     );
   });
@@ -505,8 +492,8 @@ void main() {
     expect(unrelated.readAsStringSync(), 'keep\n');
     expect(_relativeFiles(root), [
       'lib/features/auth/keep.txt',
-      'lib/features/auth/ui/viewmodels/login_viewmodel.dart',
-      'lib/features/auth/ui/views/login_view.dart',
+      'lib/features/auth/ui/login_view.dart',
+      'lib/features/auth/ui/login_viewmodel.dart',
       'pubspec.yaml',
     ]);
   });
@@ -537,24 +524,18 @@ void main() {
     );
 
     expect(
-      File(
-        '${root.path}/lib/features/auth/ui/views/login_view.dart',
-      ).existsSync(),
+      File('${root.path}/lib/features/auth/ui/login_view.dart').existsSync(),
       isFalse,
     );
     expect(
       File(
-        '${root.path}/lib/features/auth/ui/viewmodels/login_viewmodel.dart',
+        '${root.path}/lib/features/auth/ui/login_viewmodel.dart',
       ).existsSync(),
       isFalse,
     );
     expect(unrelated.readAsStringSync(), 'keep\n');
     expect(
-      Directory('${root.path}/lib/features/auth/ui/views').existsSync(),
-      isFalse,
-    );
-    expect(
-      Directory('${root.path}/lib/features/auth/ui/viewmodels').existsSync(),
+      Directory('${root.path}/lib/features/auth/ui').existsSync(),
       isFalse,
     );
   });
@@ -590,24 +571,18 @@ void main() {
     );
 
     expect(
-      File(
-        '${root.path}/lib/features/auth/ui/views/login_view.dart',
-      ).existsSync(),
+      File('${root.path}/lib/features/auth/ui/login_view.dart').existsSync(),
       isFalse,
     );
     expect(
       File(
-        '${root.path}/lib/features/auth/ui/viewmodels/login_viewmodel.dart',
+        '${root.path}/lib/features/auth/ui/login_viewmodel.dart',
       ).existsSync(),
       isFalse,
     );
     expect(unrelated.readAsStringSync(), 'keep\n');
     expect(
-      Directory('${root.path}/lib/features/auth/ui/views').existsSync(),
-      isFalse,
-    );
-    expect(
-      Directory('${root.path}/lib/features/auth/ui/viewmodels').existsSync(),
+      Directory('${root.path}/lib/features/auth/ui').existsSync(),
       isFalse,
     );
   });

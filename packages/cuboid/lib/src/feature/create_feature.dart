@@ -69,10 +69,9 @@ class CreateFeatureService {
       '${projectRoot.path}${Platform.pathSeparator}lib'
       '${Platform.pathSeparator}features${Platform.pathSeparator}$featureName',
     );
-    final viewPath =
-        'lib/features/$featureName/ui/views/${featureName}_view.dart';
+    final viewPath = 'lib/features/$featureName/ui/${featureName}_view.dart';
     final viewModelPath =
-        'lib/features/$featureName/ui/viewmodels/${featureName}_viewmodel.dart';
+        'lib/features/$featureName/ui/${featureName}_viewmodel.dart';
 
     return CreateFeaturePlan(
       name: featureName,
@@ -299,7 +298,7 @@ String _humanize(List<String> words) {
 String _viewContents(CreateFeaturePlan plan) {
   final importName = plan.name;
   return '''
-import 'package:${plan.packageName}/features/$importName/ui/viewmodels/${importName}_viewmodel.dart';
+import 'package:${plan.packageName}/features/$importName/ui/${importName}_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 

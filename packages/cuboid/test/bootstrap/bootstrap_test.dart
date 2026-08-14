@@ -105,7 +105,7 @@ void main() {
       _writeMinimalFixture(root);
       _writeFixture(
         root,
-        'lib/features/home/ui/views/home_view.dart',
+        'lib/features/home/ui/home_view.dart',
         "appBar: AppBar(title: const Text('Cuboid Flutter Template')),\n",
       );
 
@@ -209,11 +209,6 @@ description: "Template for Cuboid Flutter projects"
 ''');
     _writeFixture(root, 'lib/main.dart', '''
 import 'package:cuboid_flutter_template/app/app_root.dart';
-
-final error = StateError(
-  'Cuboid Flutter Template release build without Supabase config. '
-  'Build with --dart-define-from-file=env/prod.json.',
-);
 ''');
     _writeFixture(
       root,
@@ -233,15 +228,9 @@ abstract final class AppConfig {
 ''');
     _writeFixture(
       root,
-      'lib/features/home/ui/views/home_view.dart',
+      'lib/features/home/ui/home_view.dart',
       "appBar: AppBar(title: const Text('Cuboid Flutter Template')),\n",
     );
-    _writeFixture(root, 'lib/core/constants/storage_keys.dart', '''
-abstract final class StorageKeys {
-  static const supabaseSession = 'cuboid_flutter_template_supabase_session';
-  static const authStorageNamespace = 'cuboid_flutter_template_auth';
-}
-''');
     _writeFixture(root, 'android/app/build.gradle.kts', '''
 android {
     namespace = "com.cuboidllc.cuboid_flutter_template"
@@ -274,7 +263,6 @@ class MainActivity
 <plist>
 <dict>
 <string>Cuboid Flutter Template</string>
-<string>com.cuboidllc.cuboid_flutter_template</string>
 <string>Cuboid Flutter Template</string>
 </dict>
 </plist>
@@ -283,10 +271,6 @@ class MainActivity
 INFOPLIST_KEY_CFBundleDisplayName = "Cuboid Flutter Template";
 PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template;
 PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template.RunnerTests;
-''');
-    _writeFixture(root, 'supabase/config.toml', '''
-project_id = "Cuboid Flutter Template"
-additional_redirect_urls = ["com.cuboidllc.cuboid_flutter_template://auth-callback"]
 ''');
     _writeFixture(
       root,
@@ -346,15 +330,11 @@ void main() {
     );
     expect(plan.modifiedFiles, contains('lib/app/app.router.dart'));
     expect(
-      plan.replacements.where((replacement) {
-        return replacement.path == 'supabase/config.toml' &&
-            replacement.oldValue.startsWith('project_id');
-      }),
-      isEmpty,
-    );
-    expect(
       plan.manualConfiguration,
-      contains('Supabase project_id in supabase/config.toml.'),
+      contains(
+        'Optional backend/storage technology, if the app needs one -- e.g. '
+        '`cuboid create database supabase` or `cuboid create storage <name>`.',
+      ),
     );
     expect(
       plan.replacements,
@@ -394,30 +374,13 @@ void main() {
             .having(
               (item) => item.path,
               'path',
-              'lib/features/home/ui/views/home_view.dart',
+              'lib/features/home/ui/home_view.dart',
             )
             .having((item) => item.label, 'label', 'home view title')
             .having(
               (item) => item.newValue,
               'newValue',
               "AppBar(title: const Text('Nemara Homes'))",
-            ),
-      ),
-    );
-    expect(
-      plan.replacements,
-      contains(
-        isA<Replacement>()
-            .having((item) => item.path, 'path', 'lib/main.dart')
-            .having(
-              (item) => item.label,
-              'label',
-              'release configuration error app name',
-            )
-            .having(
-              (item) => item.newValue,
-              'newValue',
-              "'Nemara Homes release build without Supabase config. '",
             ),
       ),
     );
@@ -479,7 +442,7 @@ void main() {
     _writeMinimalFixture(root);
     _writeFixture(
       root,
-      'lib/features/home/ui/views/home_view.dart',
+      'lib/features/home/ui/home_view.dart',
       "appBar: AppBar(title: const Text('Cuboid Flutter Template')),\n",
     );
     _writeFixture(
@@ -512,15 +475,7 @@ void main() {
     );
     expect(
       File(
-        '${root.path}/lib/core/constants/storage_keys.dart',
-      ).readAsStringSync(),
-      contains(
-        "static const supabaseSession = 'nemara_homes_supabase_session';",
-      ),
-    );
-    expect(
-      File(
-        '${root.path}/lib/features/home/ui/views/home_view.dart',
+        '${root.path}/lib/features/home/ui/home_view.dart',
       ).readAsStringSync(),
       contains("AppBar(title: const Text('Nemara Homes'))"),
     );
@@ -551,7 +506,7 @@ void main() {
     _writeMinimalFixture(root);
     _writeFixture(
       root,
-      'lib/features/home/ui/views/home_view.dart',
+      'lib/features/home/ui/home_view.dart',
       "appBar: AppBar(title: const Text('Cuboid Flutter Template')),\n",
     );
     _writeFixture(
@@ -561,7 +516,7 @@ void main() {
     );
     _writeFixture(
       root,
-      'lib/features/home/ui/views/extra_view.dart',
+      'lib/features/home/ui/extra_view.dart',
       "import 'package:cuboid_flutter_template/app/app.dart';\n",
     );
 
@@ -588,7 +543,7 @@ void main() {
             .having(
               (item) => item.path,
               'path',
-              'lib/features/home/ui/views/extra_view.dart',
+              'lib/features/home/ui/extra_view.dart',
             )
             .having((item) => item.dartImportOnly, 'dartImportOnly', isTrue),
       ),
@@ -644,21 +599,10 @@ description: "Template for Cuboid Flutter projects"
 ''');
   _writeFixture(root, 'lib/main.dart', '''
 import 'package:cuboid_flutter_template/app/app_root.dart';
-
-final error = StateError(
-  'Cuboid Flutter Template release build without Supabase config. '
-  'Build with --dart-define-from-file=env/prod.json.',
-);
 ''');
   _writeFixture(root, 'lib/core/constants/app_constants.dart', '''
 abstract final class AppConfig {
   static const appName = 'Cuboid Flutter Template';
-}
-''');
-  _writeFixture(root, 'lib/core/constants/storage_keys.dart', '''
-abstract final class StorageKeys {
-  static const supabaseSession = 'cuboid_flutter_template_supabase_session';
-  static const authStorageNamespace = 'cuboid_flutter_template_auth';
 }
 ''');
   _writeFixture(root, 'android/app/build.gradle.kts', '''
@@ -693,7 +637,6 @@ class MainActivity
 <plist>
 <dict>
 <string>Cuboid Flutter Template</string>
-<string>com.cuboidllc.cuboid_flutter_template</string>
 <string>Cuboid Flutter Template</string>
 </dict>
 </plist>
@@ -702,10 +645,6 @@ class MainActivity
 INFOPLIST_KEY_CFBundleDisplayName = "Cuboid Flutter Template";
 PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template;
 PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template.RunnerTests;
-''');
-  _writeFixture(root, 'supabase/config.toml', '''
-project_id = "Cuboid Flutter Template"
-additional_redirect_urls = ["com.cuboidllc.cuboid_flutter_template://auth-callback"]
 ''');
   _writeFixture(root, 'README.md', '''
 # Cuboid Flutter Template

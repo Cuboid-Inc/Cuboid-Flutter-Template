@@ -1,8 +1,8 @@
 {
   "template_name": "cuboid_flutter_app",
   "template_version": 1,
-  "source_commit": "1a6b581fc2e816184e04e693027116ce3bc23cb2",
-  "archive_sha256": "24fc1e2d0d5413664cc7590399dfa48553accc89b91fd86b79b3566083610ee2",
+  "source_commit": "150e780cdd59fcfbb780d2b862e8fbf622e147e5",
+  "archive_sha256": "3232f9592e528ab467cd129a412ea9f109619b0322b773fa7cdbf2ce5889657c",
   "files": [
     {
       "path": ".gitignore",
@@ -16,18 +16,18 @@
     },
     {
       "path": "ARCHITECTURE.md",
-      "size": 20429,
-      "sha256": "324487d0ef60b918a18ec296b8e83d6979773100dfe9c37d2d8e7384a1ef2e30"
+      "size": 20709,
+      "sha256": "cd6a8d9c2871f1f9b3acb5626694d5ba4d45609e1f2a37c3ea14645000f469e8"
     },
     {
       "path": "README.md",
-      "size": 3409,
-      "sha256": "e57d334444758c199e93eedc8a6658330b03c0a9fe85a1163816746a49ac2ef8"
+      "size": 5826,
+      "sha256": "9c3d03817be99637d800de2fd0b86884973bd324260734a51849b871e1842a68"
     },
     {
       "path": "RULES.md",
-      "size": 20569,
-      "sha256": "2d5363507ea360d618169a4856a6b97602da972ff9bbe84e79d8f948d8abb63e"
+      "size": 20747,
+      "sha256": "fefa3f6286235fbe2a0c783e486afd45e40fd343405de52253792e3c5c179f07"
     },
     {
       "path": "analysis_options.yaml",
@@ -51,8 +51,8 @@
     },
     {
       "path": "android/app/src/main/AndroidManifest.xml",
-      "size": 2676,
-      "sha256": "06dee95ff8595e20c0f5a5cafb4e7718fdadf415ad94878e01108f6a86563d1c"
+      "size": 2247,
+      "sha256": "6b720706a0c244ec3469c12bc06e1ccdcdd34ec69307742b7ae7d62ecddaabe7"
     },
     {
       "path": "android/app/src/main/kotlin/com/cuboidllc/cuboid_flutter_template/MainActivity.kt",
@@ -491,8 +491,8 @@
     },
     {
       "path": "ios/Runner/Info.plist",
-      "size": 2667,
-      "sha256": "6ad3d508208ea120521930b110927674003f850601cf6ac3a38dfcf612198066"
+      "size": 2416,
+      "sha256": "59042051f98882f7bcc15a08fc5ce8eb4d1bc91e3f7b35748e7f107f9c18f086"
     },
     {
       "path": "ios/Runner/Runner-Bridging-Header.h",
@@ -511,8 +511,8 @@
     },
     {
       "path": "lib/app/app.dart",
-      "size": 719,
-      "sha256": "6ba94ee7e90873ba1cac45ad38dff5d20253415b5b9b31068e45649d8d3a2249"
+      "size": 694,
+      "sha256": "5f85baeef8fd9e1d9a33b8431d2d995ad3217105095052a8f7baeab0527d602a"
     },
     {
       "path": "lib/app/app.locator.dart",
@@ -526,8 +526,8 @@
     },
     {
       "path": "lib/app/app.router.dart",
-      "size": 4701,
-      "sha256": "4587115af578c72db17693e1f3485b139496b67765f8b565e350b6fd3f82a851"
+      "size": 4672,
+      "sha256": "f0277965ad5a28ca5a7c802be075446d863114396bff223e541d769a2b7a995a"
     },
     {
       "path": "lib/app/app_root.dart",
@@ -535,9 +535,14 @@
       "sha256": "6d4d46c0288cbde0939cf308a8f5628de48fa9ff6df45d0ea39d32cd0eb2e082"
     },
     {
-      "path": "lib/core/config/env.dart",
-      "size": 356,
-      "sha256": "ff9000c7c7fd543d49491e5e9bc848e08777af4fbddc0e93b0af142565b08107"
+      "path": "lib/app/shell_view.dart",
+      "size": 4880,
+      "sha256": "ed0de0c33f52bb5aa28bbd38645d818dc25e0979bbb1d67f7b3aa852248a9e58"
+    },
+    {
+      "path": "lib/app/shell_viewmodel.dart",
+      "size": 475,
+      "sha256": "7f5c5eb583a117331cb7033d48540b1b27030b2c4927bfdd6a39ecd4d84c309e"
     },
     {
       "path": "lib/core/constants/app_constants.dart",
@@ -548,11 +553,6 @@
       "path": "lib/core/constants/asset_paths.dart",
       "size": 96,
       "sha256": "c4777f5a23589ba67d507d30c4dae169f439333b289dedfdda4fa7faa7507d06"
-    },
-    {
-      "path": "lib/core/constants/storage_keys.dart",
-      "size": 184,
-      "sha256": "0e5126ef16bc27a8e744156c5ac3ef3ecd9ec1d1bdeddb9c03a7e27ecce0d58b"
     },
     {
       "path": "lib/core/errors/failures.dart",
@@ -580,11 +580,6 @@
       "sha256": "4ca8bcd4319fbd1393caf68c5bd5aff57dcda7bf3663d1b0f5199097ccdeaa29"
     },
     {
-      "path": "lib/core/network/supabase_guard.dart",
-      "size": 2291,
-      "sha256": "95a1308608f7fd3dacb501a5c3e25f11b15a2b62bd3aa32d31928eee55336277"
-    },
-    {
       "path": "lib/core/services/shell_service.dart",
       "size": 299,
       "sha256": "75d57c36fbccaade54521bc1466706f1829751cbb82896e8929a680e9c91715d"
@@ -593,11 +588,6 @@
       "path": "lib/core/storage/cache_entry.dart",
       "size": 1035,
       "sha256": "869e5d955ea00b185affec5dd5c25e81dc2e16a83f50da0e722ec4869623efd5"
-    },
-    {
-      "path": "lib/core/storage/secure_local_storage.dart",
-      "size": 1076,
-      "sha256": "ed5091b1dbb2b0a5315180a73fb3871b75997c7a77a82872e74f295ad2b0dadb"
     },
     {
       "path": "lib/core/theme/app_colors.dart",
@@ -620,39 +610,29 @@
       "sha256": "3c73cdbc927fd323a17d5e430df6bda116bfa982f028ddd11b1846b0253ca4cf"
     },
     {
-      "path": "lib/features/home/ui/viewmodels/home_viewmodel.dart",
+      "path": "lib/features/home/ui/home_view.dart",
+      "size": 569,
+      "sha256": "f22309a0ec950dd8a3853376514295156f3cc06ee2d3cabca9f0c97f978ef22e"
+    },
+    {
+      "path": "lib/features/home/ui/home_viewmodel.dart",
       "size": 85,
       "sha256": "fa20cca87d383ec5384f966cff665f71e390645a34fbd96b6a6f67e2591bc24d"
     },
     {
-      "path": "lib/features/home/ui/viewmodels/shell_viewmodel.dart",
-      "size": 475,
-      "sha256": "7f5c5eb583a117331cb7033d48540b1b27030b2c4927bfdd6a39ecd4d84c309e"
+      "path": "lib/features/startup/ui/startup_view.dart",
+      "size": 2266,
+      "sha256": "b6318677a99a00046929eafc02443cc78b5fbadc54b4eb62cc0dae586eb2509a"
     },
     {
-      "path": "lib/features/home/ui/views/home_view.dart",
-      "size": 580,
-      "sha256": "342efcf74d18016b8ff4a1b2257a38cf8b676086defec6d6e1dd4b9839fc7dd1"
-    },
-    {
-      "path": "lib/features/home/ui/views/shell_view.dart",
-      "size": 4910,
-      "sha256": "9954188a72fe6b3a15d0690fdc86f3e8ede3ab4deb5a1958cfe4dfab5001c7ca"
-    },
-    {
-      "path": "lib/features/startup/ui/viewmodels/startup_viewmodel.dart",
+      "path": "lib/features/startup/ui/startup_viewmodel.dart",
       "size": 425,
       "sha256": "1b0b5003c07dead82471f4aa7497a490c5b1e7c3e6877cb3fbabc9484d3057fa"
     },
     {
-      "path": "lib/features/startup/ui/views/startup_view.dart",
-      "size": 2277,
-      "sha256": "1a4011aa4b3c24a62423dd4dd103f982e1b841ae774f2a6c83bae4193e402633"
-    },
-    {
       "path": "lib/main.dart",
-      "size": 2232,
-      "sha256": "f6037faea05d717ee2448f028a9e92e438b846e0518eb53945e237c4887e4335"
+      "size": 1242,
+      "sha256": "8be6b8e9563c99e1a82e54d364493a9381e73dc5b2647419760f47d05ff53d31"
     },
     {
       "path": "lib/shared/widgets/app_bar_ios.dart",
@@ -711,13 +691,13 @@
     },
     {
       "path": "pubspec.lock",
-      "size": 36323,
-      "sha256": "711bb8da409177e6155baa847d3b157ff902f2185dd0595fe8b0c85981169623"
+      "size": 31816,
+      "sha256": "1a1a6ca415e6ed123b566a4a9d95e05ff2ad3cdc72f871429d31b19b019419ff"
     },
     {
       "path": "pubspec.yaml",
-      "size": 1171,
-      "sha256": "76588444c70d48f593f143996d167fe4db7227b146cd1e396229abae4b95c2a7"
+      "size": 1143,
+      "sha256": "c68cb620d288bb00b5c331912a64b1a805508f6e9ab4dfa9582b8b7b3f91add4"
     },
     {
       "path": "stacked.json",
@@ -725,24 +705,14 @@
       "sha256": "1daa8cef25b211df3243965a98ae06fff7f4302a03bb7b3cfca32d45e4f983b9"
     },
     {
-      "path": "supabase/.gitignore",
-      "size": 59,
-      "sha256": "c8ef9646ed4b1337f882ee498dd63cca0409b3a57e942248bfbce59b1777c617"
-    },
-    {
-      "path": "supabase/config.toml",
-      "size": 15645,
-      "sha256": "93eb6b5746deeeafae5b8c67588a13d7b750cf387a212deea34c9550ca69f233"
+      "path": "test/app/shell_viewmodel_test.dart",
+      "size": 656,
+      "sha256": "d3e9869ce0e81a6fa873048acf392960ae4716d20202688a6d313eeb4b988c82"
     },
     {
       "path": "test/core/models/paginated_result_test.dart",
       "size": 564,
       "sha256": "064fe6299721c7db0f65dbf4832e8f17ac4ef84cf1774df00d4de209aa7a6d68"
-    },
-    {
-      "path": "test/core/network/supabase_guard_test.dart",
-      "size": 2941,
-      "sha256": "0884d4f3bdd708eef8ad8727538eb9f2d978dc10fe0df21d2a8d00cb841b9e1e"
     },
     {
       "path": "test/core/services/shell_service_test.dart",
@@ -753,11 +723,6 @@
       "path": "test/core/storage/cache_entry_test.dart",
       "size": 966,
       "sha256": "65b3130d6b5470b93b24a6de55274a8dc52693bba681273cfb5d5d38c881690d"
-    },
-    {
-      "path": "test/features/home/ui/viewmodels/shell_viewmodel_test.dart",
-      "size": 689,
-      "sha256": "c580fb70e783b8da1e75a1a56ff0983eb21c13ea9c82b121d5aa14b2f598c10a"
     },
     {
       "path": "test/helpers/stacked_service_mocks.dart",

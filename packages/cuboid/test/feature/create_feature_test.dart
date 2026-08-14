@@ -15,21 +15,21 @@ void main() {
 
     expect(result.plan.displayName, 'Auth');
     expect(result.plan.files, [
-      'lib/features/auth/ui/views/auth_view.dart',
-      'lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
+      'lib/features/auth/ui/auth_view.dart',
+      'lib/features/auth/ui/auth_viewmodel.dart',
     ]);
 
     final view = File(
-      '${root.path}/lib/features/auth/ui/views/auth_view.dart',
+      '${root.path}/lib/features/auth/ui/auth_view.dart',
     ).readAsStringSync();
     final viewModel = File(
-      '${root.path}/lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
+      '${root.path}/lib/features/auth/ui/auth_viewmodel.dart',
     ).readAsStringSync();
 
     expect(
       view,
       contains(
-        "import 'package:test_app/features/auth/ui/viewmodels/auth_viewmodel.dart';",
+        "import 'package:test_app/features/auth/ui/auth_viewmodel.dart';",
       ),
     );
     expect(view, contains('class AuthView extends StackedView<AuthViewModel>'));
@@ -52,10 +52,10 @@ void main() {
     );
 
     final view = File(
-      '${root.path}/lib/features/user_profile/ui/views/user_profile_view.dart',
+      '${root.path}/lib/features/user_profile/ui/user_profile_view.dart',
     ).readAsStringSync();
     final viewModel = File(
-      '${root.path}/lib/features/user_profile/ui/viewmodels/user_profile_viewmodel.dart',
+      '${root.path}/lib/features/user_profile/ui/user_profile_viewmodel.dart',
     ).readAsStringSync();
 
     expect(
@@ -83,13 +83,13 @@ void main() {
     expect(result.plan.name, 'user_profile');
     expect(
       File(
-        '${root.path}/lib/features/user_profile/ui/views/user_profile_view.dart',
+        '${root.path}/lib/features/user_profile/ui/user_profile_view.dart',
       ).existsSync(),
       isTrue,
     );
     expect(
       File(
-        '${root.path}/lib/features/user_profile/ui/viewmodels/user_profile_viewmodel.dart',
+        '${root.path}/lib/features/user_profile/ui/user_profile_viewmodel.dart',
       ).existsSync(),
       isTrue,
     );
@@ -107,13 +107,13 @@ void main() {
       );
 
       final view = File(
-        '${root.path}/lib/features/billing/ui/views/billing_view.dart',
+        '${root.path}/lib/features/billing/ui/billing_view.dart',
       ).readAsStringSync();
 
       expect(
         view,
         contains(
-          "import 'package:custom_app/features/billing/ui/viewmodels/billing_viewmodel.dart';",
+          "import 'package:custom_app/features/billing/ui/billing_viewmodel.dart';",
         ),
       );
     },
@@ -132,8 +132,8 @@ void main() {
 
       expect(result.plan.dryRun, isTrue);
       expect(result.plan.files, [
-        'lib/features/auth/ui/views/auth_view.dart',
-        'lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
+        'lib/features/auth/ui/auth_view.dart',
+        'lib/features/auth/ui/auth_viewmodel.dart',
       ]);
       expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
     },
@@ -250,10 +250,9 @@ void main() {
   test('does not overwrite an existing target file', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    final target =
-        File('${root.path}/lib/features/auth/ui/views/auth_view.dart')
-          ..parent.createSync(recursive: true)
-          ..writeAsStringSync('keep\n');
+    final target = File('${root.path}/lib/features/auth/ui/auth_view.dart')
+      ..parent.createSync(recursive: true)
+      ..writeAsStringSync('keep\n');
     final service = CreateFeatureService();
 
     await expectLater(
@@ -278,8 +277,8 @@ void main() {
       expect(appFile.readAsStringSync(), 'app registration\n');
       expect(_relativeFiles(root), [
         'lib/app/app.dart',
-        'lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
-        'lib/features/auth/ui/views/auth_view.dart',
+        'lib/features/auth/ui/auth_view.dart',
+        'lib/features/auth/ui/auth_viewmodel.dart',
         'pubspec.yaml',
       ]);
     },

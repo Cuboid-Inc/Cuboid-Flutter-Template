@@ -60,8 +60,7 @@ class RegisterRouteService {
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     final packageName = _readPackageName(projectRoot);
     final viewClassName = '${_pascalCase(words)}View';
-    final viewPath =
-        'lib/features/$featureName/ui/views/${featureName}_view.dart';
+    final viewPath = 'lib/features/$featureName/ui/${featureName}_view.dart';
 
     return RegisterRoutePlan(
       featureName: featureName,
@@ -71,7 +70,7 @@ class RegisterRouteService {
       viewPath: viewPath,
       appPath: 'lib/app/app.dart',
       importLine:
-          "import 'package:$packageName/features/$featureName/ui/views/${featureName}_view.dart';",
+          "import 'package:$packageName/features/$featureName/ui/${featureName}_view.dart';",
       routeLine: '    MaterialRoute(page: $viewClassName),',
       dryRun: input.dryRun,
     );

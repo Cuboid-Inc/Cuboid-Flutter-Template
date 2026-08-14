@@ -4,7 +4,6 @@ const oldDartProjectName = 'cuboid_flutter_template';
 const oldDisplayName = 'Cuboid Flutter Template';
 const oldProductName = 'Cuboid Flutter Template';
 const oldPackageIdentifier = 'com.cuboidllc.cuboid_flutter_template';
-const oldStorageNamespace = 'cuboid_flutter_template';
 const oldKotlinPackagePath = 'com/cuboidllc/cuboid_flutter_template';
 
 const bootstrapGeneratedFiles = {
@@ -14,10 +13,10 @@ const bootstrapGeneratedFiles = {
 };
 
 const bootstrapManualConfiguration = [
-  'Supabase project_id in supabase/config.toml.',
-  'Supabase hosted project URL, anon key, and publishable keys in env files.',
   'Launcher icon and splash image artwork, if the new app needs different branding.',
   'Apple development team, signing, and provisioning settings.',
+  'Optional backend/storage technology, if the app needs one -- e.g. '
+      '`cuboid create database supabase` or `cuboid create storage <name>`.',
 ];
 
 final dartKeywords = {
@@ -340,37 +339,11 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
       category: 'Project identity',
     ),
     BootstrapReplacement(
-      path: 'lib/features/home/ui/views/home_view.dart',
+      path: 'lib/features/home/ui/home_view.dart',
       oldValue: "AppBar(title: const Text('$oldDisplayName'))",
       newValue:
           "AppBar(title: const Text('${escapeDartString(values.displayName)}'))",
       label: 'home view title',
-      category: 'Project identity',
-    ),
-    BootstrapReplacement(
-      path: 'lib/main.dart',
-      oldValue: "'$oldDisplayName release build without Supabase config. '",
-      newValue:
-          "'${escapeDartString(values.displayName)} release build without Supabase config. '",
-      label: 'release configuration error app name',
-      category: 'Project identity',
-    ),
-    BootstrapReplacement(
-      path: 'lib/core/constants/storage_keys.dart',
-      oldValue:
-          "static const supabaseSession = '${oldStorageNamespace}_supabase_session';",
-      newValue:
-          "static const supabaseSession = '${values.storageNamespace}_supabase_session';",
-      label: 'Supabase session storage key',
-      category: 'Project identity',
-    ),
-    BootstrapReplacement(
-      path: 'lib/core/constants/storage_keys.dart',
-      oldValue:
-          "static const authStorageNamespace = '${oldStorageNamespace}_auth';",
-      newValue:
-          "static const authStorageNamespace = '${values.storageNamespace}_auth';",
-      label: 'auth storage namespace',
       category: 'Project identity',
     ),
     BootstrapReplacement(
@@ -395,24 +368,10 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
       category: 'Android',
     ),
     BootstrapReplacement(
-      path: 'android/app/src/main/AndroidManifest.xml',
-      oldValue: 'android:scheme="$oldPackageIdentifier"',
-      newValue: 'android:scheme="${values.packageIdentifier}"',
-      label: 'Android auth callback scheme',
-      category: 'Android',
-    ),
-    BootstrapReplacement(
       path: 'ios/Runner/Info.plist',
       oldValue: '<string>$oldDisplayName</string>',
       newValue: '<string>${escapeXmlText(values.displayName)}</string>',
       label: 'iOS display name',
-      category: 'iOS',
-    ),
-    BootstrapReplacement(
-      path: 'ios/Runner/Info.plist',
-      oldValue: '<string>$oldPackageIdentifier</string>',
-      newValue: '<string>${values.packageIdentifier}</string>',
-      label: 'iOS URL scheme',
       category: 'iOS',
     ),
     BootstrapReplacement(
@@ -441,15 +400,6 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
       category: 'iOS',
     ),
     BootstrapReplacement(
-      path: 'supabase/config.toml',
-      oldValue:
-          'additional_redirect_urls = ["$oldPackageIdentifier://auth-callback"]',
-      newValue:
-          'additional_redirect_urls = ["${values.packageIdentifier}://auth-callback"]',
-      label: 'Supabase auth redirect URL',
-      category: 'Supabase',
-    ),
-    BootstrapReplacement(
       path: 'README.md',
       oldValue: '# $oldProductName',
       newValue: '# ${values.displayName}',
@@ -471,7 +421,7 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
           'domain application and does not contain application-specific business workflows,\n'
           'database schema, or repository/data layers.',
       newValue:
-          'It is a Flutter application built with Stacked MVVM and Supabase. Replace this section with product-specific documentation when the generated application is ready.',
+          'It is a Flutter application built with Stacked MVVM. Replace this section with product-specific documentation when the generated application is ready.',
       label: 'README app description',
       category: 'Documentation',
     ),

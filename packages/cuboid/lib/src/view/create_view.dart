@@ -73,9 +73,9 @@ class CreateViewService {
       '${projectRoot.path}${Platform.pathSeparator}lib'
       '${Platform.pathSeparator}features${Platform.pathSeparator}$featureName',
     );
-    final viewPath = 'lib/features/$featureName/ui/views/${viewName}_view.dart';
+    final viewPath = 'lib/features/$featureName/ui/${viewName}_view.dart';
     final viewModelPath =
-        'lib/features/$featureName/ui/viewmodels/${viewName}_viewmodel.dart';
+        'lib/features/$featureName/ui/${viewName}_viewmodel.dart';
 
     return CreateViewPlan(
       featureName: featureName,
@@ -302,7 +302,7 @@ String _viewContents(CreateViewPlan plan) {
   final featureName = plan.featureName;
   final viewName = plan.name;
   return '''
-import 'package:${plan.packageName}/features/$featureName/ui/viewmodels/${viewName}_viewmodel.dart';
+import 'package:${plan.packageName}/features/$featureName/ui/${viewName}_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 

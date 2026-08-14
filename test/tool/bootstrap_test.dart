@@ -113,7 +113,6 @@ void main() {
     expect(printed, contains('Dart:'));
     expect(printed, contains('Android:'));
     expect(printed, contains('iOS:'));
-    expect(printed, contains('Supabase:'));
     expect(printed, contains('Documentation:'));
     expect(printed, contains('Generated files:'));
     expect(printed, contains('Manual configuration:'));
@@ -135,21 +134,10 @@ description: "Template for Cuboid Flutter projects"
 ''');
   _writeFixture(root, 'lib/main.dart', '''
 import 'package:cuboid_flutter_template/app/app_root.dart';
-
-final error = StateError(
-  'Cuboid Flutter Template release build without Supabase config. '
-  'Build with --dart-define-from-file=env/prod.json.',
-);
 ''');
   _writeFixture(root, 'lib/core/constants/app_constants.dart', '''
 abstract final class AppConfig {
   static const appName = 'Cuboid Flutter Template';
-}
-''');
-  _writeFixture(root, 'lib/core/constants/storage_keys.dart', '''
-abstract final class StorageKeys {
-  static const supabaseSession = 'cuboid_flutter_template_supabase_session';
-  static const authStorageNamespace = 'cuboid_flutter_template_auth';
 }
 ''');
   _writeFixture(root, 'android/app/build.gradle.kts', '''
@@ -184,7 +172,6 @@ class MainActivity
 <plist>
 <dict>
 <string>Cuboid Flutter Template</string>
-<string>com.cuboidllc.cuboid_flutter_template</string>
 <string>Cuboid Flutter Template</string>
 </dict>
 </plist>
@@ -193,10 +180,6 @@ class MainActivity
 INFOPLIST_KEY_CFBundleDisplayName = "Cuboid Flutter Template";
 PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template;
 PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template.RunnerTests;
-''');
-  _writeFixture(root, 'supabase/config.toml', '''
-project_id = "Cuboid Flutter Template"
-additional_redirect_urls = ["com.cuboidllc.cuboid_flutter_template://auth-callback"]
 ''');
   _writeFixture(root, 'README.md', '''
 # Cuboid Flutter Template

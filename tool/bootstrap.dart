@@ -178,7 +178,6 @@ String buildDryRunReport(BootstrapValues values, BootstrapPlan plan) {
     'Dart',
     'Android',
     'iOS',
-    'Supabase',
     'Documentation',
     'Generated files',
     'Manual configuration',

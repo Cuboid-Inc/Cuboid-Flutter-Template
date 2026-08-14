@@ -25,14 +25,7 @@ const templateAllowedFiles = [
   'stacked.json',
 ];
 
-const templateAllowedDirectories = [
-  'android',
-  'assets',
-  'ios',
-  'lib',
-  'supabase',
-  'test',
-];
+const templateAllowedDirectories = ['android', 'assets', 'ios', 'lib', 'test'];
 
 const templateExcludedPatterns = [
   '.git/**',

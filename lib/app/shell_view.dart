@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:cuboid_flutter_template/features/home/ui/views/home_view.dart';
-import 'package:cuboid_flutter_template/features/home/ui/viewmodels/shell_viewmodel.dart';
+import 'package:cuboid_flutter_template/app/shell_viewmodel.dart';
 import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
+import 'package:cuboid_flutter_template/features/home/ui/home_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';

@@ -301,14 +301,12 @@ void main() {
       expect(output.content, contains('Created feature Auth.'));
       expect(errorOutput.content, isEmpty);
       expect(
-        File(
-          '${temp.path}/lib/features/auth/ui/views/auth_view.dart',
-        ).existsSync(),
+        File('${temp.path}/lib/features/auth/ui/auth_view.dart').existsSync(),
         isTrue,
       );
       expect(
         File(
-          '${temp.path}/lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
+          '${temp.path}/lib/features/auth/ui/auth_viewmodel.dart',
         ).existsSync(),
         isTrue,
       );
@@ -322,8 +320,8 @@ void main() {
       );
       expect(_relativeFiles(temp), [
         'lib/app/app.dart',
-        'lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
-        'lib/features/auth/ui/views/auth_view.dart',
+        'lib/features/auth/ui/auth_view.dart',
+        'lib/features/auth/ui/auth_viewmodel.dart',
         'pubspec.yaml',
       ]);
     },
@@ -349,15 +347,15 @@ void main() {
     expect(exitCode, 0);
     expect(errorOutput.content, isEmpty);
     final view = File(
-      '${temp.path}/lib/features/user_profile/ui/views/user_profile_view.dart',
+      '${temp.path}/lib/features/user_profile/ui/user_profile_view.dart',
     ).readAsStringSync();
     final viewModel = File(
-      '${temp.path}/lib/features/user_profile/ui/viewmodels/user_profile_viewmodel.dart',
+      '${temp.path}/lib/features/user_profile/ui/user_profile_viewmodel.dart',
     ).readAsStringSync();
     expect(
       view,
       contains(
-        "import 'package:custom_app/features/user_profile/ui/viewmodels/user_profile_viewmodel.dart';",
+        "import 'package:custom_app/features/user_profile/ui/user_profile_viewmodel.dart';",
       ),
     );
     expect(
@@ -393,13 +391,10 @@ void main() {
     expect(exitCode, 0);
     expect(output.content, contains('Dry run: no files were written.'));
     expect(output.content, contains('Feature: Auth'));
+    expect(output.content, contains('- lib/features/auth/ui/auth_view.dart'));
     expect(
       output.content,
-      contains('- lib/features/auth/ui/views/auth_view.dart'),
-    );
-    expect(
-      output.content,
-      contains('- lib/features/auth/ui/viewmodels/auth_viewmodel.dart'),
+      contains('- lib/features/auth/ui/auth_viewmodel.dart'),
     );
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
@@ -1197,9 +1192,7 @@ void main() {
     final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
     expect(
       app,
-      contains(
-        "import 'package:my_app/features/auth/ui/views/auth_view.dart';",
-      ),
+      contains("import 'package:my_app/features/auth/ui/auth_view.dart';"),
     );
     expect(app, contains('    MaterialRoute(page: AuthView),'));
   });
@@ -1255,7 +1248,7 @@ void main() {
       expect(output.content, contains('Feature: auth'));
       expect(
         output.content,
-        contains('- lib/features/auth/ui/views/forgot_password_view.dart'),
+        contains('- lib/features/auth/ui/forgot_password_view.dart'),
       );
       expect(errorOutput.content, isEmpty);
       expect(_relativeFiles(temp), beforeFiles);
@@ -1283,7 +1276,7 @@ void main() {
     expect(output.content, contains('Created view Forgot Password.'));
     expect(errorOutput.content, isEmpty);
     final view = File(
-      '${temp.path}/lib/features/auth/ui/views/forgot_password_view.dart',
+      '${temp.path}/lib/features/auth/ui/forgot_password_view.dart',
     ).readAsStringSync();
     expect(
       view,
@@ -1292,7 +1285,7 @@ void main() {
       ),
     );
     final viewModel = File(
-      '${temp.path}/lib/features/auth/ui/viewmodels/forgot_password_viewmodel.dart',
+      '${temp.path}/lib/features/auth/ui/forgot_password_viewmodel.dart',
     ).readAsStringSync();
     expect(
       viewModel,
@@ -1727,13 +1720,10 @@ void main() {
     expect(exitCode, 0);
     expect(output.content, contains('Dry run: no files were written.'));
     expect(output.content, contains('Feature: Auth'));
+    expect(output.content, contains('- lib/features/auth/ui/auth_view.dart'));
     expect(
       output.content,
-      contains('- lib/features/auth/ui/views/auth_view.dart'),
-    );
-    expect(
-      output.content,
-      contains('- lib/features/auth/ui/viewmodels/auth_viewmodel.dart'),
+      contains('- lib/features/auth/ui/auth_viewmodel.dart'),
     );
     expect(errorOutput.content, isEmpty);
     expect(Directory('${temp.path}/lib/features/auth').existsSync(), isFalse);
@@ -1776,7 +1766,7 @@ void main() {
     expect(
       output.content,
       contains(
-        "import 'package:my_app/features/user_profile/ui/views/user_profile_view.dart';",
+        "import 'package:my_app/features/user_profile/ui/user_profile_view.dart';",
       ),
     );
     expect(output.content, contains('MaterialRoute(page: UserProfileView),'));
@@ -1811,9 +1801,7 @@ void main() {
     final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
     expect(
       app,
-      contains(
-        "import 'package:my_app/features/auth/ui/views/auth_view.dart';",
-      ),
+      contains("import 'package:my_app/features/auth/ui/auth_view.dart';"),
     );
     expect(app, contains('    MaterialRoute(page: AuthView),'));
   });
@@ -1838,7 +1826,7 @@ void main() {
       temp.deleteSync(recursive: true);
     });
     _writeRouteProject(temp, 'auth');
-    File('${temp.path}/lib/features/auth/ui/views/auth_view.dart').deleteSync();
+    File('${temp.path}/lib/features/auth/ui/auth_view.dart').deleteSync();
     Directory.current = temp;
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
@@ -1850,7 +1838,7 @@ void main() {
     expect(exitCode, 1);
     expect(
       errorOutput.content,
-      contains('lib/features/auth/ui/views/auth_view.dart was not found.'),
+      contains('lib/features/auth/ui/auth_view.dart was not found.'),
     );
   });
 
@@ -1989,13 +1977,11 @@ void main() {
     expect(output.content, contains('Feature: auth'));
     expect(
       output.content,
-      contains('- lib/features/auth/ui/views/forgot_password_view.dart'),
+      contains('- lib/features/auth/ui/forgot_password_view.dart'),
     );
     expect(
       output.content,
-      contains(
-        '- lib/features/auth/ui/viewmodels/forgot_password_viewmodel.dart',
-      ),
+      contains('- lib/features/auth/ui/forgot_password_viewmodel.dart'),
     );
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
@@ -2022,15 +2008,15 @@ void main() {
     expect(output.content, contains('Created view Forgot Password.'));
     expect(errorOutput.content, isEmpty);
     final view = File(
-      '${temp.path}/lib/features/auth/ui/views/forgot_password_view.dart',
+      '${temp.path}/lib/features/auth/ui/forgot_password_view.dart',
     ).readAsStringSync();
     final viewModel = File(
-      '${temp.path}/lib/features/auth/ui/viewmodels/forgot_password_viewmodel.dart',
+      '${temp.path}/lib/features/auth/ui/forgot_password_viewmodel.dart',
     ).readAsStringSync();
     expect(
       view,
       contains(
-        "import 'package:my_app/features/auth/ui/viewmodels/forgot_password_viewmodel.dart';",
+        "import 'package:my_app/features/auth/ui/forgot_password_viewmodel.dart';",
       ),
     );
     expect(
@@ -2140,7 +2126,7 @@ void _writeRouteProject(Directory root, String featureName) {
   File('${root.path}/lib/app/app.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('''
-import 'package:my_app/features/startup/ui/views/startup_view.dart';
+import 'package:my_app/features/startup/ui/startup_view.dart';
 import 'package:stacked/stacked_annotations.dart';
 // @stacked-import
 
@@ -2152,9 +2138,7 @@ import 'package:stacked/stacked_annotations.dart';
 )
 class App {}
 ''');
-  File(
-      '${root.path}/lib/features/$featureName/ui/views/${featureName}_view.dart',
-    )
+  File('${root.path}/lib/features/$featureName/ui/${featureName}_view.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('class View {}\n');
 }
