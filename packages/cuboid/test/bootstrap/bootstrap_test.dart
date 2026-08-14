@@ -43,11 +43,7 @@ void main() {
         throwsA(isA<BootstrapException>()),
       );
       expect(
-        () => validatePackageIdentifier('com.example.myapp2'),
-        throwsA(isA<BootstrapException>()),
-      );
-      expect(
-        () => validatePackageIdentifier('com.example2.myapp'),
+        () => validatePackageIdentifier('com.example.2myapp'),
         throwsA(isA<BootstrapException>()),
       );
     });
@@ -59,6 +55,14 @@ void main() {
       );
       expect(
         () => validatePackageIdentifier('com.someapp.someapp'),
+        returnsNormally,
+      );
+      expect(
+        () => validatePackageIdentifier('com.example.myapp2'),
+        returnsNormally,
+      );
+      expect(
+        () => validatePackageIdentifier('com.example2.myapp'),
         returnsNormally,
       );
     });

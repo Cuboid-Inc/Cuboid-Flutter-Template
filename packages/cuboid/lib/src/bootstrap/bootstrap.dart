@@ -262,12 +262,12 @@ List<String> validatePackageIdentifierValue(String packageIdentifier) {
     );
   }
 
-  final componentPattern = RegExp(r'^[A-Za-z]+$');
+  final componentPattern = RegExp(r'^[A-Za-z][A-Za-z0-9]*$');
   for (final part in parts) {
     if (!componentPattern.hasMatch(part)) {
       failures.add(
-        'Invalid package component "$part". Use letters only -- no numbers, '
-        'underscores, or other characters.',
+        'Invalid package component "$part". Use letters and numbers only, '
+        'starting with a letter -- no underscores or other characters.',
       );
     }
   }
