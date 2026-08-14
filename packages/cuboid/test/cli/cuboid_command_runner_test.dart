@@ -190,6 +190,7 @@ void main() {
       expect(output.content, contains('cuboid create storage <name>'));
       expect(output.content, contains('cuboid create database <provider>'));
       expect(output.content, contains('cuboid create route <feature>'));
+      expect(output.content, contains('cuboid create view <feature> <name>'));
     },
   );
 
@@ -382,7 +383,8 @@ void main() {
         name != 'dialog' &&
         name != 'storage' &&
         name != 'database' &&
-        name != 'route',
+        name != 'route' &&
+        name != 'view',
   )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -1143,6 +1145,125 @@ void main() {
       contains('Only --dry-run is supported for cuboid create route.'),
     );
     expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test(
+    'create view with dry-run reports planned files without writing',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeViewProject(temp, 'auth');
+      final beforeFiles = _relativeFiles(temp);
+      Directory.current = temp;
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        ['create', '--dry-run', 'view', 'auth', 'forgot-password'],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Dry run: no files were written.'));
+      expect(output.content, contains('View: Forgot Password'));
+      expect(output.content, contains('Feature: auth'));
+      expect(
+        output.content,
+        contains('- lib/features/auth/ui/views/forgot_password_view.dart'),
+      );
+      expect(errorOutput.content, isEmpty);
+      expect(_relativeFiles(temp), beforeFiles);
+    },
+  );
+
+  test('create view creates an additional feature View', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeViewProject(temp, 'auth');
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'view', 'auth', 'forgot-password'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Created view Forgot Password.'));
+    expect(errorOutput.content, isEmpty);
+    final view = File(
+      '${temp.path}/lib/features/auth/ui/views/forgot_password_view.dart',
+    ).readAsStringSync();
+    expect(
+      view,
+      contains(
+        'class ForgotPasswordView extends StackedView<ForgotPasswordViewModel>',
+      ),
+    );
+    final viewModel = File(
+      '${temp.path}/lib/features/auth/ui/viewmodels/forgot_password_viewmodel.dart',
+    ).readAsStringSync();
+    expect(
+      viewModel,
+      contains('class ForgotPasswordViewModel extends BaseViewModel {}'),
+    );
+  });
+
+  test('create view rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeViewProject(temp, 'auth');
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'view', 'auth', 'login', '--directory', 'ignored'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Only --dry-run is supported for cuboid create view.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create view validates required positional arguments', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeViewProject(temp, 'auth');
+    Directory.current = temp;
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'view', 'auth'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Expected a feature name and view name.'),
+    );
   });
 
   test('create unknown artifact fails cleanly', () async {

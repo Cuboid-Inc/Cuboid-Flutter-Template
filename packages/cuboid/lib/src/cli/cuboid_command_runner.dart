@@ -22,6 +22,7 @@ const _knownCreateArtifacts = <String>[
   'storage',
   'database',
   'route',
+  'view',
 ];
 
 class CuboidCommandRunner extends CommandRunner<int> {
@@ -69,6 +70,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createDatabaseService: _createDatabaseService,
         registerServiceService: _registerServiceService,
         registerRouteService: _registerRouteService,
+        createViewService: _createViewService,
       ),
     );
     addCommand(
@@ -140,6 +142,7 @@ class CreateCommand extends Command<int> {
     CreateDatabaseService? createDatabaseService,
     RegisterServiceService? registerServiceService,
     RegisterRouteService? registerRouteService,
+    CreateViewService? createViewService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -152,7 +155,8 @@ class CreateCommand extends Command<int> {
            createDatabaseService ?? CreateDatabaseService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
-       _registerRouteService = registerRouteService ?? RegisterRouteService() {
+       _registerRouteService = registerRouteService ?? RegisterRouteService(),
+       _createViewService = createViewService ?? CreateViewService() {
     argParser
       ..addOption(
         'output-dir',
@@ -185,6 +189,7 @@ class CreateCommand extends Command<int> {
   final CreateDatabaseService _createDatabaseService;
   final RegisterServiceService _registerServiceService;
   final RegisterRouteService _registerRouteService;
+  final CreateViewService _createViewService;
 
   @override
   String get name => 'create';
@@ -205,7 +210,8 @@ class CreateCommand extends Command<int> {
       'cuboid create dialog <name>, '
       'cuboid create storage <name>, '
       'cuboid create database <provider>, '
-      'cuboid create route <feature>.\n'
+      'cuboid create route <feature>, '
+      'cuboid create view <feature> <name>.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -241,6 +247,9 @@ class CreateCommand extends Command<int> {
         }
         if (artifact == 'route') {
           return _runCreateRoute(rest.skip(1).toList());
+        }
+        if (artifact == 'view') {
+          return _runCreateView(rest.skip(1).toList());
         }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
@@ -471,6 +480,35 @@ class CreateCommand extends Command<int> {
     }
   }
 
+  Future<int> _runCreateView(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create view.',
+        usage,
+      );
+    }
+    if (rest.length != 2) {
+      throw UsageException('Expected a feature name and view name.', usage);
+    }
+
+    final input = CreateViewInput(
+      feature: rest[0],
+      name: rest[1],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _createViewService.create(input);
+      writeViewResult(_stdout, result);
+      return 0;
+    } on CreateViewException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
   void _writeResult(CreateProjectResult result) {
     final plan = result.plan;
     if (plan.dryRun) {
@@ -693,6 +731,21 @@ void writeRouteResult(IOSink stdout, RegisterRouteResult result) {
     stdout.writeln('- ${plan.routeLine.trim()}');
   } else {
     stdout.writeln('Next step: dart run build_runner build -d');
+  }
+}
+
+void writeViewResult(IOSink stdout, CreateViewResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('View: ${plan.displayName}');
+  } else {
+    stdout.writeln('Created view ${plan.displayName}.');
+  }
+  stdout.writeln('Feature: ${plan.featureName}');
+  stdout.writeln('Files:');
+  for (final file in plan.files) {
+    stdout.writeln('- $file');
   }
 }
 
