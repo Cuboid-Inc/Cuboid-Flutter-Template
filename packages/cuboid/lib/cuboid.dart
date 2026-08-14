@@ -31,6 +31,14 @@ export 'src/create/create_project.dart'
         CreateProjectService,
         PostStep,
         PostStepResult;
+export 'src/database/create_database.dart'
+    show
+        CreateDatabaseException,
+        CreateDatabaseInput,
+        CreateDatabasePlan,
+        CreateDatabaseResult,
+        CreateDatabaseService,
+        DatabaseFileWriter;
 export 'src/dialog/create_dialog.dart'
     show
         CreateDialogException,

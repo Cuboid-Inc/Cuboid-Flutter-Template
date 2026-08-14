@@ -188,6 +188,7 @@ void main() {
       expect(output.content, contains('cuboid create bottomsheet <name>'));
       expect(output.content, contains('cuboid create dialog <name>'));
       expect(output.content, contains('cuboid create storage <name>'));
+      expect(output.content, contains('cuboid create database <provider>'));
     },
   );
 
@@ -378,7 +379,8 @@ void main() {
         name != 'service' &&
         name != 'bottomsheet' &&
         name != 'dialog' &&
-        name != 'storage',
+        name != 'storage' &&
+        name != 'database',
   )) {
     test('create $artifact fails cleanly as unimplemented', () async {
       final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -929,6 +931,129 @@ void main() {
     expect(
       errorOutput.content,
       contains('Only --dry-run is supported for cuboid create storage.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create database with dry-run creates no files', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDatabaseProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', '--dry-run', 'database', 'supabase'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Dry run: no files were written.'));
+    expect(output.content, contains('Database: supabase'));
+    expect(output.content, contains('- lib/supabase/example_repository.dart'));
+    expect(
+      output.content,
+      contains('LazySingleton(classType: ExampleRepository),'),
+    );
+    expect(errorOutput.content, isEmpty);
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test(
+    'create database generates the supabase example and registers it',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeDatabaseProject(temp);
+      Directory.current = temp;
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        ['create', 'database', 'supabase'],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Created supabase database example.'));
+      expect(output.content, contains('- dart run build_runner build -d'));
+      expect(output.content, contains('supabase db push'));
+      expect(errorOutput.content, isEmpty);
+      final repository = File(
+        '${temp.path}/lib/supabase/example_repository.dart',
+      ).readAsStringSync();
+      expect(repository, contains('class ExampleRepository {'));
+      final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+      expect(
+        app,
+        contains("import 'package:my_app/supabase/example_repository.dart';"),
+      );
+      expect(app, contains('LazySingleton(classType: ExampleRepository),'));
+      expect(
+        Directory(
+          '${temp.path}/supabase/migrations',
+        ).listSync().whereType<File>().length,
+        1,
+      );
+    },
+  );
+
+  test('create database rejects an unsupported provider', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDatabaseProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'database', 'firebase'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 1);
+    expect(
+      errorOutput.content,
+      contains('Unsupported database provider "firebase"'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
+  });
+
+  test('create database rejects project creation options', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDatabaseProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'database', 'supabase', '--directory', 'ignored'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('Only --dry-run is supported for cuboid create database.'),
     );
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -1552,6 +1677,40 @@ Future<void> main() async {
 
 void _writeStorageProject(Directory root) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
+}
+
+void _writeDatabaseProject(Directory root) {
+  File('${root.path}/pubspec.yaml').writeAsStringSync(
+    'name: my_app\ndependencies:\n  supabase_flutter: ^2.16.0\n',
+  );
+  File('${root.path}/lib/app/app.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('''
+import 'package:my_app/core/services/shell_service.dart';
+import 'package:stacked/stacked_annotations.dart';
+import 'package:stacked_services/stacked_services.dart';
+// @stacked-import
+
+@StackedApp(
+  routes: [
+    // @stacked-route
+  ],
+  dependencies: [
+    LazySingleton(classType: ShellService),
+    // @stacked-service
+  ],
+)
+class App {}
+''');
+  File('${root.path}/lib/core/network/supabase_guard.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('Future<void> guard() async {}\n');
+  File('${root.path}/lib/core/errors/result.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('class Result<T> {}\n');
+  File('${root.path}/lib/core/errors/failures.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('class AppFailure {}\n');
 }
 
 List<String> _relativeFiles(Directory root) {

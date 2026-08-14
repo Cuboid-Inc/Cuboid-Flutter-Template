@@ -4,6 +4,7 @@ import 'package:args/command_runner.dart';
 import 'package:cuboid/src/bottomsheet/create_bottomsheet.dart';
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
 import 'package:cuboid/src/create/create_project.dart';
+import 'package:cuboid/src/database/create_database.dart';
 import 'package:cuboid/src/dialog/create_dialog.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
 import 'package:cuboid/src/route/register_route.dart';
@@ -31,6 +32,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
     CreateBottomSheetService? createBottomSheetService,
     CreateDialogService? createDialogService,
     CreateStorageService? createStorageService,
+    CreateDatabaseService? createDatabaseService,
     RegisterRouteService? registerRouteService,
     RegisterServiceService? registerServiceService,
     CreateViewService? createViewService,
@@ -42,6 +44,8 @@ class CuboidCommandRunner extends CommandRunner<int> {
            createBottomSheetService ?? CreateBottomSheetService(),
        _createDialogService = createDialogService ?? CreateDialogService(),
        _createStorageService = createStorageService ?? CreateStorageService(),
+       _createDatabaseService =
+           createDatabaseService ?? CreateDatabaseService(),
        _registerRouteService = registerRouteService ?? RegisterRouteService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
@@ -61,6 +65,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createBottomSheetService: _createBottomSheetService,
         createDialogService: _createDialogService,
         createStorageService: _createStorageService,
+        createDatabaseService: _createDatabaseService,
         registerServiceService: _registerServiceService,
       ),
     );
@@ -101,6 +106,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final CreateBottomSheetService _createBottomSheetService;
   final CreateDialogService _createDialogService;
   final CreateStorageService _createStorageService;
+  final CreateDatabaseService _createDatabaseService;
   final RegisterRouteService _registerRouteService;
   final RegisterServiceService _registerServiceService;
   final CreateViewService _createViewService;
@@ -129,6 +135,7 @@ class CreateCommand extends Command<int> {
     CreateBottomSheetService? createBottomSheetService,
     CreateDialogService? createDialogService,
     CreateStorageService? createStorageService,
+    CreateDatabaseService? createDatabaseService,
     RegisterServiceService? registerServiceService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
@@ -138,6 +145,8 @@ class CreateCommand extends Command<int> {
            createBottomSheetService ?? CreateBottomSheetService(),
        _createDialogService = createDialogService ?? CreateDialogService(),
        _createStorageService = createStorageService ?? CreateStorageService(),
+       _createDatabaseService =
+           createDatabaseService ?? CreateDatabaseService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService() {
     argParser
@@ -169,6 +178,7 @@ class CreateCommand extends Command<int> {
   final CreateBottomSheetService _createBottomSheetService;
   final CreateDialogService _createDialogService;
   final CreateStorageService _createStorageService;
+  final CreateDatabaseService _createDatabaseService;
   final RegisterServiceService _registerServiceService;
 
   @override
@@ -188,7 +198,8 @@ class CreateCommand extends Command<int> {
       'cuboid create service <name>, '
       'cuboid create bottomsheet <name>, '
       'cuboid create dialog <name>, '
-      'cuboid create storage <name>.\n'
+      'cuboid create storage <name>, '
+      'cuboid create database <provider>.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -218,6 +229,9 @@ class CreateCommand extends Command<int> {
         }
         if (artifact == 'storage') {
           return _runCreateStorage(rest.skip(1).toList());
+        }
+        if (artifact == 'database') {
+          return _runCreateDatabase(rest.skip(1).toList());
         }
         _stderr.writeln('cuboid create $artifact is not implemented yet.');
         return 64;
@@ -387,6 +401,34 @@ class CreateCommand extends Command<int> {
       writeStorageResult(_stdout, result);
       return 0;
     } on CreateStorageException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runCreateDatabase(List<String> rest) async {
+    if (argResults!.wasParsed('output-dir') ||
+        argResults!.wasParsed('directory') ||
+        argResults!.wasParsed('post-steps')) {
+      throw UsageException(
+        'Only --dry-run is supported for cuboid create database.',
+        usage,
+      );
+    }
+    if (rest.length != 1) {
+      throw UsageException('Expected a database provider.', usage);
+    }
+
+    final input = CreateDatabaseInput(
+      provider: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _createDatabaseService.create(input);
+      writeDatabaseResult(_stdout, result);
+      return 0;
+    } on CreateDatabaseException catch (error) {
       _stderr.writeln(error.message);
       return 1;
     }
@@ -570,6 +612,32 @@ void writeStorageResult(IOSink stdout, CreateStorageResult result) {
   }
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.path}');
+}
+
+void writeDatabaseResult(IOSink stdout, CreateDatabaseResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: no files were written.');
+    stdout.writeln('Database: ${plan.provider}');
+  } else {
+    stdout.writeln('Created ${plan.provider} database example.');
+  }
+  stdout.writeln('Files:');
+  for (final file in plan.files) {
+    stdout.writeln('- $file');
+  }
+  stdout.writeln('- ${plan.appPath}');
+  if (plan.dryRun) {
+    stdout.writeln('Planned changes:');
+    stdout.writeln('- ${plan.repositoryImportLine}');
+    stdout.writeln('- ${plan.repositoryLine.trim()}');
+  } else {
+    stdout.writeln('Next steps:');
+    stdout.writeln('- dart run build_runner build -d');
+    stdout.writeln(
+      '- supabase db push (or `supabase migration up` for local dev)',
+    );
+  }
 }
 
 class RouteCommand extends Command<int> {
