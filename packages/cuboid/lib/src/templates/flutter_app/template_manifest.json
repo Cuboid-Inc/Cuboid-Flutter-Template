@@ -1,8 +1,8 @@
 {
   "template_name": "cuboid_flutter_app",
   "template_version": 1,
-  "source_commit": "7b855fef754bcf2c4b61d0c00cc1610199ccd2c2",
-  "archive_sha256": "af369d3cb7733c5cee39deaaea69bfe251e151a7e4998f84fc30fba29d01af4c",
+  "source_commit": "1a6b581fc2e816184e04e693027116ce3bc23cb2",
+  "archive_sha256": "24fc1e2d0d5413664cc7590399dfa48553accc89b91fd86b79b3566083610ee2",
   "files": [
     {
       "path": ".gitignore",
@@ -16,8 +16,8 @@
     },
     {
       "path": "ARCHITECTURE.md",
-      "size": 11274,
-      "sha256": "c695b6d2bbad24b6afa5e64240ad68cfea93f1bdb3d755862cf6d8f73720441a"
+      "size": 20429,
+      "sha256": "324487d0ef60b918a18ec296b8e83d6979773100dfe9c37d2d8e7384a1ef2e30"
     },
     {
       "path": "README.md",
@@ -711,8 +711,8 @@
     },
     {
       "path": "pubspec.lock",
-      "size": 38877,
-      "sha256": "e6fb9ff00eb821e2f934d5822bbd8cf60a43b4d33dd8ce9f82a4caf71e898323"
+      "size": 36323,
+      "sha256": "711bb8da409177e6155baa847d3b157ff902f2185dd0595fe8b0c85981169623"
     },
     {
       "path": "pubspec.yaml",
