@@ -1,18 +1,30 @@
 import 'dart:io';
 
 import 'package:cuboid/src/bottomsheet/create_bottomsheet.dart';
+import 'package:cuboid/src/create/create_project.dart' show ProcessRunner;
 import 'package:test/test.dart';
 
 void main() {
   test('creates files and first-use Stacked registration', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    final service = CreateBottomSheetService();
+    final calls = <List<Object?>>[];
+    final service = CreateBottomSheetService(
+      processRunner: _recordingProcessRunner(calls),
+    );
 
     final result = await service.create(
       CreateBottomSheetInput(name: 'confirm_delete', projectRoot: root),
     );
 
+    expect(calls, [
+      [
+        'dart',
+        ['run', 'build_runner', 'build', '-d'],
+        root.path,
+      ],
+    ]);
+    expect(result.buildRunnerResult?.exitCode, 0);
     expect(result.plan.name, 'confirm_delete');
     expect(result.plan.sheetClassName, 'ConfirmDeleteSheet');
     expect(result.plan.modelClassName, 'ConfirmDeleteSheetModel');
@@ -72,7 +84,9 @@ Future<void> main() async {
   setupBottomSheetUi();
 }
 ''');
-      final service = CreateBottomSheetService();
+      final service = CreateBottomSheetService(
+        processRunner: _successProcessRunner,
+      );
 
       await service.create(
         CreateBottomSheetInput(name: 'confirm-delete', projectRoot: root),
@@ -89,6 +103,46 @@ Future<void> main() async {
       expect('setupBottomSheetUi();'.allMatches(main), hasLength(1));
     },
   );
+
+  test('reports a clear error and keeps the written files when build_runner '
+      'fails', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = CreateBottomSheetService(
+      processRunner:
+          (executable, arguments, {required workingDirectory}) async =>
+              ProcessResult(0, 1, '', 'boom'),
+    );
+
+    await expectLater(
+      service.create(
+        CreateBottomSheetInput(name: 'confirm_delete', projectRoot: root),
+      ),
+      throwsA(
+        isA<CreateBottomSheetException>().having(
+          (error) => error.message,
+          'message',
+          allOf(
+            contains('dart run build_runner build -d failed'),
+            contains('boom'),
+            contains('Bottom sheet Confirm Delete was created'),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      File(
+        '${root.path}/lib/shared/bottom_sheets/confirm_delete/'
+        'confirm_delete_sheet.dart',
+      ).existsSync(),
+      isTrue,
+    );
+    expect(
+      _appFile(root).readAsStringSync(),
+      contains('    StackedBottomsheet(classType: ConfirmDeleteSheet),'),
+    );
+  });
 
   test('dry-run validates and writes nothing', () async {
     final root = _projectRoot();
@@ -286,6 +340,19 @@ $bottomSheets  dependencies: [
 )
 class App {}
 ''';
+}
+
+Future<ProcessResult> _successProcessRunner(
+  String executable,
+  List<String> arguments, {
+  required String workingDirectory,
+}) async => ProcessResult(0, 0, '', '');
+
+ProcessRunner _recordingProcessRunner(List<List<Object?>> calls) {
+  return (executable, arguments, {required workingDirectory}) async {
+    calls.add([executable, arguments, workingDirectory]);
+    return ProcessResult(0, 0, '', '');
+  };
 }
 
 File _appFile(Directory root) => File('${root.path}/lib/app/app.dart');

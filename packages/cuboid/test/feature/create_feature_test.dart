@@ -17,6 +17,7 @@ void main() {
     expect(result.plan.files, [
       'lib/features/auth/ui/auth_view.dart',
       'lib/features/auth/ui/auth_viewmodel.dart',
+      'lib/features/auth/data/auth_repository.dart',
     ]);
 
     final view = File(
@@ -42,6 +43,50 @@ void main() {
     expect(viewModel, contains('class AuthViewModel extends BaseViewModel {}'));
   });
 
+  test(
+    'creates the feature repository under data/ and registers it for DI',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateFeatureService();
+
+      final result = await service.create(
+        CreateFeatureInput(name: 'auth', projectRoot: root),
+      );
+
+      expect(result.plan.repositoryClassName, 'AuthRepository');
+      final repository = File(
+        '${root.path}/lib/features/auth/data/auth_repository.dart',
+      ).readAsStringSync();
+      expect(repository, contains('class AuthRepository {'));
+      expect(repository, contains('const AuthRepository();'));
+
+      final app = File('${root.path}/lib/app/app.dart').readAsStringSync();
+      expect(
+        app,
+        contains(
+          "import 'package:test_app/features/auth/data/auth_repository.dart';",
+        ),
+      );
+      expect(app, contains('LazySingleton(classType: AuthRepository),'));
+    },
+  );
+
+  test('registers the feature view as a route in lib/app/app.dart', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = CreateFeatureService();
+
+    await service.create(CreateFeatureInput(name: 'auth', projectRoot: root));
+
+    final app = File('${root.path}/lib/app/app.dart').readAsStringSync();
+    expect(
+      app,
+      contains("import 'package:test_app/features/auth/ui/auth_view.dart';"),
+    );
+    expect(app, contains('MaterialRoute(page: AuthView),'));
+  });
+
   test('creates a user_profile feature with PascalCase class names', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
@@ -57,6 +102,9 @@ void main() {
     final viewModel = File(
       '${root.path}/lib/features/user_profile/ui/user_profile_viewmodel.dart',
     ).readAsStringSync();
+    final repository = File(
+      '${root.path}/lib/features/user_profile/data/user_profile_repository.dart',
+    ).readAsStringSync();
 
     expect(
       view,
@@ -69,6 +117,7 @@ void main() {
       viewModel,
       contains('class UserProfileViewModel extends BaseViewModel {}'),
     );
+    expect(repository, contains('class UserProfileRepository {'));
   });
 
   test('normalizes hyphenated feature names to lower snake case', () async {
@@ -90,6 +139,12 @@ void main() {
     expect(
       File(
         '${root.path}/lib/features/user_profile/ui/user_profile_viewmodel.dart',
+      ).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(
+        '${root.path}/lib/features/user_profile/data/user_profile_repository.dart',
       ).existsSync(),
       isTrue,
     );
@@ -134,8 +189,13 @@ void main() {
       expect(result.plan.files, [
         'lib/features/auth/ui/auth_view.dart',
         'lib/features/auth/ui/auth_viewmodel.dart',
+        'lib/features/auth/data/auth_repository.dart',
       ]);
       expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
+      expect(
+        File('${root.path}/lib/app/app.dart').readAsStringSync(),
+        _appContents(),
+      );
     },
   );
 
@@ -262,41 +322,11 @@ void main() {
     expect(target.readAsStringSync(), 'keep\n');
   });
 
-  test(
-    'leaves app registration untouched and creates no unrelated files',
-    () async {
-      final root = _projectRoot();
-      addTearDown(() => root.deleteSync(recursive: true));
-      final appFile = File('${root.path}/lib/app/app.dart')
-        ..parent.createSync(recursive: true)
-        ..writeAsStringSync('app registration\n');
-      final service = CreateFeatureService();
-
-      await service.create(CreateFeatureInput(name: 'auth', projectRoot: root));
-
-      expect(appFile.readAsStringSync(), 'app registration\n');
-      expect(_relativeFiles(root), [
-        'lib/app/app.dart',
-        'lib/features/auth/ui/auth_view.dart',
-        'lib/features/auth/ui/auth_viewmodel.dart',
-        'pubspec.yaml',
-      ]);
-    },
-  );
-
-  test('rolls back generated files when a later write fails', () async {
+  test('rejects when lib/app/app.dart is missing', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    var writes = 0;
-    final service = CreateFeatureService(
-      fileWriter: (file, contents) {
-        writes += 1;
-        if (writes == 2) {
-          throw const FileSystemException('simulated write failure');
-        }
-        file.writeAsStringSync(contents);
-      },
-    );
+    File('${root.path}/lib/app/app.dart').deleteSync();
+    final service = CreateFeatureService();
 
     await expectLater(
       service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
@@ -304,29 +334,74 @@ void main() {
         isA<CreateFeatureException>().having(
           (error) => error.message,
           'message',
-          contains('Unable to create feature Auth'),
+          'lib/app/app.dart was not found.',
         ),
       ),
     );
-
-    expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
-    expect(_relativeFiles(root), ['pubspec.yaml']);
   });
+
+  test(
+    'creates no files and leaves app.dart untouched when a later write fails',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final beforeApp = File(
+        '${root.path}/lib/app/app.dart',
+      ).readAsStringSync();
+      var writes = 0;
+      final service = CreateFeatureService(
+        fileWriter: (file, contents) {
+          writes += 1;
+          if (writes == 2) {
+            throw const FileSystemException('simulated write failure');
+          }
+          file.writeAsStringSync(contents);
+        },
+      );
+
+      await expectLater(
+        service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
+        throwsA(
+          isA<CreateFeatureException>().having(
+            (error) => error.message,
+            'message',
+            contains('Unable to create feature Auth'),
+          ),
+        ),
+      );
+
+      expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
+      expect(
+        File('${root.path}/lib/app/app.dart').readAsStringSync(),
+        beforeApp,
+      );
+    },
+  );
+}
+
+String _appContents() {
+  return '''
+import 'package:stacked/stacked_annotations.dart';
+// @stacked-import
+
+@StackedApp(
+  routes: [
+    // @stacked-route
+  ],
+  dependencies: [
+    // @stacked-service
+  ],
+)
+class App {}
+''';
 }
 
 Directory _projectRoot({String pubspec = 'name: test_app\n'}) {
   final root = Directory.systemTemp.createTempSync('cuboid_feature_test_');
   File('${root.path}/pubspec.yaml').writeAsStringSync(pubspec);
   Directory('${root.path}/lib/features').createSync(recursive: true);
+  File('${root.path}/lib/app/app.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync(_appContents());
   return root;
-}
-
-List<String> _relativeFiles(Directory root) {
-  return root
-      .listSync(recursive: true)
-      .whereType<File>()
-      .map((file) => file.path.substring(root.path.length + 1))
-      .map((path) => path.replaceAll(Platform.pathSeparator, '/'))
-      .toList()
-    ..sort();
 }

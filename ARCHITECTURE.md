@@ -45,11 +45,16 @@ StartupView
     |
 StartupViewModel
     |
-ShellView
+HomeView
 ```
 
 The current repository provides application bootstrap, shared foundations, a
-startup flow, an app-level navigation shell, and a minimal Home feature.
+startup flow, and a minimal Home feature. There is no application-level
+navigation shell in the base template; `cuboid create feature` registers each
+feature's view as its own route (see [9](#9-cuboid-cli-command-contract)), and
+a generated application that needs tab/section navigation adds that
+composition-root infrastructure itself once it actually has more than one
+top-level destination.
 
 ## 3. Current application structure
 
@@ -59,8 +64,6 @@ lib/
 |-- app/
 |   |-- app.dart
 |   |-- app_root.dart
-|   |-- shell_view.dart
-|   |-- shell_viewmodel.dart
 |   |-- app.locator.dart       Generated
 |   |-- app.logger.dart        Generated
 |   `-- app.router.dart        Generated
@@ -109,23 +112,27 @@ lib/features/<feature>/
 |   |-- <name>_view.dart       View and ViewModel files, flat (no views/ or
 |   |-- <name>_viewmodel.dart  viewmodels/ subdirectories)
 |   `-- widgets/               Optional; feature-scoped widgets
-`-- data/                      Optional; only when the feature owns
-                                persistent data
+`-- data/
+    `-- <feature>_repository.dart  The feature's persistent-data boundary
 ```
 
 For example, `cuboid create feature home` produces:
 
 ```text
 lib/features/home/
-`-- ui/
-    |-- home_view.dart
-    `-- home_viewmodel.dart
+|-- ui/
+|   |-- home_view.dart
+|   `-- home_viewmodel.dart
+`-- data/
+    `-- home_repository.dart
 ```
 
-If the feature later owns persistent data, its repository belongs under
-`lib/features/<feature>/data/` (for example `home_repository.dart`). `cuboid
-create feature` does not generate a repository automatically -- add one only
-when the feature actually owns persistent data, matching
+`cuboid create feature` always generates the feature's repository under
+`lib/features/<feature>/data/` and registers it as a `LazySingleton`, and it
+registers the feature's view as a route in `lib/app/app.dart` -- see
+[9](#9-cuboid-cli-command-contract). The repository starts as an empty,
+technology-neutral shell; wire it to a real data source once the feature
+actually owns persistent data, matching
 [ADR-3](#adr-3-repositories-are-the-persistent-data-boundary).
 
 Do not add domain, use-case, or other layer folders merely to make a feature
@@ -134,21 +141,13 @@ look more layered. No UseCase layer is required.
 `startup` is an application-bootstrap feature and may stay narrower than a
 fully built product feature.
 
-### Application shell vs. features
-
-`ShellView`/`ShellViewModel` (`lib/app/shell_view.dart`,
-`lib/app/shell_viewmodel.dart`) are application-level root navigation, not a
-feature. The shell owns tab/section switching for the whole app and is backed
-by `ShellService` (`lib/core/services/shell_service.dart`, see
-[7](#7-services)). It is registered as a normal Stacked route in
-`lib/app/app.dart`, the same way a feature view would be, but its source lives
-under `lib/app/` because it is composition-root infrastructure, not
-product-feature UI.
-
-`Home` (`lib/features/home/`) is an ordinary feature reachable through the
-shell's first tab. It owns only Home-specific UI/model/data. Adding a new tab
-to the shell means adding a new feature and wiring it into `ShellView`'s tab
-list -- it does not mean adding UI to the `home` feature.
+`Home` (`lib/features/home/`) is an ordinary feature, registered as a normal
+route in `lib/app/app.dart` like any other `cuboid create feature` output. The
+base template has no application-level navigation shell (tab bar, drawer,
+etc.); it owns only Home-specific UI/model/data. A generated application that
+needs tab/section navigation across multiple features adds that
+composition-root infrastructure itself under `lib/app/` -- it does not belong
+inside a feature folder.
 
 ## 5. Dependency direction
 
@@ -196,12 +195,10 @@ persistent feature data is added, repositories own backend access.
 ## 7. Services
 
 Shared reactive services are appropriate only when multiple features require the
-same live application state.
-
-The template currently includes `ShellService` (`lib/core/services/`) for
-shared shell/navigation state. Its presentation layer, `ShellView`/
-`ShellViewModel`, lives under `lib/app/` -- see
-[Application shell vs. features](#application-shell-vs-features).
+same live application state. The base template does not currently ship one;
+`cuboid create service <name>` scaffolds a new one under
+`lib/core/services/` and registers it (see
+[9](#9-cuboid-cli-command-contract)).
 
 Do not create services simply to wrap one method or one repository call.
 
@@ -241,61 +238,67 @@ The public CLI is artifact-oriented under a canonical `create` namespace:
 cuboid create <artifact> [arguments] [options]
 ```
 
-All 12 known artifact categories are implemented and shipped:
+All 10 known artifact categories are implemented and shipped:
 
 ```text
-app, feature, service, bottomsheet, dialog, storage, database, route, view,
-repository, model, widget
+app, feature, service, bottomsheet, dialog, storage, database, view, model,
+widget
 ```
 
 None fall through to an unimplemented state; `cuboid create <artifact>` for any
-of the twelve dispatches to a real generator or registration service. Adding a
-13th artifact still requires explicit contract evidence before implementation —
-that discipline is unchanged. What has changed is that the twelve above are no
+of the ten dispatches to a real generator or registration service. Adding an
+11th artifact still requires explicit contract evidence before implementation —
+that discipline is unchanged. What has changed is that the ten above are no
 longer speculative: they are implemented, tested (`packages/cuboid/test/`), and
 live-smoke-tested against a real generated project as part of release
 verification.
+
+There is no standalone `route` or `repository` artifact. A View always has a
+route, and a feature always has a repository, so `cuboid create feature` and
+`cuboid create view` register the route as part of creating the view, and
+`cuboid create feature` generates and registers the feature's repository at
+the same time -- see the table below. A prior, separately-run `cuboid create
+route`/`cuboid create repository` (and their legacy `cuboid route`/`cuboid
+repository` top-level forms) duplicated that work as an extra manual step and
+had drifted into requiring Supabase for a plain repository; both were removed
+rather than kept as redundant, backend-coupled commands.
 
 Shipped `create` command family:
 
 | Command | Generates | Modifies | Registration | Requires build_runner |
 | --- | --- | --- | --- | --- |
 | `cuboid create app <display> <package>` | New Flutter project from the template payload | — | Bootstraps package identifiers, Dart project name, bundle IDs | Runs `flutter pub get`, `build_runner`, `dart format` as post-steps (skippable with `--no-post-steps`) |
-| `cuboid create feature <name>` | `lib/features/<name>/ui/<name>_view.dart` + `.../ui/<name>_viewmodel.dart` | — | None | No |
+| `cuboid create feature <name>` | `lib/features/<name>/ui/<name>_view.dart` + `.../ui/<name>_viewmodel.dart` + `.../data/<name>_repository.dart` | `lib/app/app.dart` | Registers the view as a route and the repository as a `LazySingleton` | Yes |
 | `cuboid create service <name>` | `lib/core/services/<name>_service.dart` | `lib/app/app.dart` | Registers the service as a `LazySingleton` | Yes |
-| `cuboid create bottomsheet <name>` | `lib/shared/bottom_sheets/<name>/<name>_sheet.dart` + `_sheet_model.dart` | `lib/app/app.dart`, `lib/main.dart` | Registers the sheet + `setupBottomSheetUi()` call | Yes |
-| `cuboid create dialog <name>` | `lib/shared/dialogs/<name>/<name>_dialog.dart` + `_dialog_model.dart` | `lib/app/app.dart`, `lib/main.dart` | Registers the dialog + `setupDialogUi()` call | Yes |
-| `cuboid create storage <name>` | `lib/core/storage/<name>_storage.dart` | — | None | No |
-| `cuboid create database <provider>` | `lib/supabase/example_model.dart`, `example_repository.dart`, a timestamped migration under `supabase/migrations/` (provider must be `supabase`; no other provider is currently supported) | `lib/app/app.dart` | Registers the example repository | Yes, plus `supabase db push` |
-| `cuboid create route <feature>` | — (the feature's view must already exist) | `lib/app/app.dart` | Registers the existing view as a route | Yes |
-| `cuboid create view <feature> <name>` | Additional `..._view.dart` + `..._viewmodel.dart` pair, flat inside the feature's `ui/` | — | None | No |
-| `cuboid create repository <name>` | `lib/supabase/<name>_model.dart`, `<name>_repository.dart`, a timestamped migration (table name is naively pluralized from `<name>`) | `lib/app/app.dart` | Registers the repository | Yes, plus `supabase db push` |
+| `cuboid create bottomsheet <name>` | `lib/shared/bottom_sheets/<name>/<name>_sheet.dart` + `_sheet_model.dart` | `lib/app/app.dart`, `lib/main.dart` | Registers the sheet + `setupBottomSheetUi()` call | Runs it automatically |
+| `cuboid create dialog <name>` | `lib/shared/dialogs/<name>/<name>_dialog.dart` + `_dialog_model.dart` | `lib/app/app.dart`, `lib/main.dart` | Registers the dialog + `setupDialogUi()` call | Runs it automatically |
+| `cuboid create storage` | `lib/core/storage/local_storage.dart` | — | None | No |
+| `cuboid create database <provider>` | `lib/supabase/example_model.dart`, `example_repository.dart`, a timestamped migration under `supabase/migrations/` (provider must be `supabase`; no other provider is currently supported) | `lib/app/app.dart`, `pubspec.yaml`, `lib/core/network/supabase_guard.dart` | Registers the example repository; provisions the `supabase_flutter` dependency and the guard file when either is missing | Yes, plus `flutter pub get` and `supabase db push` |
+| `cuboid create view <name> <feature>` | Additional `..._view.dart` + `..._viewmodel.dart` pair, flat inside the feature's `ui/` | `lib/app/app.dart` | Registers the new view as a route | Yes |
 | `cuboid create model <name>` | `lib/core/models/<name>.dart` | — | None | No |
-| `cuboid create widget <name>` or `<feature> <name>` | `lib/shared/widgets/<name>.dart` (shared) or `lib/features/<feature>/ui/widgets/<name>.dart` (feature-scoped; the feature must already exist) | — | None | No |
+| `cuboid create widget <name>` or `<name> <feature>` | `lib/shared/widgets/<name>.dart` (shared) or `lib/features/<feature>/ui/widgets/<name>.dart` (feature-scoped; the feature must already exist) | — | None | No |
 
-`database`/`repository` require the Supabase foundation (the `supabase_flutter`
-dependency and `lib/core/network/supabase_guard.dart`) to already be present in
-the project; they refuse to run otherwise rather than silently scaffolding it.
-The base template does not include this foundation by default -- see
-[12](#12-current-data-and-backend-boundary). A developer who wants Supabase
-adds the dependency and guard themselves before these commands become usable;
-the commands do not provision Supabase from nothing.
+`database` provisions its own Supabase foundation: it adds the
+`supabase_flutter` dependency to `pubspec.yaml` and creates
+`lib/core/network/supabase_guard.dart` when either is missing (idempotently --
+an existing dependency or guard file is left untouched), then generates the
+example repository against it. See [12](#12-current-data-and-backend-boundary)
+and [13](#13-supabase-and-database-authority).
 
-Dual command surfaces exist for `feature`, `service`, `route`, and `view`:
-each also has a legacy top-level form (`cuboid feature <name>`,
-`cuboid service <name>`, `cuboid route <feature>`, `cuboid view <feature>
-<name>`). For `service` specifically, the two surfaces are **not** aliases:
-`cuboid create service <name>` generates the service file and registers it;
-the legacy `cuboid service <name>` only registers an already-existing service
-file. `feature`, `route`, and `view` behave identically under both surfaces.
-The legacy top-level forms are retained implementation history, not deprecated
-— no migration or removal has been decided.
+Dual command surfaces exist for `feature`, `service`, and `view`: each also
+has a legacy top-level form (`cuboid feature <name>`, `cuboid service <name>`,
+`cuboid view <name> <feature>`). For `service` specifically, the two surfaces
+are **not** aliases: `cuboid create service <name>` generates the service file
+and registers it; the legacy `cuboid service <name>` only registers an
+already-existing service file. `feature` and `view` behave identically under
+both surfaces. The legacy top-level forms are retained implementation history,
+not deprecated — no migration or removal has been decided.
 
 Every command above supports `--dry-run`, which validates and reports the
 plan without writing anything (verified: dry-run never creates files or
 directories).
 
-Safety guarantees enforced uniformly across all 12 generators (verified by
+Safety guarantees enforced uniformly across all 10 generators (verified by
 source inspection and tests, not assumed):
 
 - Name normalization rejects path separators, `.`/`..` traversal, empty names,
@@ -310,19 +313,24 @@ source inspection and tests, not assumed):
   already created, restores any registration file (`app.dart`/`main.dart`) to
   its original contents, and prunes any parent directories the operation
   itself created (empty-only; pre-existing directories are left alone).
-- No generator runs `build_runner` automatically. Where regeneration is
-  required, the CLI prints the exact next command instead.
+- No generator runs `build_runner` automatically, with two exceptions:
+  `bottomsheet` and `dialog` do, because the `lib/main.dart` import they wire
+  up (`app.bottomsheets.dart`/`app.dialogs.dart`) does not exist until
+  build_runner produces it, so without regenerating immediately the project
+  would not compile at all. Every other generator only needs build_runner to
+  refresh DI/route wiring, not to keep the project compiling, and prints the
+  exact next command instead of running it.
 - Generated Stacked files (`lib/app/app.router.dart`, `.locator.dart`,
   `.logger.dart`) are never hand-edited by a generator; only the editable
   source (`lib/app/app.dart`) is patched.
 
-A new artifact command (a 13th category, or a new option on an existing one)
+A new artifact command (an 11th category, or a new option on an existing one)
 still requires: command syntax, required/optional arguments, normalized names,
 generated files, modified files, registration/configuration side effects,
 dependencies, dry-run behavior, no-overwrite behavior, failure conditions,
 rollback/atomicity expectations, filesystem/path safety, package-name
 resolution, and exit-code behavior — defined explicitly before implementation,
-matching the standard the 12 shipped commands were held to.
+matching the standard the 10 shipped commands were held to.
 
 ## 10. Core foundations
 
@@ -409,6 +417,12 @@ when it actually needs one -- for example `cuboid create database supabase`
 requires this step; an app with no persistent feature data never needs to take
 it.
 
+`cuboid create feature` generates an empty, technology-neutral repository
+shell for every feature (see [4](#4-feature-structure)) so the persistent-data
+boundary exists from the start; it does not, by itself, introduce a backend.
+A feature's repository stays an empty shell -- and never imports a backend
+SDK -- until the application wires it to a real data source.
+
 When a generated application does introduce persistent feature data, use this
 flow:
 
@@ -438,10 +452,11 @@ feature data.
 ## 13. Supabase and database authority
 
 Supabase is not part of the base template. It is available as an opt-in
-backend choice, introduced only by running `cuboid create database supabase`
-(or by a developer manually adding the `supabase_flutter` dependency and
-`lib/core/network/supabase_guard.dart`). No generated application is required
-to use Supabase, and none is assumed to.
+backend choice, introduced only by running `cuboid create database supabase`,
+which provisions the `supabase_flutter` dependency and
+`lib/core/network/supabase_guard.dart` itself (idempotently, alongside any
+already present) rather than requiring a developer to add them first. No
+generated application is required to use Supabase, and none is assumed to.
 
 Once a generated application has introduced Supabase:
 
@@ -466,7 +481,7 @@ The template contains focused tests for implemented foundations and UI.
 Tests live under:
 
 ```text
-test/app/       Composition-root tests (e.g. ShellViewModel)
+test/app/       Composition-root tests (app bootstrap and locator wiring)
 test/core/
 test/features/
 test/shared/
@@ -514,14 +529,19 @@ requires it.
 When persistent feature data exists, repositories isolate UI code from backend
 implementation details.
 
-The starter template does not require repositories until a feature actually owns
-persistent data.
+Every feature gets a repository -- `cuboid create feature` generates it
+alongside the feature's UI (see [4](#4-feature-structure)) -- but it starts as
+an empty, technology-neutral shell. A feature is never required to wire it to
+a real data source; nothing about having the file assumes or requires
+persistent data. Repositories are not a standalone CLI command: they belong to
+the feature that owns them, not to a backend technology (there is no
+`cuboid create repository`; see [9](#9-cuboid-cli-command-contract)).
 
 ### ADR-4: The base template is backend/storage-technology-neutral
 
 Supabase, and any other backend/storage technology, is opt-in infrastructure
 introduced deliberately through the CLI (`cuboid create database supabase`,
-`cuboid create storage <name>`), never pre-installed in the base template. The
+`cuboid create storage`), never pre-installed in the base template. The
 base template does not assume or require any backend/storage choice.
 
 ### ADR-5: No custom API server by default

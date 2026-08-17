@@ -23,9 +23,10 @@ void main() {
     expect(runner.executableName, 'cuboid');
     expect(runner.commands, contains('create'));
     expect(runner.commands, contains('feature'));
-    expect(runner.commands, contains('route'));
     expect(runner.commands, contains('service'));
     expect(runner.commands, contains('view'));
+    expect(runner.commands, isNot(contains('route')));
+    expect(runner.commands, isNot(contains('repository')));
   });
 
   test('--help works', () async {
@@ -39,7 +40,6 @@ void main() {
     );
     expect(output.content, contains('create'));
     expect(output.content, contains('feature'));
-    expect(output.content, contains('route'));
     expect(output.content, contains('service'));
     expect(output.content, contains('view'));
   });
@@ -66,16 +66,6 @@ void main() {
     expect(
       runner.commands['feature']!.description,
       contains('Create a new Cuboid feature'),
-    );
-  });
-
-  test('route command is registered', () async {
-    final runner = CuboidCommandRunner(stdout: _memorySink());
-
-    expect(runner.commands['route'], isA<RouteCommand>());
-    expect(
-      runner.commands['route']!.description,
-      contains('Register an existing feature View'),
     );
   });
 
@@ -262,13 +252,16 @@ void main() {
       expect(output.content, contains('cuboid create service <name>'));
       expect(output.content, contains('cuboid create bottomsheet <name>'));
       expect(output.content, contains('cuboid create dialog <name>'));
-      expect(output.content, contains('cuboid create storage <name>'));
+      expect(output.content, contains('cuboid create storage,'));
       expect(output.content, contains('cuboid create database <provider>'));
-      expect(output.content, contains('cuboid create route <feature>'));
-      expect(output.content, contains('cuboid create view <feature> <name>'));
-      expect(output.content, contains('cuboid create repository <name>'));
+      expect(
+        output.content,
+        contains('cuboid create view <view-name> <feature>'),
+      );
       expect(output.content, contains('cuboid create model <name>'));
       expect(output.content, contains('cuboid create widget <name>'));
+      expect(output.content, isNot(contains('cuboid create route')));
+      expect(output.content, isNot(contains('cuboid create repository')));
     },
   );
 
@@ -282,9 +275,6 @@ void main() {
         temp.deleteSync(recursive: true);
       });
       _writeFeatureProject(temp);
-      final beforeApp = File(
-        '${temp.path}/lib/app/app.dart',
-      ).readAsStringSync();
       final beforePubspec = File(
         '${temp.path}/pubspec.yaml',
       ).readAsStringSync();
@@ -299,6 +289,10 @@ void main() {
 
       expect(exitCode, 0);
       expect(output.content, contains('Created feature Auth.'));
+      expect(
+        output.content,
+        contains('Next step: dart run build_runner build -d'),
+      );
       expect(errorOutput.content, isEmpty);
       expect(
         File('${temp.path}/lib/features/auth/ui/auth_view.dart').existsSync(),
@@ -311,15 +305,31 @@ void main() {
         isTrue,
       );
       expect(
-        File('${temp.path}/lib/app/app.dart').readAsStringSync(),
-        beforeApp,
+        File(
+          '${temp.path}/lib/features/auth/data/auth_repository.dart',
+        ).existsSync(),
+        isTrue,
       );
+      final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+      expect(
+        app,
+        contains("import 'package:my_app/features/auth/ui/auth_view.dart';"),
+      );
+      expect(app, contains('MaterialRoute(page: AuthView),'));
+      expect(
+        app,
+        contains(
+          "import 'package:my_app/features/auth/data/auth_repository.dart';",
+        ),
+      );
+      expect(app, contains('LazySingleton(classType: AuthRepository),'));
       expect(
         File('${temp.path}/pubspec.yaml').readAsStringSync(),
         beforePubspec,
       );
       expect(_relativeFiles(temp), [
         'lib/app/app.dart',
+        'lib/features/auth/data/auth_repository.dart',
         'lib/features/auth/ui/auth_view.dart',
         'lib/features/auth/ui/auth_viewmodel.dart',
         'pubspec.yaml',
@@ -395,6 +405,15 @@ void main() {
     expect(
       output.content,
       contains('- lib/features/auth/ui/auth_viewmodel.dart'),
+    );
+    expect(
+      output.content,
+      contains('- lib/features/auth/data/auth_repository.dart'),
+    );
+    expect(output.content, contains('MaterialRoute(page: AuthView),'));
+    expect(
+      output.content,
+      contains('LazySingleton(classType: AuthRepository),'),
     );
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
@@ -618,6 +637,51 @@ void main() {
     ]);
   });
 
+  test('create service registers every service across repeated invocations '
+      '(auth, payment, notification)', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeServiceProject(temp, createFile: false);
+    Directory.current = temp;
+
+    for (final name in ['auth', 'payment', 'notification']) {
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+      final exitCode = await runCuboid(
+        ['create', 'service', name],
+        stdout: output,
+        stderr: errorOutput,
+      );
+      expect(exitCode, 0, reason: name);
+      expect(errorOutput.content, isEmpty, reason: name);
+    }
+
+    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    for (final entry in {
+      'auth': 'AuthService',
+      'payment': 'PaymentService',
+      'notification': 'NotificationService',
+    }.entries) {
+      expect(
+        File(
+          '${temp.path}/lib/core/services/${entry.key}_service.dart',
+        ).existsSync(),
+        isTrue,
+        reason: entry.value,
+      );
+      expect(
+        app,
+        contains('    LazySingleton(classType: ${entry.value}),'),
+        reason: entry.value,
+      );
+    }
+    expect('// @stacked-service'.allMatches(app), hasLength(1));
+  });
+
   test('create service rejects project creation options', () async {
     final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
     final previousCurrent = Directory.current;
@@ -707,21 +771,25 @@ void main() {
     Directory.current = temp;
     final output = _memorySink();
     final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['create', 'bottomsheet', 'confirm_delete'],
+    final runner = CuboidCommandRunner(
       stdout: output,
       stderr: errorOutput,
+      createBottomSheetService: CreateBottomSheetService(
+        processRunner: _successProcessRunner,
+      ),
     );
+    final exitCode = await runner.run([
+      'create',
+      'bottomsheet',
+      'confirm_delete',
+    ]);
 
     expect(exitCode, 0);
     expect(
       output.content,
       contains('Created bottom sheet ConfirmDeleteSheet.'),
     );
-    expect(
-      output.content,
-      contains('Next step: dart run build_runner build -d'),
-    );
+    expect(output.content, contains('Ran dart run build_runner build -d.'));
     expect(errorOutput.content, isEmpty);
     final sheet = File(
       '${temp.path}/lib/shared/bottom_sheets/confirm_delete/'
@@ -851,18 +919,18 @@ void main() {
     Directory.current = temp;
     final output = _memorySink();
     final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['create', 'dialog', 'confirm_delete'],
+    final runner = CuboidCommandRunner(
       stdout: output,
       stderr: errorOutput,
+      createDialogService: CreateDialogService(
+        processRunner: _successProcessRunner,
+      ),
     );
+    final exitCode = await runner.run(['create', 'dialog', 'confirm_delete']);
 
     expect(exitCode, 0);
     expect(output.content, contains('Created dialog ConfirmDeleteDialog.'));
-    expect(
-      output.content,
-      contains('Next step: dart run build_runner build -d'),
-    );
+    expect(output.content, contains('Ran dart run build_runner build -d.'));
     expect(errorOutput.content, isEmpty);
     final dialog = File(
       '${temp.path}/lib/shared/dialogs/confirm_delete/'
@@ -939,18 +1007,15 @@ void main() {
     final output = _memorySink();
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['create', '--dry-run', 'storage', 'user-prefs'],
+      ['create', '--dry-run', 'storage'],
       stdout: output,
       stderr: errorOutput,
     );
 
     expect(exitCode, 0);
     expect(output.content, contains('Dry run: no files were written.'));
-    expect(output.content, contains('Storage: UserPrefsStorage'));
-    expect(
-      output.content,
-      contains('- lib/core/storage/user_prefs_storage.dart'),
-    );
+    expect(output.content, contains('Storage: LocalStorage'));
+    expect(output.content, contains('- lib/core/storage/local_storage.dart'));
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -967,20 +1032,17 @@ void main() {
     final output = _memorySink();
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['create', 'storage', 'user_prefs'],
+      ['create', 'storage'],
       stdout: output,
       stderr: errorOutput,
     );
 
     expect(exitCode, 0);
-    expect(output.content, contains('Created storage UserPrefsStorage.'));
-    expect(
-      output.content,
-      contains('- lib/core/storage/user_prefs_storage.dart'),
-    );
+    expect(output.content, contains('Created storage LocalStorage.'));
+    expect(output.content, contains('- lib/core/storage/local_storage.dart'));
     expect(errorOutput.content, isEmpty);
     final storage = File(
-      '${temp.path}/lib/core/storage/user_prefs_storage.dart',
+      '${temp.path}/lib/core/storage/local_storage.dart',
     ).readAsStringSync();
     expect(
       storage,
@@ -988,7 +1050,32 @@ void main() {
         "import 'package:flutter_secure_storage/flutter_secure_storage.dart';",
       ),
     );
-    expect(storage, contains('class UserPrefsStorage {'));
+    expect(storage, contains('class LocalStorage {'));
+  });
+
+  test('create storage rejects a storage name argument', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeStorageProject(temp);
+    Directory.current = temp;
+    final beforeFiles = _relativeFiles(temp);
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'storage', 'cache'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('cuboid create storage does not take a storage name.'),
+    );
+    expect(_relativeFiles(temp), beforeFiles);
   });
 
   test('create storage rejects project creation options', () async {
@@ -1003,7 +1090,7 @@ void main() {
     final beforeFiles = _relativeFiles(temp);
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['create', 'storage', 'cache', '--directory', 'ignored'],
+      ['create', 'storage', '--directory', 'ignored'],
       stdout: _memorySink(),
       stderr: errorOutput,
     );
@@ -1067,6 +1154,7 @@ void main() {
 
       expect(exitCode, 0);
       expect(output.content, contains('Created supabase database example.'));
+      expect(output.content, contains('- flutter pub get'));
       expect(output.content, contains('- dart run build_runner build -d'));
       expect(output.content, contains('supabase db push'));
       expect(errorOutput.content, isEmpty);
@@ -1088,6 +1176,70 @@ void main() {
       );
     },
   );
+
+  test('create database provisions the supabase_flutter dependency and guard '
+      'when missing', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDatabaseProject(temp, withSupabaseFoundation: false);
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'database', 'supabase'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(errorOutput.content, isEmpty);
+    final pubspec = File('${temp.path}/pubspec.yaml').readAsStringSync();
+    expect(pubspec, contains('supabase_flutter: ^2.17.1'));
+    expect(pubspec, contains('name: my_app'));
+    final guard = File(
+      '${temp.path}/lib/core/network/supabase_guard.dart',
+    ).readAsStringSync();
+    expect(guard, contains('Future<Result<T>> guard<T>('));
+    expect(
+      guard,
+      contains("import 'package:supabase_flutter/supabase_flutter.dart';"),
+    );
+  });
+
+  test('create database does not duplicate an existing supabase_flutter '
+      'dependency or overwrite an existing guard', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeDatabaseProject(temp);
+    File(
+      '${temp.path}/lib/core/network/supabase_guard.dart',
+    ).writeAsStringSync('// customized guard\nFuture<void> guard() async {}\n');
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['create', 'database', 'supabase'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(errorOutput.content, isEmpty);
+    final pubspec = File('${temp.path}/pubspec.yaml').readAsStringSync();
+    expect('supabase_flutter'.allMatches(pubspec).length, 1);
+    final guard = File(
+      '${temp.path}/lib/core/network/supabase_guard.dart',
+    ).readAsStringSync();
+    expect(guard, contains('// customized guard'));
+  });
 
   test('create database rejects an unsupported provider', () async {
     final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
@@ -1139,89 +1291,6 @@ void main() {
     expect(_relativeFiles(temp), beforeFiles);
   });
 
-  test('create route with dry-run reports the plan without writing', () async {
-    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
-    final previousCurrent = Directory.current;
-    addTearDown(() {
-      Directory.current = previousCurrent;
-      temp.deleteSync(recursive: true);
-    });
-    _writeRouteProject(temp, 'user_profile');
-    final before = File('${temp.path}/lib/app/app.dart').readAsStringSync();
-    Directory.current = temp;
-    final output = _memorySink();
-    final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['create', '--dry-run', 'route', 'user-profile'],
-      stdout: output,
-      stderr: errorOutput,
-    );
-
-    expect(exitCode, 0);
-    expect(output.content, contains('Dry run: no files were written.'));
-    expect(output.content, contains('Route: UserProfileView'));
-    expect(output.content, contains('MaterialRoute(page: UserProfileView),'));
-    expect(errorOutput.content, isEmpty);
-    expect(File('${temp.path}/lib/app/app.dart').readAsStringSync(), before);
-  });
-
-  test('create route registers an existing feature View', () async {
-    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
-    final previousCurrent = Directory.current;
-    addTearDown(() {
-      Directory.current = previousCurrent;
-      temp.deleteSync(recursive: true);
-    });
-    _writeRouteProject(temp, 'auth');
-    Directory.current = temp;
-    final output = _memorySink();
-    final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['create', 'route', 'auth'],
-      stdout: output,
-      stderr: errorOutput,
-    );
-
-    expect(exitCode, 0);
-    expect(output.content, contains('Registered route AuthView.'));
-    expect(
-      output.content,
-      contains('Next step: dart run build_runner build -d'),
-    );
-    expect(errorOutput.content, isEmpty);
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
-    expect(
-      app,
-      contains("import 'package:my_app/features/auth/ui/auth_view.dart';"),
-    );
-    expect(app, contains('    MaterialRoute(page: AuthView),'));
-  });
-
-  test('create route rejects project creation options', () async {
-    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
-    final previousCurrent = Directory.current;
-    addTearDown(() {
-      Directory.current = previousCurrent;
-      temp.deleteSync(recursive: true);
-    });
-    _writeRouteProject(temp, 'auth');
-    Directory.current = temp;
-    final beforeFiles = _relativeFiles(temp);
-    final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['create', 'route', 'auth', '--directory', 'ignored'],
-      stdout: _memorySink(),
-      stderr: errorOutput,
-    );
-
-    expect(exitCode, 64);
-    expect(
-      errorOutput.content,
-      contains('Only --dry-run is supported for cuboid create route.'),
-    );
-    expect(_relativeFiles(temp), beforeFiles);
-  });
-
   test(
     'create view with dry-run reports planned files without writing',
     () async {
@@ -1237,7 +1306,7 @@ void main() {
       final output = _memorySink();
       final errorOutput = _memorySink();
       final exitCode = await runCuboid(
-        ['create', '--dry-run', 'view', 'auth', 'forgot-password'],
+        ['create', '--dry-run', 'view', 'forgot-password', 'auth'],
         stdout: output,
         stderr: errorOutput,
       );
@@ -1249,6 +1318,10 @@ void main() {
       expect(
         output.content,
         contains('- lib/features/auth/ui/forgot_password_view.dart'),
+      );
+      expect(
+        output.content,
+        contains('MaterialRoute(page: ForgotPasswordView),'),
       );
       expect(errorOutput.content, isEmpty);
       expect(_relativeFiles(temp), beforeFiles);
@@ -1267,13 +1340,17 @@ void main() {
     final output = _memorySink();
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['create', 'view', 'auth', 'forgot-password'],
+      ['create', 'view', 'forgot-password', 'auth'],
       stdout: output,
       stderr: errorOutput,
     );
 
     expect(exitCode, 0);
     expect(output.content, contains('Created view Forgot Password.'));
+    expect(
+      output.content,
+      contains('Next step: dart run build_runner build -d'),
+    );
     expect(errorOutput.content, isEmpty);
     final view = File(
       '${temp.path}/lib/features/auth/ui/forgot_password_view.dart',
@@ -1291,6 +1368,14 @@ void main() {
       viewModel,
       contains('class ForgotPasswordViewModel extends BaseViewModel {}'),
     );
+    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    expect(
+      app,
+      contains(
+        "import 'package:my_app/features/auth/ui/forgot_password_view.dart';",
+      ),
+    );
+    expect(app, contains('MaterialRoute(page: ForgotPasswordView),'));
   });
 
   test('create view rejects project creation options', () async {
@@ -1305,7 +1390,7 @@ void main() {
     final beforeFiles = _relativeFiles(temp);
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['create', 'view', 'auth', 'login', '--directory', 'ignored'],
+      ['create', 'view', 'login', 'auth', '--directory', 'ignored'],
       stdout: _memorySink(),
       stderr: errorOutput,
     );
@@ -1329,7 +1414,7 @@ void main() {
     Directory.current = temp;
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['create', 'view', 'auth'],
+      ['create', 'view'],
       stdout: _memorySink(),
       stderr: errorOutput,
     );
@@ -1337,106 +1422,58 @@ void main() {
     expect(exitCode, 64);
     expect(
       errorOutput.content,
-      contains('Expected a feature name and view name.'),
+      contains('Expected a view name, or a view name and feature name.'),
     );
   });
 
-  test('create repository with dry-run creates no files', () async {
+  test('create view with a single argument creates a shared view', () async {
     final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
     final previousCurrent = Directory.current;
     addTearDown(() {
       Directory.current = previousCurrent;
       temp.deleteSync(recursive: true);
     });
-    _writeDatabaseProject(temp);
+    _writeViewProject(temp, 'auth');
     Directory.current = temp;
-    final beforeFiles = _relativeFiles(temp);
     final output = _memorySink();
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['create', '--dry-run', 'repository', 'todo'],
+      ['create', 'view', 'login'],
       stdout: output,
       stderr: errorOutput,
     );
 
     expect(exitCode, 0);
-    expect(output.content, contains('Dry run: no files were written.'));
-    expect(output.content, contains('Repository: TodoRepository'));
-    expect(output.content, contains('Table: todos'));
-    expect(output.content, contains('- lib/supabase/todo_repository.dart'));
-    expect(
-      output.content,
-      contains('LazySingleton(classType: TodoRepository),'),
-    );
     expect(errorOutput.content, isEmpty);
-    expect(_relativeFiles(temp), beforeFiles);
-  });
+    expect(output.content, contains('Created view Login.'));
+    expect(output.content, isNot(contains('Feature:')));
+    expect(output.content, contains('- lib/shared/views/login_view.dart'));
+    expect(output.content, contains('- lib/shared/views/login_viewmodel.dart'));
 
-  test('create repository generates a new entity and registers it', () async {
-    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
-    final previousCurrent = Directory.current;
-    addTearDown(() {
-      Directory.current = previousCurrent;
-      temp.deleteSync(recursive: true);
-    });
-    _writeDatabaseProject(temp);
-    Directory.current = temp;
-    final output = _memorySink();
-    final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['create', 'repository', 'category'],
-      stdout: output,
-      stderr: errorOutput,
-    );
-
-    expect(exitCode, 0);
-    expect(output.content, contains('Created repository CategoryRepository.'));
-    expect(output.content, contains('Table: categories'));
-    expect(output.content, contains('- dart run build_runner build -d'));
-    expect(output.content, contains('supabase db push'));
-    expect(errorOutput.content, isEmpty);
-    final repository = File(
-      '${temp.path}/lib/supabase/category_repository.dart',
+    final view = File(
+      '${temp.path}/lib/shared/views/login_view.dart',
     ).readAsStringSync();
-    expect(repository, contains('class CategoryRepository {'));
-    expect(repository, contains("static const _table = 'categories';"));
+    expect(
+      view,
+      contains("import 'package:my_app/shared/views/login_viewmodel.dart';"),
+    );
+    expect(
+      view,
+      contains('class LoginView extends StackedView<LoginViewModel>'),
+    );
+    expect(
+      File(
+        '${temp.path}/lib/shared/views/login_viewmodel.dart',
+      ).readAsStringSync(),
+      contains('class LoginViewModel extends BaseViewModel {}'),
+    );
+
     final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
     expect(
       app,
-      contains("import 'package:my_app/supabase/category_repository.dart';"),
+      contains("import 'package:my_app/shared/views/login_view.dart';"),
     );
-    expect(app, contains('LazySingleton(classType: CategoryRepository),'));
-    expect(
-      Directory(
-        '${temp.path}/supabase/migrations',
-      ).listSync().whereType<File>().length,
-      1,
-    );
-  });
-
-  test('create repository rejects project creation options', () async {
-    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
-    final previousCurrent = Directory.current;
-    addTearDown(() {
-      Directory.current = previousCurrent;
-      temp.deleteSync(recursive: true);
-    });
-    _writeDatabaseProject(temp);
-    Directory.current = temp;
-    final beforeFiles = _relativeFiles(temp);
-    final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['create', 'repository', 'todo', '--directory', 'ignored'],
-      stdout: _memorySink(),
-      stderr: errorOutput,
-    );
-
-    expect(exitCode, 64);
-    expect(
-      errorOutput.content,
-      contains('Only --dry-run is supported for cuboid create repository.'),
-    );
-    expect(_relativeFiles(temp), beforeFiles);
+    expect(app, contains('MaterialRoute(page: LoginView),'));
   });
 
   test('create model with dry-run creates no files', () async {
@@ -1538,10 +1575,31 @@ void main() {
     expect(output.content, contains('Created widget StatusBadge.'));
     expect(errorOutput.content, isEmpty);
     expect(output.content, isNot(contains('Feature:')));
+    expect(output.content, contains('- lib/shared/widgets/status_badge.dart'));
+    expect(
+      output.content,
+      contains('- lib/shared/widgets/status_badge_viewmodel.dart'),
+    );
     final widget = File(
       '${temp.path}/lib/shared/widgets/status_badge.dart',
     ).readAsStringSync();
-    expect(widget, contains('class StatusBadge extends StatelessWidget {'));
+    expect(
+      widget,
+      contains(
+        "import 'package:my_app/shared/widgets/status_badge_viewmodel.dart';",
+      ),
+    );
+    expect(
+      widget,
+      contains('class StatusBadge extends StackedView<StatusBadgeViewModel> {'),
+    );
+    final viewModel = File(
+      '${temp.path}/lib/shared/widgets/status_badge_viewmodel.dart',
+    ).readAsStringSync();
+    expect(
+      viewModel,
+      contains('class StatusBadgeViewModel extends BaseViewModel {}'),
+    );
   });
 
   test(
@@ -1558,7 +1616,7 @@ void main() {
       final output = _memorySink();
       final errorOutput = _memorySink();
       final exitCode = await runCuboid(
-        ['create', 'widget', 'auth', 'password_field'],
+        ['create', 'widget', 'password_field', 'auth'],
         stdout: output,
         stderr: errorOutput,
       );
@@ -1570,7 +1628,26 @@ void main() {
       final widget = File(
         '${temp.path}/lib/features/auth/ui/widgets/password_field.dart',
       ).readAsStringSync();
-      expect(widget, contains('class PasswordField extends StatelessWidget {'));
+      expect(
+        widget,
+        contains(
+          "import 'package:my_app/features/auth/ui/widgets/"
+          "password_field_viewmodel.dart';",
+        ),
+      );
+      expect(
+        widget,
+        contains(
+          'class PasswordField extends StackedView<PasswordFieldViewModel> {',
+        ),
+      );
+      final viewModel = File(
+        '${temp.path}/lib/features/auth/ui/widgets/password_field_viewmodel.dart',
+      ).readAsStringSync();
+      expect(
+        viewModel,
+        contains('class PasswordFieldViewModel extends BaseViewModel {}'),
+      );
     },
   );
 
@@ -1618,7 +1695,7 @@ void main() {
     expect(exitCode, 64);
     expect(
       errorOutput.content,
-      contains('Expected a widget name, or a feature name and widget name.'),
+      contains('Expected a widget name, or a widget name and feature name.'),
     );
   });
 
@@ -1707,7 +1784,7 @@ void main() {
       Directory.current = previousCurrent;
       temp.deleteSync(recursive: true);
     });
-    File('${temp.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
+    _writeFeatureProject(temp);
     Directory.current = temp;
     final output = _memorySink();
     final errorOutput = _memorySink();
@@ -1739,107 +1816,6 @@ void main() {
 
     expect(exitCode, 64);
     expect(errorOutput.content, contains('Expected a feature name.'));
-  });
-
-  test('route dry-run reports planned registration without writing', () async {
-    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
-    final previousCurrent = Directory.current;
-    addTearDown(() {
-      Directory.current = previousCurrent;
-      temp.deleteSync(recursive: true);
-    });
-    _writeRouteProject(temp, 'user_profile');
-    final before = File('${temp.path}/lib/app/app.dart').readAsStringSync();
-    Directory.current = temp;
-    final output = _memorySink();
-    final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['route', 'user-profile', '--dry-run'],
-      stdout: output,
-      stderr: errorOutput,
-    );
-
-    expect(exitCode, 0);
-    expect(output.content, contains('Dry run: no files were written.'));
-    expect(output.content, contains('Route: UserProfileView'));
-    expect(output.content, contains('- lib/app/app.dart'));
-    expect(
-      output.content,
-      contains(
-        "import 'package:my_app/features/user_profile/ui/user_profile_view.dart';",
-      ),
-    );
-    expect(output.content, contains('MaterialRoute(page: UserProfileView),'));
-    expect(errorOutput.content, isEmpty);
-    expect(File('${temp.path}/lib/app/app.dart').readAsStringSync(), before);
-  });
-
-  test('route command registers an existing feature View', () async {
-    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
-    final previousCurrent = Directory.current;
-    addTearDown(() {
-      Directory.current = previousCurrent;
-      temp.deleteSync(recursive: true);
-    });
-    _writeRouteProject(temp, 'auth');
-    Directory.current = temp;
-    final output = _memorySink();
-    final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['route', 'auth'],
-      stdout: output,
-      stderr: errorOutput,
-    );
-
-    expect(exitCode, 0);
-    expect(output.content, contains('Registered route AuthView.'));
-    expect(
-      output.content,
-      contains('Next step: dart run build_runner build -d'),
-    );
-    expect(errorOutput.content, isEmpty);
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
-    expect(
-      app,
-      contains("import 'package:my_app/features/auth/ui/auth_view.dart';"),
-    );
-    expect(app, contains('    MaterialRoute(page: AuthView),'));
-  });
-
-  test('route validates required positional arguments', () async {
-    final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['route'],
-      stdout: _memorySink(),
-      stderr: errorOutput,
-    );
-
-    expect(exitCode, 64);
-    expect(errorOutput.content, contains('Expected a feature name.'));
-  });
-
-  test('route service failures return non-zero and write stderr', () async {
-    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
-    final previousCurrent = Directory.current;
-    addTearDown(() {
-      Directory.current = previousCurrent;
-      temp.deleteSync(recursive: true);
-    });
-    _writeRouteProject(temp, 'auth');
-    File('${temp.path}/lib/features/auth/ui/auth_view.dart').deleteSync();
-    Directory.current = temp;
-    final errorOutput = _memorySink();
-    final exitCode = await runCuboid(
-      ['route', 'auth'],
-      stdout: _memorySink(),
-      stderr: errorOutput,
-    );
-
-    expect(exitCode, 1);
-    expect(
-      errorOutput.content,
-      contains('lib/features/auth/ui/auth_view.dart was not found.'),
-    );
   });
 
   test(
@@ -1966,7 +1942,7 @@ void main() {
     final output = _memorySink();
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['view', 'auth', 'forgot-password', '--dry-run'],
+      ['view', 'forgot-password', 'auth', '--dry-run'],
       stdout: output,
       stderr: errorOutput,
     );
@@ -1999,7 +1975,7 @@ void main() {
     final output = _memorySink();
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['view', 'auth', 'forgot-password'],
+      ['view', 'forgot-password', 'auth'],
       stdout: output,
       stderr: errorOutput,
     );
@@ -2029,6 +2005,8 @@ void main() {
       viewModel,
       contains('class ForgotPasswordViewModel extends BaseViewModel {}'),
     );
+    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    expect(app, contains('MaterialRoute(page: ForgotPasswordView),'));
   });
 
   test('view validates required positional arguments', () async {
@@ -2042,7 +2020,7 @@ void main() {
     expect(exitCode, 64);
     expect(
       errorOutput.content,
-      contains('Expected a feature name and view name.'),
+      contains('Expected a view name and feature name.'),
     );
   });
 
@@ -2057,7 +2035,7 @@ void main() {
     Directory.current = temp;
     final errorOutput = _memorySink();
     final exitCode = await runCuboid(
-      ['view', 'auth', 'login'],
+      ['view', 'login', 'auth'],
       stdout: _memorySink(),
       stderr: errorOutput,
     );
@@ -2121,30 +2099,27 @@ void main() {
 
 _MemorySink _memorySink() => _MemorySink();
 
-void _writeRouteProject(Directory root, String featureName) {
+Future<ProcessResult> _successProcessRunner(
+  String executable,
+  List<String> arguments, {
+  required String workingDirectory,
+}) async => ProcessResult(0, 0, '', '');
+
+void _writeViewProject(Directory root, String featureName) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
   File('${root.path}/lib/app/app.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('''
-import 'package:my_app/features/startup/ui/startup_view.dart';
 import 'package:stacked/stacked_annotations.dart';
 // @stacked-import
 
 @StackedApp(
   routes: [
-    MaterialRoute(page: StartupView, initial: true),
     // @stacked-route
   ],
 )
 class App {}
 ''');
-  File('${root.path}/lib/features/$featureName/ui/${featureName}_view.dart')
-    ..parent.createSync(recursive: true)
-    ..writeAsStringSync('class View {}\n');
-}
-
-void _writeViewProject(Directory root, String featureName) {
-  File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
   Directory(
     '${root.path}/lib/features/$featureName',
   ).createSync(recursive: true);
@@ -2154,7 +2129,20 @@ void _writeFeatureProject(Directory root, {String pubspec = 'name: my_app\n'}) {
   File('${root.path}/pubspec.yaml').writeAsStringSync(pubspec);
   File('${root.path}/lib/app/app.dart')
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync('app registration\n');
+    ..writeAsStringSync('''
+import 'package:stacked/stacked_annotations.dart';
+// @stacked-import
+
+@StackedApp(
+  routes: [
+    // @stacked-route
+  ],
+  dependencies: [
+    // @stacked-service
+  ],
+)
+class App {}
+''');
   Directory('${root.path}/lib/features').createSync(recursive: true);
 }
 
@@ -2167,13 +2155,13 @@ void _writeServiceProject(
   File('${root.path}/lib/app/app.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('''
-import 'package:my_app/core/services/shell_service.dart';
+import 'package:my_app/core/services/analytics_service.dart';
 import 'package:stacked/stacked_annotations.dart';
 // @stacked-import
 
 @StackedApp(
   dependencies: [
-    LazySingleton(classType: ShellService),
+    LazySingleton(classType: AnalyticsService),
     // @stacked-service
   ],
 )
@@ -2196,7 +2184,7 @@ void _writeBottomSheetProject(Directory root) {
   File('${root.path}/lib/app/app.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('''
-import 'package:my_app/core/services/shell_service.dart';
+import 'package:my_app/core/services/analytics_service.dart';
 import 'package:stacked/stacked_annotations.dart';
 import 'package:stacked_services/stacked_services.dart';
 // @stacked-import
@@ -2206,7 +2194,7 @@ import 'package:stacked_services/stacked_services.dart';
     // @stacked-route
   ],
   dependencies: [
-    LazySingleton(classType: ShellService),
+    LazySingleton(classType: AnalyticsService),
     // @stacked-service
   ],
 )
@@ -2228,7 +2216,7 @@ void _writeDialogProject(Directory root) {
   File('${root.path}/lib/app/app.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('''
-import 'package:my_app/core/services/shell_service.dart';
+import 'package:my_app/core/services/analytics_service.dart';
 import 'package:stacked/stacked_annotations.dart';
 import 'package:stacked_services/stacked_services.dart';
 // @stacked-import
@@ -2238,7 +2226,7 @@ import 'package:stacked_services/stacked_services.dart';
     // @stacked-route
   ],
   dependencies: [
-    LazySingleton(classType: ShellService),
+    LazySingleton(classType: AnalyticsService),
     // @stacked-service
   ],
 )
@@ -2263,14 +2251,19 @@ void _writeModelProject(Directory root) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
 }
 
-void _writeDatabaseProject(Directory root) {
+void _writeDatabaseProject(
+  Directory root, {
+  bool withSupabaseFoundation = true,
+}) {
   File('${root.path}/pubspec.yaml').writeAsStringSync(
-    'name: my_app\ndependencies:\n  supabase_flutter: ^2.16.0\n',
+    withSupabaseFoundation
+        ? 'name: my_app\ndependencies:\n  supabase_flutter: ^2.16.0\n'
+        : 'name: my_app\ndependencies:\n  flutter:\n    sdk: flutter\n',
   );
   File('${root.path}/lib/app/app.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('''
-import 'package:my_app/core/services/shell_service.dart';
+import 'package:my_app/core/services/analytics_service.dart';
 import 'package:stacked/stacked_annotations.dart';
 import 'package:stacked_services/stacked_services.dart';
 // @stacked-import
@@ -2280,15 +2273,17 @@ import 'package:stacked_services/stacked_services.dart';
     // @stacked-route
   ],
   dependencies: [
-    LazySingleton(classType: ShellService),
+    LazySingleton(classType: AnalyticsService),
     // @stacked-service
   ],
 )
 class App {}
 ''');
-  File('${root.path}/lib/core/network/supabase_guard.dart')
-    ..parent.createSync(recursive: true)
-    ..writeAsStringSync('Future<void> guard() async {}\n');
+  if (withSupabaseFoundation) {
+    File('${root.path}/lib/core/network/supabase_guard.dart')
+      ..parent.createSync(recursive: true)
+      ..writeAsStringSync('Future<void> guard() async {}\n');
+  }
   File('${root.path}/lib/core/errors/result.dart')
     ..parent.createSync(recursive: true)
     ..writeAsStringSync('class Result<T> {}\n');

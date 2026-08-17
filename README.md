@@ -12,7 +12,7 @@ database schema, or repository/data layers.
 - Stacked MVVM, routing, service locator, dialogs, and bottom sheets
 - Technology-neutral base: no backend or storage technology is pre-installed;
   add one explicitly via the Cuboid CLI (e.g. `cuboid create database
-  supabase`, `cuboid create storage <name>`) when a project actually needs one
+  supabase`, `cuboid create storage`) when a project actually needs one
 - Focused unit and widget tests
 - Bootstrap tooling for renaming a generated app from the template
 
@@ -20,13 +20,12 @@ database schema, or repository/data layers.
 
 ```text
 lib/
-|-- app/                  Stacked registration, router, locator, app root,
-|                         and the app-level navigation shell (ShellView)
+|-- app/                  Stacked registration, router, locator, app root
 |-- core/                 Constants, errors, formatters, forms, models,
 |                         services, storage, theme, and validators
 |-- features/
 |   |-- startup/          Startup view and view model
-|   `-- home/             Home feature (reachable through the shell)
+|   `-- home/             Home feature
 `-- shared/
     `-- widgets/          Reusable UI widgets
 
@@ -76,26 +75,31 @@ dot-separated segment must start with a letter.
 Inside a generated project, scaffold artifacts with `cuboid create <artifact>`:
 
 ```text
-cuboid create feature <name>
+cuboid create feature <name>           # also creates its repository and route
 cuboid create service <name>
-cuboid create bottomsheet <name>
-cuboid create dialog <name>
-cuboid create storage <name>
+cuboid create bottomsheet <name>       # regenerates app.bottomsheets.dart itself
+cuboid create dialog <name>            # regenerates app.dialogs.dart itself
+cuboid create storage
 cuboid create database supabase
-cuboid create route <feature>
-cuboid create view <feature> <name>
-cuboid create repository <name>
+cuboid create view <name> <feature>    # also registers the view's route
 cuboid create model <name>
 cuboid create widget <name>            # shared, under lib/shared/widgets/
-cuboid create widget <feature> <name>  # feature-scoped
+cuboid create widget <name> <feature>  # feature-scoped
 ```
 
+There is no separate `route` or `repository` command: creating a feature
+generates and registers its repository, and creating a feature or view
+registers its route, automatically.
+
 Every command supports `--dry-run` to preview the plan without writing
-anything. Commands that register an artifact with Stacked (`service`,
-`bottomsheet`, `dialog`, `database`, `route`, `repository`) print the
-`dart run build_runner build -d` step to run afterward instead of running it
-automatically. Full per-command contracts (generated files, registration
-behavior, safety guarantees) live in
+anything. Commands that register an artifact with Stacked (`feature`,
+`service`, `database`, `view`) print the `dart run build_runner build -d`
+step to run afterward instead of running it automatically. `bottomsheet` and
+`dialog` are the exception: they run that step for you, because otherwise
+`lib/main.dart`'s `setupBottomSheetUi()`/`setupDialogUi()` calls would
+reference a file (`app.bottomsheets.dart`/`app.dialogs.dart`) that doesn't
+exist yet and the project wouldn't compile. Full per-command contracts
+(generated files, registration behavior, safety guarantees) live in
 [ARCHITECTURE.md §9](ARCHITECTURE.md#9-cuboid-cli-command-contract).
 
 ## Local development
@@ -126,12 +130,13 @@ explicitly when a project actually needs it:
 
 ```bash
 cuboid create database supabase   # Supabase example model, repository, migration
-cuboid create storage <name>      # A local key-value/secure storage wrapper
+cuboid create storage              # A local key-value/secure storage wrapper
 ```
 
-`cuboid create database supabase` requires the Supabase foundation (the
-`supabase_flutter` dependency and `lib/core/network/supabase_guard.dart`) to
-already exist in the project -- it does not install Supabase from nothing. See
+`cuboid create database supabase` provisions its own Supabase foundation: it
+adds the `supabase_flutter` dependency to `pubspec.yaml` and creates
+`lib/core/network/supabase_guard.dart` when either is missing, so it does not
+require a developer to add them first. See
 [ARCHITECTURE.md §12-13](ARCHITECTURE.md#12-current-data-and-backend-boundary)
 for the full contract.
 

@@ -90,6 +90,39 @@ void main() {
       'dart run build_runner build --delete-conflicting-outputs',
       'dart format .',
     ]);
+
+    for (final shellFile in [
+      'lib/app/shell_view.dart',
+      'lib/app/shell_viewmodel.dart',
+      'lib/core/services/shell_service.dart',
+      'test/app/shell_viewmodel_test.dart',
+      'test/core/services/shell_service_test.dart',
+    ]) {
+      expect(
+        File('${destination.path}/$shellFile').existsSync(),
+        isFalse,
+        reason: shellFile,
+      );
+    }
+    final dartFiles = destination
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'));
+    for (final file in dartFiles) {
+      final contents = file.readAsStringSync();
+      for (final shellSymbol in [
+        'ShellView',
+        'ShellViewModel',
+        'ShellService',
+        'Routes.shellView',
+      ]) {
+        expect(
+          contents,
+          isNot(contains(shellSymbol)),
+          reason: '${file.path} should not reference $shellSymbol',
+        );
+      }
+    }
   });
 
   test('refuses to overwrite an existing destination', () async {

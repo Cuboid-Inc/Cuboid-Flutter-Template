@@ -8,8 +8,6 @@ import 'package:cuboid/src/database/create_database.dart';
 import 'package:cuboid/src/dialog/create_dialog.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
 import 'package:cuboid/src/model/create_model.dart';
-import 'package:cuboid/src/repository/create_repository.dart';
-import 'package:cuboid/src/route/register_route.dart';
 import 'package:cuboid/src/service/register_service.dart';
 import 'package:cuboid/src/storage/create_storage.dart';
 import 'package:cuboid/src/view/create_view.dart';
@@ -24,9 +22,7 @@ const _knownCreateArtifacts = <String>[
   'dialog',
   'storage',
   'database',
-  'route',
   'view',
-  'repository',
   'model',
   'widget',
 ];
@@ -41,10 +37,8 @@ class CuboidCommandRunner extends CommandRunner<int> {
     CreateDialogService? createDialogService,
     CreateStorageService? createStorageService,
     CreateDatabaseService? createDatabaseService,
-    RegisterRouteService? registerRouteService,
     RegisterServiceService? registerServiceService,
     CreateViewService? createViewService,
-    CreateRepositoryService? createRepositoryService,
     CreateModelService? createModelService,
     CreateWidgetService? createWidgetService,
   }) : _stdout = stdout ?? ioStdout,
@@ -57,12 +51,9 @@ class CuboidCommandRunner extends CommandRunner<int> {
        _createStorageService = createStorageService ?? CreateStorageService(),
        _createDatabaseService =
            createDatabaseService ?? CreateDatabaseService(),
-       _registerRouteService = registerRouteService ?? RegisterRouteService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
        _createViewService = createViewService ?? CreateViewService(),
-       _createRepositoryService =
-           createRepositoryService ?? CreateRepositoryService(),
        _createModelService = createModelService ?? CreateModelService(),
        _createWidgetService = createWidgetService ?? CreateWidgetService(),
        super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
@@ -82,9 +73,7 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createStorageService: _createStorageService,
         createDatabaseService: _createDatabaseService,
         registerServiceService: _registerServiceService,
-        registerRouteService: _registerRouteService,
         createViewService: _createViewService,
-        createRepositoryService: _createRepositoryService,
         createModelService: _createModelService,
         createWidgetService: _createWidgetService,
       ),
@@ -94,13 +83,6 @@ class CuboidCommandRunner extends CommandRunner<int> {
         stdout: _stdout,
         stderr: _stderr,
         createFeatureService: _createFeatureService,
-      ),
-    );
-    addCommand(
-      RouteCommand(
-        stdout: _stdout,
-        stderr: _stderr,
-        registerRouteService: _registerRouteService,
       ),
     );
     addCommand(
@@ -127,10 +109,8 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final CreateDialogService _createDialogService;
   final CreateStorageService _createStorageService;
   final CreateDatabaseService _createDatabaseService;
-  final RegisterRouteService _registerRouteService;
   final RegisterServiceService _registerServiceService;
   final CreateViewService _createViewService;
-  final CreateRepositoryService _createRepositoryService;
   final CreateModelService _createModelService;
   final CreateWidgetService _createWidgetService;
 
@@ -160,9 +140,7 @@ class CreateCommand extends Command<int> {
     CreateStorageService? createStorageService,
     CreateDatabaseService? createDatabaseService,
     RegisterServiceService? registerServiceService,
-    RegisterRouteService? registerRouteService,
     CreateViewService? createViewService,
-    CreateRepositoryService? createRepositoryService,
     CreateModelService? createModelService,
     CreateWidgetService? createWidgetService,
   }) : _stdout = stdout ?? ioStdout,
@@ -177,10 +155,7 @@ class CreateCommand extends Command<int> {
            createDatabaseService ?? CreateDatabaseService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
-       _registerRouteService = registerRouteService ?? RegisterRouteService(),
        _createViewService = createViewService ?? CreateViewService(),
-       _createRepositoryService =
-           createRepositoryService ?? CreateRepositoryService(),
        _createModelService = createModelService ?? CreateModelService(),
        _createWidgetService = createWidgetService ?? CreateWidgetService() {
     argParser
@@ -214,9 +189,7 @@ class CreateCommand extends Command<int> {
   final CreateStorageService _createStorageService;
   final CreateDatabaseService _createDatabaseService;
   final RegisterServiceService _registerServiceService;
-  final RegisterRouteService _registerRouteService;
   final CreateViewService _createViewService;
-  final CreateRepositoryService _createRepositoryService;
   final CreateModelService _createModelService;
   final CreateWidgetService _createWidgetService;
 
@@ -239,14 +212,16 @@ class CreateCommand extends Command<int> {
       'cuboid create service <name>, '
       'cuboid create bottomsheet <name>, '
       'cuboid create dialog <name>, '
-      'cuboid create storage <name>, '
+      'cuboid create storage, '
       'cuboid create database <provider>, '
-      'cuboid create route <feature>, '
-      'cuboid create view <feature> <name>, '
-      'cuboid create repository <name>, '
+      'cuboid create view <view-name> (shared) or '
+      'cuboid create view <view-name> <feature> (feature-scoped), '
       'cuboid create model <name>, '
       'cuboid create widget <name> (shared) or '
-      'cuboid create widget <feature> <name> (feature-scoped).\n'
+      'cuboid create widget <name> <feature> (feature-scoped).\n'
+      'cuboid create feature <name> also creates the feature\'s repository '
+      'and registers its route; there is no separate route or repository '
+      'command.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
       'other artifact commands are not yet implemented.';
@@ -283,14 +258,8 @@ class CreateCommand extends Command<int> {
         if (artifact == 'database') {
           return _runCreateDatabase(rest.skip(1).toList());
         }
-        if (artifact == 'route') {
-          return _runCreateRoute(rest.skip(1).toList());
-        }
         if (artifact == 'view') {
           return _runCreateView(rest.skip(1).toList());
-        }
-        if (artifact == 'repository') {
-          return _runCreateRepository(rest.skip(1).toList());
         }
         if (artifact == 'model') {
           return _runCreateModel(rest.skip(1).toList());
@@ -456,14 +425,14 @@ class CreateCommand extends Command<int> {
         usage,
       );
     }
-    if (rest.length != 1) {
-      throw UsageException('Expected a storage name.', usage);
+    if (rest.isNotEmpty) {
+      throw UsageException(
+        'cuboid create storage does not take a storage name.',
+        usage,
+      );
     }
 
-    final input = CreateStorageInput(
-      name: rest[0],
-      dryRun: argResults!['dry-run'] as bool,
-    );
+    final input = CreateStorageInput(dryRun: argResults!['dry-run'] as bool);
 
     try {
       final result = await _createStorageService.create(input);
@@ -503,34 +472,6 @@ class CreateCommand extends Command<int> {
     }
   }
 
-  Future<int> _runCreateRoute(List<String> rest) async {
-    if (argResults!.wasParsed('output-dir') ||
-        argResults!.wasParsed('directory') ||
-        argResults!.wasParsed('post-steps')) {
-      throw UsageException(
-        'Only --dry-run is supported for cuboid create route.',
-        usage,
-      );
-    }
-    if (rest.length != 1) {
-      throw UsageException('Expected a feature name.', usage);
-    }
-
-    final input = RegisterRouteInput(
-      feature: rest[0],
-      dryRun: argResults!['dry-run'] as bool,
-    );
-
-    try {
-      final result = await _registerRouteService.register(input);
-      writeRouteResult(_stdout, result);
-      return 0;
-    } on RegisterRouteException catch (error) {
-      _stderr.writeln(error.message);
-      return 1;
-    }
-  }
-
   Future<int> _runCreateView(List<String> rest) async {
     if (argResults!.wasParsed('output-dir') ||
         argResults!.wasParsed('directory') ||
@@ -540,49 +481,26 @@ class CreateCommand extends Command<int> {
         usage,
       );
     }
-    if (rest.length != 2) {
-      throw UsageException('Expected a feature name and view name.', usage);
+    if (rest.length != 1 && rest.length != 2) {
+      throw UsageException(
+        'Expected a view name, or a view name and feature name.',
+        usage,
+      );
     }
 
-    final input = CreateViewInput(
-      feature: rest[0],
-      name: rest[1],
-      dryRun: argResults!['dry-run'] as bool,
-    );
+    final input = rest.length == 1
+        ? CreateViewInput(name: rest[0], dryRun: argResults!['dry-run'] as bool)
+        : CreateViewInput(
+            name: rest[0],
+            feature: rest[1],
+            dryRun: argResults!['dry-run'] as bool,
+          );
 
     try {
       final result = await _createViewService.create(input);
       writeViewResult(_stdout, result);
       return 0;
     } on CreateViewException catch (error) {
-      _stderr.writeln(error.message);
-      return 1;
-    }
-  }
-
-  Future<int> _runCreateRepository(List<String> rest) async {
-    if (argResults!.wasParsed('output-dir') ||
-        argResults!.wasParsed('directory') ||
-        argResults!.wasParsed('post-steps')) {
-      throw UsageException(
-        'Only --dry-run is supported for cuboid create repository.',
-        usage,
-      );
-    }
-    if (rest.length != 1) {
-      throw UsageException('Expected a repository name.', usage);
-    }
-
-    final input = CreateRepositoryInput(
-      name: rest[0],
-      dryRun: argResults!['dry-run'] as bool,
-    );
-
-    try {
-      final result = await _createRepositoryService.create(input);
-      writeRepositoryResult(_stdout, result);
-      return 0;
-    } on CreateRepositoryException catch (error) {
       _stderr.writeln(error.message);
       return 1;
     }
@@ -627,7 +545,7 @@ class CreateCommand extends Command<int> {
     }
     if (rest.length != 1 && rest.length != 2) {
       throw UsageException(
-        'Expected a widget name, or a feature name and widget name.',
+        'Expected a widget name, or a widget name and feature name.',
         usage,
       );
     }
@@ -638,8 +556,8 @@ class CreateCommand extends Command<int> {
             dryRun: argResults!['dry-run'] as bool,
           )
         : CreateWidgetInput(
-            feature: rest[0],
-            name: rest[1],
+            name: rest[0],
+            feature: rest[1],
             dryRun: argResults!['dry-run'] as bool,
           );
 
@@ -748,6 +666,16 @@ void writeFeatureResult(IOSink stdout, CreateFeatureResult result) {
   for (final file in plan.files) {
     stdout.writeln('- $file');
   }
+  stdout.writeln('- ${plan.appPath}');
+  if (plan.dryRun) {
+    stdout.writeln('Planned changes:');
+    stdout.writeln('- ${plan.routeImportLine}');
+    stdout.writeln('- ${plan.routeLine.trim()}');
+    stdout.writeln('- ${plan.repositoryImportLine}');
+    stdout.writeln('- ${plan.repositoryLine.trim()}');
+  } else {
+    stdout.writeln('Next step: dart run build_runner build -d');
+  }
 }
 
 void writeCreatedServiceResult(IOSink stdout, RegisterServiceResult result) {
@@ -792,7 +720,7 @@ void writeBottomSheetResult(IOSink stdout, CreateBottomSheetResult result) {
     stdout.writeln('- ${plan.bottomSheetsImportLine}');
     stdout.writeln('- ${plan.setupLine.trim()}');
   } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
+    stdout.writeln('Ran dart run build_runner build -d.');
   }
 }
 
@@ -817,7 +745,7 @@ void writeDialogResult(IOSink stdout, CreateDialogResult result) {
     stdout.writeln('- ${plan.dialogsImportLine}');
     stdout.writeln('- ${plan.setupLine.trim()}');
   } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
+    stdout.writeln('Ran dart run build_runner build -d.');
   }
 }
 
@@ -852,29 +780,11 @@ void writeDatabaseResult(IOSink stdout, CreateDatabaseResult result) {
     stdout.writeln('- ${plan.repositoryLine.trim()}');
   } else {
     stdout.writeln('Next steps:');
+    stdout.writeln('- flutter pub get');
     stdout.writeln('- dart run build_runner build -d');
     stdout.writeln(
       '- supabase db push (or `supabase migration up` for local dev)',
     );
-  }
-}
-
-void writeRouteResult(IOSink stdout, RegisterRouteResult result) {
-  final plan = result.plan;
-  if (plan.dryRun) {
-    stdout.writeln('Dry run: no files were written.');
-    stdout.writeln('Route: ${plan.viewClassName}');
-  } else {
-    stdout.writeln('Registered route ${plan.viewClassName}.');
-  }
-  stdout.writeln('Files:');
-  stdout.writeln('- ${plan.appPath}');
-  if (plan.dryRun) {
-    stdout.writeln('Planned changes:');
-    stdout.writeln('- ${plan.importLine}');
-    stdout.writeln('- ${plan.routeLine.trim()}');
-  } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 
@@ -886,22 +796,9 @@ void writeViewResult(IOSink stdout, CreateViewResult result) {
   } else {
     stdout.writeln('Created view ${plan.displayName}.');
   }
-  stdout.writeln('Feature: ${plan.featureName}');
-  stdout.writeln('Files:');
-  for (final file in plan.files) {
-    stdout.writeln('- $file');
+  if (!plan.isShared) {
+    stdout.writeln('Feature: ${plan.featureName}');
   }
-}
-
-void writeRepositoryResult(IOSink stdout, CreateRepositoryResult result) {
-  final plan = result.plan;
-  if (plan.dryRun) {
-    stdout.writeln('Dry run: no files were written.');
-    stdout.writeln('Repository: ${plan.repositoryClassName}');
-  } else {
-    stdout.writeln('Created repository ${plan.repositoryClassName}.');
-  }
-  stdout.writeln('Table: ${plan.tableName}');
   stdout.writeln('Files:');
   for (final file in plan.files) {
     stdout.writeln('- $file');
@@ -909,14 +806,10 @@ void writeRepositoryResult(IOSink stdout, CreateRepositoryResult result) {
   stdout.writeln('- ${plan.appPath}');
   if (plan.dryRun) {
     stdout.writeln('Planned changes:');
-    stdout.writeln('- ${plan.repositoryImportLine}');
-    stdout.writeln('- ${plan.repositoryLine.trim()}');
+    stdout.writeln('- ${plan.routeImportLine}');
+    stdout.writeln('- ${plan.routeLine.trim()}');
   } else {
-    stdout.writeln('Next steps:');
-    stdout.writeln('- dart run build_runner build -d');
-    stdout.writeln(
-      '- supabase db push (or `supabase migration up` for local dev)',
-    );
+    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 
@@ -945,76 +838,7 @@ void writeWidgetResult(IOSink stdout, CreateWidgetResult result) {
   }
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.path}');
-}
-
-class RouteCommand extends Command<int> {
-  RouteCommand({
-    IOSink? stdout,
-    IOSink? stderr,
-    RegisterRouteService? registerRouteService,
-  }) : _stdout = stdout ?? ioStdout,
-       _stderr = stderr ?? ioStderr,
-       _registerRouteService = registerRouteService ?? RegisterRouteService() {
-    argParser.addFlag(
-      'dry-run',
-      negatable: false,
-      help: 'Print the route registration plan without writing files.',
-    );
-  }
-
-  final IOSink _stdout;
-  final IOSink _stderr;
-  final RegisterRouteService _registerRouteService;
-
-  @override
-  String get name => 'route';
-
-  @override
-  String get description => 'Register an existing feature View as a route.';
-
-  @override
-  String get invocation => 'cuboid route [options] <feature>';
-
-  @override
-  Future<int> run() async {
-    final rest = argResults!.rest;
-    if (rest.length != 1) {
-      throw UsageException('Expected a feature name.', usage);
-    }
-
-    final input = RegisterRouteInput(
-      feature: rest[0],
-      dryRun: argResults!['dry-run'] as bool,
-    );
-
-    try {
-      final result = await _registerRouteService.register(input);
-      _writeResult(result);
-      return 0;
-    } on RegisterRouteException catch (error) {
-      _stderr.writeln(error.message);
-      return 1;
-    }
-  }
-
-  void _writeResult(RegisterRouteResult result) {
-    final plan = result.plan;
-    if (plan.dryRun) {
-      _stdout.writeln('Dry run: no files were written.');
-      _stdout.writeln('Route: ${plan.viewClassName}');
-    } else {
-      _stdout.writeln('Registered route ${plan.viewClassName}.');
-    }
-    _stdout.writeln('Files:');
-    _stdout.writeln('- ${plan.appPath}');
-    if (plan.dryRun) {
-      _stdout.writeln('Planned changes:');
-      _stdout.writeln('- ${plan.importLine}');
-      _stdout.writeln('- ${plan.routeLine.trim()}');
-    } else {
-      _stdout.writeln('Next step: dart run build_runner build -d');
-    }
-  }
+  stdout.writeln('- ${plan.viewModelPath}');
 }
 
 class ViewCommand extends Command<int> {
@@ -1044,18 +868,18 @@ class ViewCommand extends Command<int> {
       'Create an additional Stacked View inside an existing feature.';
 
   @override
-  String get invocation => 'cuboid view [options] <feature> <name>';
+  String get invocation => 'cuboid view [options] <name> <feature>';
 
   @override
   Future<int> run() async {
     final rest = argResults!.rest;
     if (rest.length != 2) {
-      throw UsageException('Expected a feature name and view name.', usage);
+      throw UsageException('Expected a view name and feature name.', usage);
     }
 
     final input = CreateViewInput(
-      feature: rest[0],
-      name: rest[1],
+      name: rest[0],
+      feature: rest[1],
       dryRun: argResults!['dry-run'] as bool,
     );
 
@@ -1081,6 +905,14 @@ class ViewCommand extends Command<int> {
     _stdout.writeln('Files:');
     for (final file in plan.files) {
       _stdout.writeln('- $file');
+    }
+    _stdout.writeln('- ${plan.appPath}');
+    if (plan.dryRun) {
+      _stdout.writeln('Planned changes:');
+      _stdout.writeln('- ${plan.routeImportLine}');
+      _stdout.writeln('- ${plan.routeLine.trim()}');
+    } else {
+      _stdout.writeln('Next step: dart run build_runner build -d');
     }
   }
 }

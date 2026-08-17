@@ -25,15 +25,21 @@ class CreateWidgetPlan {
   const CreateWidgetPlan({
     required this.name,
     required this.feature,
+    required this.packageName,
     required this.className,
+    required this.viewModelClassName,
     required this.path,
+    required this.viewModelPath,
     required this.dryRun,
   });
 
   final String name;
   final String? feature;
+  final String packageName;
   final String className;
+  final String viewModelClassName;
   final String path;
+  final String viewModelPath;
   final bool dryRun;
 
   bool get isShared => feature == null;
@@ -66,13 +72,17 @@ class CreateWidgetService {
     final words = widgetName.split('_');
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     _ensureProjectRoot(projectRoot);
+    final packageName = _readPackageName(projectRoot);
 
     if (input.feature == null) {
       return CreateWidgetPlan(
         name: widgetName,
         feature: null,
+        packageName: packageName,
         className: _pascalCase(words),
+        viewModelClassName: '${_pascalCase(words)}ViewModel',
         path: 'lib/shared/widgets/$widgetName.dart',
+        viewModelPath: 'lib/shared/widgets/${widgetName}_viewmodel.dart',
         dryRun: input.dryRun,
       );
     }
@@ -81,8 +91,12 @@ class CreateWidgetService {
     return CreateWidgetPlan(
       name: widgetName,
       feature: featureName,
+      packageName: packageName,
       className: _pascalCase(words),
+      viewModelClassName: '${_pascalCase(words)}ViewModel',
       path: 'lib/features/$featureName/ui/widgets/$widgetName.dart',
+      viewModelPath:
+          'lib/features/$featureName/ui/widgets/${widgetName}_viewmodel.dart',
       dryRun: input.dryRun,
     );
   }
@@ -91,8 +105,9 @@ class CreateWidgetService {
     final createPlan = await plan(input);
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     final widgetFile = _targetFile(projectRoot, createPlan.path);
+    final viewModelFile = _targetFile(projectRoot, createPlan.viewModelPath);
 
-    _validateTarget(projectRoot, createPlan, widgetFile);
+    _validateTarget(projectRoot, createPlan, widgetFile, viewModelFile);
 
     if (createPlan.dryRun) {
       return CreateWidgetResult(plan: createPlan);
@@ -105,14 +120,15 @@ class CreateWidgetService {
         widgetFile.parent,
         createdDirectories,
       );
+      _fileWriter(viewModelFile, _viewModelContents(createPlan));
       _fileWriter(widgetFile, _widgetContents(createPlan));
     } on FileSystemException catch (error) {
-      _rollback(widgetFile, createdDirectories);
+      _rollback(widgetFile, viewModelFile, createdDirectories);
       throw CreateWidgetException(
         'Unable to create widget ${createPlan.className}: ${error.message}',
       );
     } catch (error) {
-      _rollback(widgetFile, createdDirectories);
+      _rollback(widgetFile, viewModelFile, createdDirectories);
       throw CreateWidgetException(
         'Unable to create widget ${createPlan.className}: $error',
       );
@@ -126,6 +142,7 @@ void _validateTarget(
   Directory projectRoot,
   CreateWidgetPlan plan,
   File widgetFile,
+  File viewModelFile,
 ) {
   if (!plan.isShared) {
     final featureDirectory = Directory(
@@ -140,10 +157,13 @@ void _validateTarget(
 
   _validateNoAncestorSymlinks(projectRoot, plan);
 
-  if (widgetFile.existsSync() ||
-      Directory(widgetFile.path).existsSync() ||
-      Link(widgetFile.path).existsSync()) {
-    throw CreateWidgetException('Target already exists: ${plan.path}');
+  for (final file in [widgetFile, viewModelFile]) {
+    if (file.existsSync() ||
+        Directory(file.path).existsSync() ||
+        Link(file.path).existsSync()) {
+      final path = file == widgetFile ? plan.path : plan.viewModelPath;
+      throw CreateWidgetException('Target already exists: $path');
+    }
   }
 }
 
@@ -205,6 +225,38 @@ void _ensureProjectRoot(Directory projectRoot) {
   }
 }
 
+String _readPackageName(Directory projectRoot) {
+  final pubspecPath =
+      '${projectRoot.path}${Platform.pathSeparator}pubspec.yaml';
+  final pubspec = File(pubspecPath);
+  final String contents;
+  try {
+    contents = pubspec.readAsStringSync();
+  } on FileSystemException catch (error) {
+    throw CreateWidgetException(
+      'Unable to read pubspec.yaml: ${error.message}',
+    );
+  }
+
+  final match = RegExp(
+    r'''^\s*name:\s*(?:"([A-Za-z_][A-Za-z0-9_]*)"|'([A-Za-z_][A-Za-z0-9_]*)'|([A-Za-z_][A-Za-z0-9_]*))\s*(?:#.*)?$''',
+    multiLine: true,
+  ).firstMatch(contents);
+  if (match == null) {
+    throw const CreateWidgetException(
+      'pubspec.yaml must contain a valid Dart package name.',
+    );
+  }
+
+  final packageName = match.group(1) ?? match.group(2) ?? match.group(3)!;
+  if (dartKeywords.contains(packageName)) {
+    throw const CreateWidgetException(
+      'pubspec.yaml package name must not be a Dart keyword.',
+    );
+  }
+  return packageName;
+}
+
 File _targetFile(Directory projectRoot, String path) {
   return File(
     '${projectRoot.path}${Platform.pathSeparator}'
@@ -228,13 +280,19 @@ void _createParentDirectories(
   createdDirectories.addAll(missing);
 }
 
-void _rollback(File widgetFile, List<Directory> createdDirectories) {
-  try {
-    if (widgetFile.existsSync()) {
-      widgetFile.deleteSync();
+void _rollback(
+  File widgetFile,
+  File viewModelFile,
+  List<Directory> createdDirectories,
+) {
+  for (final file in [widgetFile, viewModelFile]) {
+    try {
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+    } on FileSystemException {
+      // Best-effort cleanup; preserve the original creation failure.
     }
-  } on FileSystemException {
-    // Best-effort cleanup; preserve the original creation failure.
   }
 
   final directories = createdDirectories.toSet().toList()
@@ -293,16 +351,37 @@ String _pascalCase(List<String> words) {
 }
 
 String _widgetContents(CreateWidgetPlan plan) {
+  final viewModelImportPath = plan.isShared
+      ? 'shared/widgets/${plan.name}_viewmodel.dart'
+      : 'features/${plan.feature}/ui/widgets/${plan.name}_viewmodel.dart';
   return '''
+import 'package:${plan.packageName}/$viewModelImportPath';
 import 'package:flutter/material.dart';
+import 'package:stacked/stacked.dart';
 
-class ${plan.className} extends StatelessWidget {
+class ${plan.className} extends StackedView<${plan.viewModelClassName}> {
   const ${plan.className}({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  ${plan.viewModelClassName} viewModelBuilder(BuildContext context) =>
+      ${plan.viewModelClassName}();
+
+  @override
+  Widget builder(
+    BuildContext context,
+    ${plan.viewModelClassName} vm,
+    Widget? child,
+  ) {
     return const SizedBox.shrink();
   }
 }
+''';
+}
+
+String _viewModelContents(CreateWidgetPlan plan) {
+  return '''
+import 'package:stacked/stacked.dart';
+
+class ${plan.viewModelClassName} extends BaseViewModel {}
 ''';
 }

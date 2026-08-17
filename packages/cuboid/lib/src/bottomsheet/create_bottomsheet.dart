@@ -1,8 +1,17 @@
 import 'dart:io';
 
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
+import 'package:cuboid/src/create/create_project.dart'
+    show PostStep, PostStepResult, ProcessRunner;
 
 typedef BottomSheetFileWriter = void Function(File file, String contents);
+
+const _buildRunnerStep = PostStep('dart', [
+  'run',
+  'build_runner',
+  'build',
+  '-d',
+], label: 'build_runner');
 
 class CreateBottomSheetInput {
   const CreateBottomSheetInput({
@@ -57,9 +66,13 @@ class CreateBottomSheetPlan {
 }
 
 class CreateBottomSheetResult {
-  const CreateBottomSheetResult({required this.plan});
+  const CreateBottomSheetResult({required this.plan, this.buildRunnerResult});
 
   final CreateBottomSheetPlan plan;
+
+  /// The outcome of automatically running `dart run build_runner build -d`
+  /// after writing the sheet and its registration. `null` for a dry run.
+  final PostStepResult? buildRunnerResult;
 }
 
 class CreateBottomSheetException implements Exception {
@@ -72,11 +85,15 @@ class CreateBottomSheetException implements Exception {
 }
 
 class CreateBottomSheetService {
-  CreateBottomSheetService({BottomSheetFileWriter? fileWriter})
-    : _fileWriter =
-          fileWriter ?? ((file, contents) => file.writeAsStringSync(contents));
+  CreateBottomSheetService({
+    BottomSheetFileWriter? fileWriter,
+    ProcessRunner? processRunner,
+  }) : _fileWriter =
+           fileWriter ?? ((file, contents) => file.writeAsStringSync(contents)),
+       _processRunner = processRunner ?? _defaultProcessRunner;
 
   final BottomSheetFileWriter _fileWriter;
+  final ProcessRunner _processRunner;
 
   Future<CreateBottomSheetPlan> plan(CreateBottomSheetInput input) async {
     final bottomSheetName = _normalizeBottomSheetName(input.name);
@@ -179,8 +196,65 @@ class CreateBottomSheetService {
       );
     }
 
-    return CreateBottomSheetResult(plan: createPlan);
+    final buildRunnerResult = await _runBuildRunner(projectRoot, createPlan);
+    return CreateBottomSheetResult(
+      plan: createPlan,
+      buildRunnerResult: buildRunnerResult,
+    );
   }
+
+  /// Regenerates `lib/app/app.bottomsheets.dart` (and the other Stacked
+  /// outputs) so the `setupBottomSheetUi()` call this command just wired
+  /// into `lib/main.dart` resolves immediately, instead of leaving the
+  /// project uncompilable until a developer remembers a manual follow-up
+  /// step. The sheet, model, and registration have already been written
+  /// successfully by this point, so a build_runner failure is reported
+  /// clearly rather than unwinding otherwise-valid source changes.
+  Future<PostStepResult> _runBuildRunner(
+    Directory projectRoot,
+    CreateBottomSheetPlan plan,
+  ) async {
+    final ProcessResult result;
+    try {
+      result = await _processRunner(
+        _buildRunnerStep.executable,
+        _buildRunnerStep.arguments,
+        workingDirectory: projectRoot.path,
+      );
+    } on ProcessException catch (error) {
+      throw CreateBottomSheetException(
+        '${_buildRunnerStep.command} could not be started: '
+        '${error.message}. Bottom sheet ${plan.displayName} was created; '
+        'run ${_buildRunnerStep.command} manually.',
+      );
+    }
+    if (result.exitCode != 0) {
+      final stderrText = '${result.stderr}'.trim();
+      throw CreateBottomSheetException(
+        [
+          '${_buildRunnerStep.command} failed with exit code '
+              '${result.exitCode}.',
+          if (stderrText.isNotEmpty) stderrText,
+          'Bottom sheet ${plan.displayName} was created; run '
+              '${_buildRunnerStep.command} manually.',
+        ].join('\n'),
+      );
+    }
+    return PostStepResult(step: _buildRunnerStep, exitCode: result.exitCode);
+  }
+}
+
+Future<ProcessResult> _defaultProcessRunner(
+  String executable,
+  List<String> arguments, {
+  required String workingDirectory,
+}) {
+  return Process.run(
+    executable,
+    arguments,
+    workingDirectory: workingDirectory,
+    runInShell: false,
+  );
 }
 
 void _validateGeneratedTargets(

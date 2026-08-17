@@ -36,6 +36,48 @@ void main() {
     ]);
   });
 
+  test('creates and registers auth, payment, and notification services in '
+      'sequence without losing earlier registrations', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = RegisterServiceService();
+    const expected = {
+      'auth': 'AuthService',
+      'payment': 'PaymentService',
+      'notification': 'NotificationService',
+    };
+
+    for (final name in expected.keys) {
+      await service.create(RegisterServiceInput(name: name, projectRoot: root));
+    }
+
+    final app = _appFile(root).readAsStringSync();
+    for (final entry in expected.entries) {
+      expect(
+        File(
+          '${root.path}/lib/core/services/${entry.key}_service.dart',
+        ).existsSync(),
+        isTrue,
+        reason: entry.value,
+      );
+      expect(
+        app,
+        contains(
+          "import 'package:test_app/core/services/"
+          "${entry.key}_service.dart';",
+        ),
+        reason: entry.value,
+      );
+      expect(
+        app,
+        contains('    LazySingleton(classType: ${entry.value}),'),
+        reason: entry.value,
+      );
+    }
+    expect('// @stacked-import'.allMatches(app), hasLength(1));
+    expect('// @stacked-service'.allMatches(app), hasLength(1));
+  });
+
   test('create normalizes service name variants consistently', () async {
     for (final entry in {
       'auth_service': 'auth_service',
@@ -868,13 +910,13 @@ void _writeService(Directory root, String serviceName) {
 
 String _appContents({String extra = ''}) {
   return '''
-import 'package:test_app/core/services/shell_service.dart';
+import 'package:test_app/core/services/analytics_service.dart';
 import 'package:stacked/stacked_annotations.dart';
 // @stacked-import
 
 @StackedApp(
 $extra  dependencies: [
-    LazySingleton(classType: ShellService),
+    LazySingleton(classType: AnalyticsService),
     // @stacked-service
   ],
 )

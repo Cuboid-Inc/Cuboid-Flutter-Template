@@ -113,43 +113,118 @@ void main() {
     );
   });
 
-  test('rejects when supabase_flutter is not a dependency', () async {
-    final root = _projectRoot(withSupabaseDependency: false);
+  test(
+    'provisions the supabase_flutter dependency when it is missing',
+    () async {
+      final root = _projectRoot(withSupabaseDependency: false);
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateDatabaseService();
+
+      await service.create(
+        CreateDatabaseInput(provider: 'supabase', projectRoot: root),
+      );
+
+      final pubspec = File('${root.path}/pubspec.yaml').readAsStringSync();
+      expect(pubspec, contains('name: test_app'));
+      expect(pubspec, contains('supabase_flutter: ^2.17.1'));
+    },
+  );
+
+  test(
+    'does not duplicate an already-declared supabase_flutter dependency',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateDatabaseService();
+
+      await service.create(
+        CreateDatabaseInput(provider: 'supabase', projectRoot: root),
+      );
+
+      final pubspec = File('${root.path}/pubspec.yaml').readAsStringSync();
+      expect('supabase_flutter'.allMatches(pubspec).length, 1);
+      expect(pubspec, contains('supabase_flutter: ^2.16.0'));
+    },
+  );
+
+  test(
+    'provisions lib/core/network/supabase_guard.dart when it is missing',
+    () async {
+      final root = _projectRoot(withGuard: false);
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateDatabaseService();
+
+      await service.create(
+        CreateDatabaseInput(provider: 'supabase', projectRoot: root),
+      );
+
+      final guard = File(
+        '${root.path}/lib/core/network/supabase_guard.dart',
+      ).readAsStringSync();
+      expect(guard, contains('Future<Result<T>> guard<T>('));
+      expect(
+        guard,
+        contains("import 'package:supabase_flutter/supabase_flutter.dart';"),
+      );
+      expect(
+        guard,
+        contains("import 'package:test_app/core/errors/result.dart';"),
+      );
+    },
+  );
+
+  test('does not overwrite an existing supabase_guard.dart', () async {
+    final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
+    File(
+      '${root.path}/lib/core/network/supabase_guard.dart',
+    ).writeAsStringSync('// customized\nFuture<void> guard() async {}\n');
     final service = CreateDatabaseService();
 
-    await expectLater(
-      service.create(
-        CreateDatabaseInput(provider: 'supabase', projectRoot: root),
-      ),
-      throwsA(
-        isA<CreateDatabaseException>().having(
-          (error) => error.message,
-          'message',
-          contains('supabase_flutter dependency'),
-        ),
-      ),
+    await service.create(
+      CreateDatabaseInput(provider: 'supabase', projectRoot: root),
     );
+
+    final guard = File(
+      '${root.path}/lib/core/network/supabase_guard.dart',
+    ).readAsStringSync();
+    expect(guard, contains('// customized'));
   });
 
-  test('rejects when the supabase foundation is missing', () async {
-    final root = _projectRoot(withGuard: false);
-    addTearDown(() => root.deleteSync(recursive: true));
-    final service = CreateDatabaseService();
+  test(
+    'rolls back a provisioned pubspec dependency when a later write fails',
+    () async {
+      final root = _projectRoot(
+        withSupabaseDependency: false,
+        withGuard: false,
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      final beforePubspec = File(
+        '${root.path}/pubspec.yaml',
+      ).readAsStringSync();
+      final service = CreateDatabaseService(
+        fileWriter: (file, contents) {
+          throw const FileSystemException('simulated write failure');
+        },
+      );
 
-    await expectLater(
-      service.create(
-        CreateDatabaseInput(provider: 'supabase', projectRoot: root),
-      ),
-      throwsA(
-        isA<CreateDatabaseException>().having(
-          (error) => error.message,
-          'message',
-          'lib/core/network/supabase_guard.dart was not found.',
+      await expectLater(
+        service.create(
+          CreateDatabaseInput(provider: 'supabase', projectRoot: root),
         ),
-      ),
-    );
-  });
+        throwsA(isA<CreateDatabaseException>()),
+      );
+
+      expect(
+        File('${root.path}/pubspec.yaml').readAsStringSync(),
+        beforePubspec,
+      );
+      expect(
+        File('${root.path}/lib/core/network/supabase_guard.dart').existsSync(),
+        isFalse,
+      );
+    },
+  );
 
   test('rejects an existing lib/supabase target without mutation', () async {
     final root = _projectRoot();
@@ -292,7 +367,7 @@ Directory _projectRoot({
   File('${root.path}/pubspec.yaml').writeAsStringSync(
     withSupabaseDependency
         ? 'name: test_app\ndependencies:\n  supabase_flutter: ^2.16.0\n'
-        : 'name: test_app\n',
+        : 'name: test_app\ndependencies:\n  flutter:\n    sdk: flutter\n',
   );
   _appFile(root)
     ..parent.createSync(recursive: true)
@@ -301,13 +376,13 @@ Directory _projectRoot({
     File('${root.path}/lib/core/network/supabase_guard.dart')
       ..parent.createSync(recursive: true)
       ..writeAsStringSync('Future<void> guard() async {}\n');
-    File('${root.path}/lib/core/errors/result.dart')
-      ..parent.createSync(recursive: true)
-      ..writeAsStringSync('class Result<T> {}\n');
-    File('${root.path}/lib/core/errors/failures.dart')
-      ..parent.createSync(recursive: true)
-      ..writeAsStringSync('class AppFailure {}\n');
   }
+  File('${root.path}/lib/core/errors/result.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('class Result<T> {}\n');
+  File('${root.path}/lib/core/errors/failures.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('class AppFailure {}\n');
   return root;
 }
 

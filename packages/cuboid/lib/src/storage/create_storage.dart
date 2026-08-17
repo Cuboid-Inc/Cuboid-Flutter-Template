@@ -1,32 +1,24 @@
 import 'dart:io';
 
-import 'package:cuboid/src/bootstrap/bootstrap.dart';
-
 typedef StorageFileWriter = void Function(File file, String contents);
 
-class CreateStorageInput {
-  const CreateStorageInput({
-    required this.name,
-    this.projectRoot,
-    this.dryRun = false,
-  });
+const _storagePath = 'lib/core/storage/local_storage.dart';
+const _storageClassName = 'LocalStorage';
 
-  final String name;
+class CreateStorageInput {
+  const CreateStorageInput({this.projectRoot, this.dryRun = false});
+
   final Directory? projectRoot;
   final bool dryRun;
 }
 
 class CreateStoragePlan {
   const CreateStoragePlan({
-    required this.name,
-    required this.displayName,
     required this.className,
     required this.path,
     required this.dryRun,
   });
 
-  final String name;
-  final String displayName;
   final String className;
   final String path;
   final bool dryRun;
@@ -55,16 +47,12 @@ class CreateStorageService {
   final StorageFileWriter _fileWriter;
 
   Future<CreateStoragePlan> plan(CreateStorageInput input) async {
-    final storageName = _normalizeStorageName(input.name);
-    final words = storageName.split('_');
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     _ensureProjectRoot(projectRoot);
 
     return CreateStoragePlan(
-      name: storageName,
-      displayName: _humanize(words),
-      className: '${_pascalCase(words)}Storage',
-      path: 'lib/core/storage/${storageName}_storage.dart',
+      className: _storageClassName,
+      path: _storagePath,
       dryRun: input.dryRun,
     );
   }
@@ -91,13 +79,13 @@ class CreateStorageService {
     } on FileSystemException catch (error) {
       _rollback(storageFile, createdDirectories);
       throw CreateStorageException(
-        'Unable to create storage ${createPlan.displayName}: '
+        'Unable to create storage ${createPlan.className}: '
         '${error.message}',
       );
     } catch (error) {
       _rollback(storageFile, createdDirectories);
       throw CreateStorageException(
-        'Unable to create storage ${createPlan.displayName}: $error',
+        'Unable to create storage ${createPlan.className}: $error',
       );
     }
 
@@ -195,80 +183,26 @@ String _relativePath(Directory root, String path) {
       .replaceAll(Platform.pathSeparator, '/');
 }
 
-String _normalizeStorageName(String input) {
-  final value = input.trim();
-  if (value.isEmpty) {
-    throw const CreateStorageException('Storage name must not be empty.');
-  }
-  if (value == '.' || value == '..') {
-    throw const CreateStorageException(
-      'Storage name must be a lower snake_case identifier.',
-    );
-  }
-  if (value.contains('/') ||
-      value.contains('\\') ||
-      value.split(RegExp(r'[/\\]')).contains('..')) {
-    throw const CreateStorageException(
-      'Storage name must not contain path separators or traversal.',
-    );
-  }
-  if (!RegExp(
-    r'^[A-Za-z][A-Za-z0-9]*([_-][A-Za-z][A-Za-z0-9]*)*$',
-  ).hasMatch(value)) {
-    throw const CreateStorageException(
-      'Storage name must use letters and numbers separated by _ or -.',
-    );
-  }
-
-  final normalized = value.replaceAll('-', '_').toLowerCase();
-  if (dartKeywords.contains(normalized)) {
-    throw const CreateStorageException(
-      'Storage name must not be a Dart keyword.',
-    );
-  }
-  return normalized;
-}
-
-String _pascalCase(List<String> words) {
-  return words.map((word) => word[0].toUpperCase() + word.substring(1)).join();
-}
-
-String _humanize(List<String> words) {
-  return words
-      .map((word) => word[0].toUpperCase() + word.substring(1))
-      .join(' ');
-}
-
 String _storageContents(CreateStoragePlan plan) {
   return '''
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Secure key-value storage scoped to the '${plan.name}' namespace.
+/// Secure key-value local storage for the application.
 class ${plan.className} {
   const ${plan.className}();
 
   static const _storage = FlutterSecureStorage();
 
-  Future<String?> read(String key) => _storage.read(key: _namespaced(key));
+  Future<String?> read(String key) => _storage.read(key: key);
 
   Future<void> write(String key, String value) =>
-      _storage.write(key: _namespaced(key), value: value);
+      _storage.write(key: key, value: value);
 
-  Future<void> delete(String key) => _storage.delete(key: _namespaced(key));
+  Future<void> delete(String key) => _storage.delete(key: key);
 
-  Future<bool> containsKey(String key) =>
-      _storage.containsKey(key: _namespaced(key));
+  Future<bool> containsKey(String key) => _storage.containsKey(key: key);
 
-  Future<void> clear() async {
-    final all = await _storage.readAll();
-    for (final key in all.keys.where((key) => key.startsWith(_prefix))) {
-      await _storage.delete(key: key);
-    }
-  }
-
-  static const _prefix = '${plan.name}.';
-
-  String _namespaced(String key) => '\$_prefix\$key';
+  Future<void> clear() => _storage.deleteAll();
 }
 ''';
 }

@@ -447,9 +447,7 @@ where the flow needs each state.
 UI-12. Use direct action labels. Avoid vague labels such as Submit, Process, or
 Done.
 
-UI-13. Preserve bottom navigation state through the existing shell.
-
-UI-14. Do not introduce a new visual pattern when a shared project pattern
+UI-13. Do not introduce a new visual pattern when a shared project pattern
 covers the need.
 
 15. TESTING

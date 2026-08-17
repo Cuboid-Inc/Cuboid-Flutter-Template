@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cuboid/src/create/create_project.dart' show ProcessRunner;
 import 'package:cuboid/src/dialog/create_dialog.dart';
 import 'package:test/test.dart';
 
@@ -7,12 +8,23 @@ void main() {
   test('creates files and first-use Stacked registration', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    final service = CreateDialogService();
+    final calls = <List<Object?>>[];
+    final service = CreateDialogService(
+      processRunner: _recordingProcessRunner(calls),
+    );
 
     final result = await service.create(
       CreateDialogInput(name: 'confirm_delete', projectRoot: root),
     );
 
+    expect(calls, [
+      [
+        'dart',
+        ['run', 'build_runner', 'build', '-d'],
+        root.path,
+      ],
+    ]);
+    expect(result.buildRunnerResult?.exitCode, 0);
     expect(result.plan.name, 'confirm_delete');
     expect(result.plan.dialogClassName, 'ConfirmDeleteDialog');
     expect(result.plan.modelClassName, 'ConfirmDeleteDialogModel');
@@ -82,7 +94,7 @@ Future<void> main() async {
   setupDialogUi();
 }
 ''');
-    final service = CreateDialogService();
+    final service = CreateDialogService(processRunner: _successProcessRunner);
 
     await service.create(
       CreateDialogInput(name: 'confirm-delete', projectRoot: root),
@@ -101,6 +113,50 @@ Future<void> main() async {
     final main = _mainFile(root).readAsStringSync();
     expect("app/app.dialogs.dart';".allMatches(main), hasLength(1));
     expect('setupDialogUi();'.allMatches(main), hasLength(1));
+  });
+
+  test('reports a clear error and keeps the written files when build_runner '
+      'fails', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = CreateDialogService(
+      processRunner:
+          (executable, arguments, {required workingDirectory}) async =>
+              ProcessResult(0, 1, '', 'boom'),
+    );
+
+    await expectLater(
+      service.create(
+        CreateDialogInput(name: 'confirm_delete', projectRoot: root),
+      ),
+      throwsA(
+        isA<CreateDialogException>().having(
+          (error) => error.message,
+          'message',
+          allOf(
+            contains('dart run build_runner build -d failed'),
+            contains('boom'),
+            contains('Dialog Confirm Delete was created'),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      File(
+        '${root.path}/lib/shared/dialogs/confirm_delete/'
+        'confirm_delete_dialog.dart',
+      ).existsSync(),
+      isTrue,
+    );
+    expect(
+      _appFile(root).readAsStringSync(),
+      contains(
+        '    StackedDialog(\n'
+        '      classType: ConfirmDeleteDialog,\n'
+        '    ),',
+      ),
+    );
   });
 
   test('dry-run validates and writes nothing', () async {
@@ -380,6 +436,19 @@ $dialogs  dependencies: [
 )
 class App {}
 ''';
+}
+
+Future<ProcessResult> _successProcessRunner(
+  String executable,
+  List<String> arguments, {
+  required String workingDirectory,
+}) async => ProcessResult(0, 0, '', '');
+
+ProcessRunner _recordingProcessRunner(List<List<Object?>> calls) {
+  return (executable, arguments, {required workingDirectory}) async {
+    calls.add([executable, arguments, workingDirectory]);
+    return ProcessResult(0, 0, '', '');
+  };
 }
 
 File _appFile(Directory root) => File('${root.path}/lib/app/app.dart');

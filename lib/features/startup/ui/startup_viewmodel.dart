@@ -7,6 +7,6 @@ class StartupViewModel extends BaseViewModel {
   final _navigationService = locator<NavigationService>();
 
   Future<void> init() async {
-    await _navigationService.replaceWith(Routes.shellView);
+    await _navigationService.replaceWith(Routes.homeView);
   }
 }

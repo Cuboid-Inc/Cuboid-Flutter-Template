@@ -61,7 +61,88 @@ void main() {
       viewModel,
       contains('class ForgotPasswordViewModel extends BaseViewModel {}'),
     );
+
+    final app = File('${root.path}/lib/app/app.dart').readAsStringSync();
+    expect(
+      app,
+      contains(
+        "import 'package:test_app/features/auth/ui/forgot_password_view.dart';",
+      ),
+    );
+    expect(app, contains('MaterialRoute(page: ForgotPasswordView),'));
   });
+
+  test(
+    'creates a shared login view and viewmodel when no feature is given',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateViewService();
+
+      final result = await service.create(
+        CreateViewInput(name: 'login', projectRoot: root),
+      );
+
+      expect(result.plan.featureName, isNull);
+      expect(result.plan.isShared, isTrue);
+      expect(result.plan.name, 'login');
+      expect(result.plan.viewClassName, 'LoginView');
+      expect(result.plan.viewModelClassName, 'LoginViewModel');
+      expect(result.plan.files, [
+        'lib/shared/views/login_view.dart',
+        'lib/shared/views/login_viewmodel.dart',
+      ]);
+
+      final view = File(
+        '${root.path}/lib/shared/views/login_view.dart',
+      ).readAsStringSync();
+      final viewModel = File(
+        '${root.path}/lib/shared/views/login_viewmodel.dart',
+      ).readAsStringSync();
+
+      expect(
+        view,
+        contains(
+          "import 'package:test_app/shared/views/login_viewmodel.dart';",
+        ),
+      );
+      expect(
+        view,
+        contains('class LoginView extends StackedView<LoginViewModel>'),
+      );
+      expect(
+        viewModel,
+        contains('class LoginViewModel extends BaseViewModel {}'),
+      );
+
+      final app = File('${root.path}/lib/app/app.dart').readAsStringSync();
+      expect(
+        app,
+        contains("import 'package:test_app/shared/views/login_view.dart';"),
+      );
+      expect(app, contains('MaterialRoute(page: LoginView),'));
+
+      expect(
+        Directory('${root.path}/lib/features').existsSync() &&
+            Directory('${root.path}/lib/features/login').existsSync(),
+        isFalse,
+      );
+    },
+  );
+
+  test(
+    'does not require an existing feature directory for shared views',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateViewService();
+
+      await expectLater(
+        service.create(CreateViewInput(name: 'login', projectRoot: root)),
+        completes,
+      );
+    },
+  );
 
   test('normalizes mixed-case and hyphenated feature and view names', () async {
     final root = _projectRoot(feature: 'user_profile');
@@ -491,11 +572,61 @@ void main() {
 
     expect(unrelated.readAsStringSync(), 'keep\n');
     expect(_relativeFiles(root), [
+      'lib/app/app.dart',
       'lib/features/auth/keep.txt',
       'lib/features/auth/ui/login_view.dart',
       'lib/features/auth/ui/login_viewmodel.dart',
       'pubspec.yaml',
     ]);
+  });
+
+  test('rejects when lib/app/app.dart is missing', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    File('${root.path}/lib/app/app.dart').deleteSync();
+    final service = CreateViewService();
+
+    await expectLater(
+      service.create(
+        CreateViewInput(feature: 'auth', name: 'login', projectRoot: root),
+      ),
+      throwsA(
+        isA<CreateViewException>().having(
+          (error) => error.message,
+          'message',
+          'lib/app/app.dart was not found.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects a route that already exists for the view', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    File('${root.path}/lib/app/app.dart').writeAsStringSync('''
+import 'package:test_app/features/auth/ui/login_view.dart';
+// @stacked-import
+
+@StackedApp(
+  routes: [
+    MaterialRoute(page: LoginView),
+    // @stacked-route
+  ],
+)
+class App {}
+''');
+    final service = CreateViewService();
+
+    await expectLater(
+      service.create(
+        CreateViewInput(feature: 'auth', name: 'login', projectRoot: root),
+      ),
+      throwsA(isA<CreateViewException>()),
+    );
+    expect(
+      File('${root.path}/lib/features/auth/ui/login_view.dart').existsSync(),
+      isFalse,
+    );
   });
 
   test('cleans up partial first file when first final publish fails', () async {
@@ -540,11 +671,13 @@ void main() {
     );
   });
 
-  test('cleans up first file when second final publish fails', () async {
+  test('cleans up first file and leaves app.dart untouched when second final '
+      'publish fails', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final unrelated = File('${root.path}/lib/features/auth/keep.txt')
       ..writeAsStringSync('keep\n');
+    final beforeApp = File('${root.path}/lib/app/app.dart').readAsStringSync();
     var writes = 0;
     final service = CreateViewService(
       fileWriter: (file, contents) {
@@ -585,7 +718,22 @@ void main() {
       Directory('${root.path}/lib/features/auth/ui').existsSync(),
       isFalse,
     );
+    expect(File('${root.path}/lib/app/app.dart').readAsStringSync(), beforeApp);
   });
+}
+
+String _appContents() {
+  return '''
+import 'package:stacked/stacked_annotations.dart';
+// @stacked-import
+
+@StackedApp(
+  routes: [
+    // @stacked-route
+  ],
+)
+class App {}
+''';
 }
 
 Directory _projectRoot({
@@ -595,6 +743,9 @@ Directory _projectRoot({
   final root = Directory.systemTemp.createTempSync('cuboid_view_test_');
   File('${root.path}/pubspec.yaml').writeAsStringSync(pubspec);
   Directory('${root.path}/lib/features/$feature').createSync(recursive: true);
+  File('${root.path}/lib/app/app.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync(_appContents());
   return root;
 }
 

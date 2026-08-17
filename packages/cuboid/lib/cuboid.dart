@@ -62,21 +62,6 @@ export 'src/model/create_model.dart'
         CreateModelResult,
         CreateModelService,
         ModelFileWriter;
-export 'src/repository/create_repository.dart'
-    show
-        CreateRepositoryException,
-        CreateRepositoryInput,
-        CreateRepositoryPlan,
-        CreateRepositoryResult,
-        CreateRepositoryService,
-        RepositoryFileWriter;
-export 'src/route/register_route.dart'
-    show
-        RegisterRouteException,
-        RegisterRouteInput,
-        RegisterRoutePlan,
-        RegisterRouteResult,
-        RegisterRouteService;
 export 'src/service/register_service.dart'
     show
         RegisterServiceException,
