@@ -10,8 +10,9 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
-  # Stacked generates app.*.dart files from lib/app/app.dart. Keep source
-  # analysis strict while ignoring generator-specific naming conventions.
+  # The Cuboid CLI patches app.*.dart files directly (locator, router, and
+  # optional bottom sheet/dialog registries). Keep source analysis strict
+  # while ignoring these CLI-maintained registration files.
   exclude:
     - lib/app/app.*.dart
     - packages/cuboid/**

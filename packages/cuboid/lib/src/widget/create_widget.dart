@@ -13,8 +13,8 @@ class CreateWidgetInput {
   });
 
   /// The widget name. When [feature] is null, the widget is shared
-  /// (lib/shared/widgets/); otherwise it is scoped to that feature
-  /// (`lib/features/<feature>/ui/widgets/`).
+  /// (`lib/shared/widgets/<name>/`); otherwise it is scoped to that feature
+  /// (`lib/features/<feature>/ui/widgets/<name>/`).
   final String name;
   final String? feature;
   final Directory? projectRoot;
@@ -75,28 +75,29 @@ class CreateWidgetService {
     final packageName = _readPackageName(projectRoot);
 
     if (input.feature == null) {
+      final directoryPath = 'lib/shared/widgets/$widgetName';
       return CreateWidgetPlan(
         name: widgetName,
         feature: null,
         packageName: packageName,
         className: _pascalCase(words),
         viewModelClassName: '${_pascalCase(words)}ViewModel',
-        path: 'lib/shared/widgets/$widgetName.dart',
-        viewModelPath: 'lib/shared/widgets/${widgetName}_viewmodel.dart',
+        path: '$directoryPath/${widgetName}_widget.dart',
+        viewModelPath: '$directoryPath/${widgetName}_view_model.dart',
         dryRun: input.dryRun,
       );
     }
 
     final featureName = _normalizeName(input.feature!, label: 'Feature');
+    final directoryPath = 'lib/features/$featureName/ui/widgets/$widgetName';
     return CreateWidgetPlan(
       name: widgetName,
       feature: featureName,
       packageName: packageName,
       className: _pascalCase(words),
       viewModelClassName: '${_pascalCase(words)}ViewModel',
-      path: 'lib/features/$featureName/ui/widgets/$widgetName.dart',
-      viewModelPath:
-          'lib/features/$featureName/ui/widgets/${widgetName}_viewmodel.dart',
+      path: '$directoryPath/${widgetName}_widget.dart',
+      viewModelPath: '$directoryPath/${widgetName}_view_model.dart',
       dryRun: input.dryRun,
     );
   }
@@ -171,23 +172,26 @@ void _validateNoAncestorSymlinks(Directory projectRoot, CreateWidgetPlan plan) {
   final lib = Directory('${projectRoot.path}${Platform.pathSeparator}lib');
   final directories = <Directory>[lib];
   if (plan.isShared) {
-    directories.add(Directory('${lib.path}${Platform.pathSeparator}shared'));
-    directories.add(
-      Directory(
-        '${lib.path}${Platform.pathSeparator}shared${Platform.pathSeparator}widgets',
-      ),
-    );
+    final shared = Directory('${lib.path}${Platform.pathSeparator}shared');
+    final widgets = Directory('${shared.path}${Platform.pathSeparator}widgets');
+    directories.addAll([
+      shared,
+      widgets,
+      Directory('${widgets.path}${Platform.pathSeparator}${plan.name}'),
+    ]);
   } else {
     final features = Directory('${lib.path}${Platform.pathSeparator}features');
     final feature = Directory(
       '${features.path}${Platform.pathSeparator}${plan.feature}',
     );
     final ui = Directory('${feature.path}${Platform.pathSeparator}ui');
+    final widgets = Directory('${ui.path}${Platform.pathSeparator}widgets');
     directories.addAll([
       features,
       feature,
       ui,
-      Directory('${ui.path}${Platform.pathSeparator}widgets'),
+      widgets,
+      Directory('${widgets.path}${Platform.pathSeparator}${plan.name}'),
     ]);
   }
 
@@ -352,14 +356,15 @@ String _pascalCase(List<String> words) {
 
 String _widgetContents(CreateWidgetPlan plan) {
   final viewModelImportPath = plan.isShared
-      ? 'shared/widgets/${plan.name}_viewmodel.dart'
-      : 'features/${plan.feature}/ui/widgets/${plan.name}_viewmodel.dart';
+      ? 'shared/widgets/${plan.name}/${plan.name}_view_model.dart'
+      : 'features/${plan.feature}/ui/widgets/${plan.name}/'
+            '${plan.name}_view_model.dart';
   return '''
+import 'package:${plan.packageName}/core/mvvm/cuboid_view.dart';
 import 'package:${plan.packageName}/$viewModelImportPath';
 import 'package:flutter/material.dart';
-import 'package:stacked/stacked.dart';
 
-class ${plan.className} extends StackedView<${plan.viewModelClassName}> {
+class ${plan.className} extends CuboidView<${plan.viewModelClassName}> {
   const ${plan.className}({super.key});
 
   @override
@@ -380,8 +385,8 @@ class ${plan.className} extends StackedView<${plan.viewModelClassName}> {
 
 String _viewModelContents(CreateWidgetPlan plan) {
   return '''
-import 'package:stacked/stacked.dart';
+import 'package:${plan.packageName}/core/mvvm/cuboid_view_model.dart';
 
-class ${plan.viewModelClassName} extends BaseViewModel {}
+class ${plan.viewModelClassName} extends CuboidViewModel {}
 ''';
 }

@@ -92,10 +92,11 @@ class CreateDatabaseService {
       repositoryPath: 'lib/supabase/example_repository.dart',
       migrationPath:
           'supabase/migrations/${_migrationTimestamp(timestamp)}_create_examples.sql',
-      appPath: 'lib/app/app.dart',
+      appPath: 'lib/app/app.locator.dart',
       repositoryImportLine:
           "import 'package:$packageName/supabase/example_repository.dart';",
-      repositoryLine: '    LazySingleton(classType: ExampleRepository),',
+      repositoryLine:
+          '  locator.registerLazySingleton<ExampleRepository>(() => const ExampleRepository());',
       dryRun: input.dryRun,
     );
   }
@@ -213,8 +214,8 @@ String _validateApp(CreateDatabasePlan plan, File appFile) {
   _ensureRegularFile(appFile.path, plan.appPath);
   final contents = _readFile(appFile, plan.appPath);
 
-  _requireSingleMarker(contents, '// @stacked-import');
-  _requireSingleMarker(contents, '// @stacked-service');
+  _requireSingleMarker(contents, '// @cuboid-import');
+  _requireSingleMarker(contents, '// @cuboid-service');
   if (_hasMatchingImport(contents, plan)) {
     throw CreateDatabaseException(
       'Repository import already exists for ${plan.repositoryClassName}.',
@@ -366,7 +367,7 @@ List<String> _repositoryImports(String contents) {
 
 bool _hasRepositoryRegistration(String contents, CreateDatabasePlan plan) {
   final pattern = RegExp(
-    r'classType\s*:\s*' + RegExp.escape(plan.repositoryClassName) + r'\b',
+    r'register\w*\s*<\s*' + RegExp.escape(plan.repositoryClassName) + r'\s*>',
   );
   return pattern.hasMatch(contents);
 }
@@ -375,12 +376,12 @@ String _applyAppPlan(String contents, CreateDatabasePlan plan) {
   final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
   return contents
       .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-import', multiLine: true),
-        '${plan.repositoryImportLine}$lineEnding// @stacked-import',
+        RegExp(r'^[ \t]*// @cuboid-import', multiLine: true),
+        '${plan.repositoryImportLine}$lineEnding// @cuboid-import',
       )
       .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-service', multiLine: true),
-        '${plan.repositoryLine}$lineEnding    // @stacked-service',
+        RegExp(r'^[ \t]*// @cuboid-service', multiLine: true),
+        '${plan.repositoryLine}$lineEnding  // @cuboid-service',
       );
 }
 
@@ -599,7 +600,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///
 /// Replace this with your own domain repository once you introduce real
 /// persistent data; this exists as a working starting point wired to
-/// `Result<T>`, guard(), and the Stacked locator.
+/// `Result<T>`, guard(), and the Cuboid locator.
 class ${plan.repositoryClassName} {
   const ${plan.repositoryClassName}();
 

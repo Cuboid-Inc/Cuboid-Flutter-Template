@@ -1,6 +1,6 @@
 import 'package:cuboid_flutter_template/app/app.locator.dart';
+import 'package:cuboid_flutter_template/core/services/navigation_service.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:stacked_services/stacked_services.dart';
 
 class MockNavigationService extends Mock implements NavigationService {}
 

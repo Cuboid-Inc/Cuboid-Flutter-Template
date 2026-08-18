@@ -1,8 +1,8 @@
+import 'package:cuboid_flutter_template/core/mvvm/cuboid_view.dart';
 import 'package:cuboid_flutter_template/features/home/ui/home_viewmodel.dart';
 import 'package:flutter/material.dart';
-import 'package:stacked/stacked.dart';
 
-class HomeView extends StackedView<HomeViewModel> {
+class HomeView extends CuboidView<HomeViewModel> {
   const HomeView({super.key});
 
   @override

@@ -27,9 +27,9 @@ class CreateFeaturePlan {
     required this.repositoryClassName,
     required this.featureDirectory,
     required this.files,
-    required this.appPath,
-    required this.routeImportLine,
-    required this.routeLine,
+    required this.locatorPath,
+    required this.routerPath,
+    required this.routeRegistration,
     required this.repositoryImportLine,
     required this.repositoryLine,
     required this.dryRun,
@@ -43,9 +43,9 @@ class CreateFeaturePlan {
   final String repositoryClassName;
   final Directory featureDirectory;
   final List<String> files;
-  final String appPath;
-  final String routeImportLine;
-  final String routeLine;
+  final String locatorPath;
+  final String routerPath;
+  final RouteRegistration routeRegistration;
   final String repositoryImportLine;
   final String repositoryLine;
   final bool dryRun;
@@ -103,12 +103,13 @@ class CreateFeatureService {
       repositoryClassName: repositoryClassName,
       featureDirectory: featureDirectory,
       files: [viewPath, viewModelPath, repositoryPath],
-      appPath: 'lib/app/app.dart',
-      routeImportLine: routeRegistration.importLine,
-      routeLine: routeRegistration.routeLine,
+      locatorPath: 'lib/app/app.locator.dart',
+      routerPath: 'lib/app/app.router.dart',
+      routeRegistration: routeRegistration,
       repositoryImportLine:
           "import 'package:$packageName/features/$featureName/data/${featureName}_repository.dart';",
-      repositoryLine: '    LazySingleton(classType: $repositoryClassName),',
+      repositoryLine:
+          '  locator.registerLazySingleton<$repositoryClassName>(() => const $repositoryClassName());',
       dryRun: input.dryRun,
     );
   }
@@ -118,9 +119,15 @@ class CreateFeatureService {
     _validateTargets(createPlan);
 
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
-    final appFile = _targetFile(projectRoot, createPlan.appPath);
-    final appContents = _validateApp(createPlan, appFile);
-    final nextAppContents = _applyAppPlan(appContents, createPlan);
+    final routerFile = _targetFile(projectRoot, createPlan.routerPath);
+    final locatorFile = _targetFile(projectRoot, createPlan.locatorPath);
+    final routerContents = _validateRouter(createPlan, routerFile);
+    final locatorContents = _validateLocator(createPlan, locatorFile);
+    final nextRouterContents = applyRouteRegistration(
+      routerContents,
+      createPlan.routeRegistration,
+    );
+    final nextLocatorContents = _applyLocatorPlan(locatorContents, createPlan);
 
     if (createPlan.dryRun) {
       return CreateFeatureResult(plan: createPlan);
@@ -153,12 +160,24 @@ class CreateFeatureService {
         _fileWriter(stagedFile.file, stagedFile.contents);
         createdFiles.add(stagedFile.file);
       }
-      _replaceFileContents(appFile, nextAppContents, label: createPlan.appPath);
+      _replaceFileContents(
+        routerFile,
+        nextRouterContents,
+        label: createPlan.routerPath,
+      );
+      _replaceFileContents(
+        locatorFile,
+        nextLocatorContents,
+        label: createPlan.locatorPath,
+      );
     } on FileSystemException catch (error) {
       _rollback(
         createdFiles,
         createdDirectories,
-        restoredFiles: {appFile: appContents},
+        restoredFiles: {
+          routerFile: routerContents,
+          locatorFile: locatorContents,
+        },
       );
       throw CreateFeatureException(
         'Unable to create feature ${createPlan.displayName}: ${error.message}',
@@ -167,7 +186,10 @@ class CreateFeatureService {
       _rollback(
         createdFiles,
         createdDirectories,
-        restoredFiles: {appFile: appContents},
+        restoredFiles: {
+          routerFile: routerContents,
+          locatorFile: locatorContents,
+        },
       );
       throw CreateFeatureException(
         'Unable to create feature ${createPlan.displayName}: $error',
@@ -200,29 +222,32 @@ void _validateTargets(CreateFeaturePlan plan) {
   }
 }
 
-String _validateApp(CreateFeaturePlan plan, File appFile) {
-  _ensureRegularFile(appFile.path, plan.appPath);
-  final contents = _readFile(appFile, plan.appPath);
+String _validateRouter(CreateFeaturePlan plan, File routerFile) {
+  _ensureRegularFile(routerFile.path, plan.routerPath);
+  final contents = _readFile(routerFile, plan.routerPath);
 
-  final routeRegistration = RouteRegistration(
-    viewClassName: plan.viewClassName,
-    importLine: plan.routeImportLine,
-    routeLine: plan.routeLine,
-  );
   try {
-    validateRouteRegistration(contents, routeRegistration);
+    validateRouteRegistration(contents, plan.routeRegistration);
   } on RouteRegistrationException catch (error) {
     throw CreateFeatureException(error.message);
   }
 
-  _requireSingleMarker(contents, '// @stacked-service');
+  return contents;
+}
+
+String _validateLocator(CreateFeaturePlan plan, File locatorFile) {
+  _ensureRegularFile(locatorFile.path, plan.locatorPath);
+  final contents = _readFile(locatorFile, plan.locatorPath);
+
+  _requireSingleMarker(contents, '// @cuboid-import');
+  _requireSingleMarker(contents, '// @cuboid-service');
   if (contents.contains(plan.repositoryImportLine)) {
     throw CreateFeatureException(
       'Repository import already exists for ${plan.repositoryClassName}.',
     );
   }
   if (RegExp(
-    r'classType\s*:\s*' + RegExp.escape(plan.repositoryClassName) + r'\b',
+    r'register\w*\s*<\s*' + RegExp.escape(plan.repositoryClassName) + r'\s*>',
   ).hasMatch(contents)) {
     throw CreateFeatureException(
       'Repository already exists for ${plan.repositoryClassName}.',
@@ -232,23 +257,16 @@ String _validateApp(CreateFeaturePlan plan, File appFile) {
   return contents;
 }
 
-String _applyAppPlan(String contents, CreateFeaturePlan plan) {
-  final routeRegistration = RouteRegistration(
-    viewClassName: plan.viewClassName,
-    importLine: plan.routeImportLine,
-    routeLine: plan.routeLine,
-  );
-  final withRoute = applyRouteRegistration(contents, routeRegistration);
-
-  final lineEnding = withRoute.contains('\r\n') ? '\r\n' : '\n';
-  return withRoute
+String _applyLocatorPlan(String contents, CreateFeaturePlan plan) {
+  final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
+  return contents
       .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-import', multiLine: true),
-        '${plan.repositoryImportLine}$lineEnding// @stacked-import',
+        RegExp(r'^[ \t]*// @cuboid-import', multiLine: true),
+        '${plan.repositoryImportLine}$lineEnding// @cuboid-import',
       )
       .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-service', multiLine: true),
-        '${plan.repositoryLine}$lineEnding    // @stacked-service',
+        RegExp(r'^[ \t]*// @cuboid-service', multiLine: true),
+        '${plan.repositoryLine}$lineEnding  // @cuboid-service',
       );
 }
 
@@ -464,11 +482,11 @@ String _humanize(List<String> words) {
 String _viewContents(CreateFeaturePlan plan) {
   final importName = plan.name;
   return '''
+import 'package:${plan.packageName}/core/mvvm/cuboid_view.dart';
 import 'package:${plan.packageName}/features/$importName/ui/${importName}_viewmodel.dart';
 import 'package:flutter/material.dart';
-import 'package:stacked/stacked.dart';
 
-class ${plan.viewClassName} extends StackedView<${plan.viewModelClassName}> {
+class ${plan.viewClassName} extends CuboidView<${plan.viewModelClassName}> {
   const ${plan.viewClassName}({super.key});
 
   @override
@@ -492,9 +510,9 @@ class ${plan.viewClassName} extends StackedView<${plan.viewModelClassName}> {
 
 String _viewModelContents(CreateFeaturePlan plan) {
   return '''
-import 'package:stacked/stacked.dart';
+import 'package:${plan.packageName}/core/mvvm/cuboid_view_model.dart';
 
-class ${plan.viewModelClassName} extends BaseViewModel {}
+class ${plan.viewModelClassName} extends CuboidViewModel {}
 ''';
 }
 

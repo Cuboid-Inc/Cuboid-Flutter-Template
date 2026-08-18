@@ -4,7 +4,7 @@ import 'package:cuboid/src/feature/create_feature.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('creates an auth feature with Stacked view and viewmodel', () async {
+  test('creates an auth feature with a Cuboid view and viewmodel', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final service = CreateFeatureService();
@@ -33,14 +33,17 @@ void main() {
         "import 'package:test_app/features/auth/ui/auth_viewmodel.dart';",
       ),
     );
-    expect(view, contains('class AuthView extends StackedView<AuthViewModel>'));
+    expect(view, contains('class AuthView extends CuboidView<AuthViewModel>'));
     expect(
       view,
       contains('AuthViewModel viewModelBuilder(BuildContext context)'),
     );
     expect(view, contains("AppBar(title: const Text('Auth'))"));
     expect(view, contains("body: const Center(child: Text('Auth'))"));
-    expect(viewModel, contains('class AuthViewModel extends BaseViewModel {}'));
+    expect(
+      viewModel,
+      contains('class AuthViewModel extends CuboidViewModel {}'),
+    );
   });
 
   test(
@@ -61,31 +64,40 @@ void main() {
       expect(repository, contains('class AuthRepository {'));
       expect(repository, contains('const AuthRepository();'));
 
-      final app = File('${root.path}/lib/app/app.dart').readAsStringSync();
+      final locator = _locatorFile(root).readAsStringSync();
       expect(
-        app,
+        locator,
         contains(
           "import 'package:test_app/features/auth/data/auth_repository.dart';",
         ),
       );
-      expect(app, contains('LazySingleton(classType: AuthRepository),'));
+      expect(
+        locator,
+        contains(
+          '  locator.registerLazySingleton<AuthRepository>(() => const AuthRepository());',
+        ),
+      );
     },
   );
 
-  test('registers the feature view as a route in lib/app/app.dart', () async {
-    final root = _projectRoot();
-    addTearDown(() => root.deleteSync(recursive: true));
-    final service = CreateFeatureService();
+  test(
+    'registers the feature view as a route in lib/app/app.router.dart',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateFeatureService();
 
-    await service.create(CreateFeatureInput(name: 'auth', projectRoot: root));
+      await service.create(CreateFeatureInput(name: 'auth', projectRoot: root));
 
-    final app = File('${root.path}/lib/app/app.dart').readAsStringSync();
-    expect(
-      app,
-      contains("import 'package:test_app/features/auth/ui/auth_view.dart';"),
-    );
-    expect(app, contains('MaterialRoute(page: AuthView),'));
-  });
+      final router = _routerFile(root).readAsStringSync();
+      expect(
+        router,
+        contains("import 'package:test_app/features/auth/ui/auth_view.dart';"),
+      );
+      expect(router, contains("static const authView = '/auth-view';"));
+      expect(router, contains('Routes.authView: (_) => const AuthView(),'));
+    },
+  );
 
   test('creates a user_profile feature with PascalCase class names', () async {
     final root = _projectRoot();
@@ -109,15 +121,21 @@ void main() {
     expect(
       view,
       contains(
-        'class UserProfileView extends StackedView<UserProfileViewModel>',
+        'class UserProfileView extends CuboidView<UserProfileViewModel>',
       ),
     );
     expect(view, contains("AppBar(title: const Text('User Profile'))"));
     expect(
       viewModel,
-      contains('class UserProfileViewModel extends BaseViewModel {}'),
+      contains('class UserProfileViewModel extends CuboidViewModel {}'),
     );
     expect(repository, contains('class UserProfileRepository {'));
+
+    final router = _routerFile(root).readAsStringSync();
+    expect(
+      router,
+      contains("static const userProfileView = '/user-profile-view';"),
+    );
   });
 
   test('normalizes hyphenated feature names to lower snake case', () async {
@@ -192,10 +210,8 @@ void main() {
         'lib/features/auth/data/auth_repository.dart',
       ]);
       expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
-      expect(
-        File('${root.path}/lib/app/app.dart').readAsStringSync(),
-        _appContents(),
-      );
+      expect(_routerFile(root).readAsStringSync(), _routerContents());
+      expect(_locatorFile(root).readAsStringSync(), _locatorContents());
     },
   );
 
@@ -322,10 +338,10 @@ void main() {
     expect(target.readAsStringSync(), 'keep\n');
   });
 
-  test('rejects when lib/app/app.dart is missing', () async {
+  test('rejects when lib/app/app.router.dart is missing', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    File('${root.path}/lib/app/app.dart').deleteSync();
+    _routerFile(root).deleteSync();
     final service = CreateFeatureService();
 
     await expectLater(
@@ -334,74 +350,103 @@ void main() {
         isA<CreateFeatureException>().having(
           (error) => error.message,
           'message',
-          'lib/app/app.dart was not found.',
+          'lib/app/app.router.dart was not found.',
         ),
       ),
     );
   });
 
-  test(
-    'creates no files and leaves app.dart untouched when a later write fails',
-    () async {
-      final root = _projectRoot();
-      addTearDown(() => root.deleteSync(recursive: true));
-      final beforeApp = File(
-        '${root.path}/lib/app/app.dart',
-      ).readAsStringSync();
-      var writes = 0;
-      final service = CreateFeatureService(
-        fileWriter: (file, contents) {
-          writes += 1;
-          if (writes == 2) {
-            throw const FileSystemException('simulated write failure');
-          }
-          file.writeAsStringSync(contents);
-        },
-      );
+  test('rejects when lib/app/app.locator.dart is missing', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    _locatorFile(root).deleteSync();
+    final service = CreateFeatureService();
 
-      await expectLater(
-        service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
-        throwsA(
-          isA<CreateFeatureException>().having(
-            (error) => error.message,
-            'message',
-            contains('Unable to create feature Auth'),
-          ),
+    await expectLater(
+      service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
+      throwsA(
+        isA<CreateFeatureException>().having(
+          (error) => error.message,
+          'message',
+          'lib/app/app.locator.dart was not found.',
         ),
-      );
+      ),
+    );
+  });
 
-      expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
-      expect(
-        File('${root.path}/lib/app/app.dart').readAsStringSync(),
-        beforeApp,
-      );
-    },
-  );
+  test('creates no files and leaves the router and locator untouched when a '
+      'later write fails', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final beforeRouter = _routerFile(root).readAsStringSync();
+    final beforeLocator = _locatorFile(root).readAsStringSync();
+    var writes = 0;
+    final service = CreateFeatureService(
+      fileWriter: (file, contents) {
+        writes += 1;
+        if (writes == 2) {
+          throw const FileSystemException('simulated write failure');
+        }
+        file.writeAsStringSync(contents);
+      },
+    );
+
+    await expectLater(
+      service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
+      throwsA(
+        isA<CreateFeatureException>().having(
+          (error) => error.message,
+          'message',
+          contains('Unable to create feature Auth'),
+        ),
+      ),
+    );
+
+    expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
+    expect(_routerFile(root).readAsStringSync(), beforeRouter);
+    expect(_locatorFile(root).readAsStringSync(), beforeLocator);
+  });
 }
 
-String _appContents() {
+String _routerContents() {
   return '''
-import 'package:stacked/stacked_annotations.dart';
-// @stacked-import
+// @cuboid-import
 
-@StackedApp(
-  routes: [
-    // @stacked-route
-  ],
-  dependencies: [
-    // @stacked-service
-  ],
-)
-class App {}
+class Routes {
+  // @cuboid-route-const
+}
+
+final Map<String, WidgetBuilder> appRoutes = {
+  // @cuboid-route
+};
 ''';
 }
+
+String _locatorContents() {
+  return '''
+// @cuboid-import
+
+final locator = GetIt.instance;
+
+Future<void> setupLocator() async {
+  // @cuboid-service
+}
+''';
+}
+
+File _routerFile(Directory root) =>
+    File('${root.path}/lib/app/app.router.dart');
+
+File _locatorFile(Directory root) =>
+    File('${root.path}/lib/app/app.locator.dart');
 
 Directory _projectRoot({String pubspec = 'name: test_app\n'}) {
   final root = Directory.systemTemp.createTempSync('cuboid_feature_test_');
   File('${root.path}/pubspec.yaml').writeAsStringSync(pubspec);
   Directory('${root.path}/lib/features').createSync(recursive: true);
-  File('${root.path}/lib/app/app.dart')
+  _routerFile(root)
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync(_appContents());
+    ..writeAsStringSync(_routerContents());
+  _locatorFile(root).writeAsStringSync(_locatorContents());
   return root;
 }

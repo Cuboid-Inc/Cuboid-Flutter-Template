@@ -176,7 +176,7 @@ class CreateCommand extends Command<int> {
       ..addFlag(
         'post-steps',
         defaultsTo: true,
-        help: 'Run flutter pub get, build_runner, and dart format.',
+        help: 'Run flutter pub get and dart format.',
       );
   }
 
@@ -666,15 +666,15 @@ void writeFeatureResult(IOSink stdout, CreateFeatureResult result) {
   for (final file in plan.files) {
     stdout.writeln('- $file');
   }
-  stdout.writeln('- ${plan.appPath}');
+  stdout.writeln('- ${plan.routerPath}');
+  stdout.writeln('- ${plan.locatorPath}');
   if (plan.dryRun) {
     stdout.writeln('Planned changes:');
-    stdout.writeln('- ${plan.routeImportLine}');
-    stdout.writeln('- ${plan.routeLine.trim()}');
+    stdout.writeln('- ${plan.routeRegistration.importLine}');
+    stdout.writeln('- ${plan.routeRegistration.routeConstLine}');
+    stdout.writeln('- ${plan.routeRegistration.routeMapLine}');
     stdout.writeln('- ${plan.repositoryImportLine}');
     stdout.writeln('- ${plan.repositoryLine.trim()}');
-  } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 
@@ -694,8 +694,6 @@ void writeCreatedServiceResult(IOSink stdout, RegisterServiceResult result) {
     stdout.writeln('- class ${plan.serviceClassName} {}');
     stdout.writeln('- ${plan.importLine}');
     stdout.writeln('- ${plan.serviceLine.trim()}');
-  } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 
@@ -710,17 +708,16 @@ void writeBottomSheetResult(IOSink stdout, CreateBottomSheetResult result) {
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.sheetPath}');
   stdout.writeln('- ${plan.modelPath}');
-  stdout.writeln('- ${plan.appPath}');
-  stdout.writeln('- ${plan.mainPath}');
+  stdout.writeln('- ${plan.bottomSheetsPath}');
+  stdout.writeln('- ${plan.bottomSheetServicePath} (first use only)');
+  stdout.writeln('- ${plan.locatorPath} (first use only)');
   if (plan.dryRun) {
     stdout.writeln('Planned changes:');
     stdout.writeln('- ${plan.sheetImportLine}');
-    stdout.writeln('- ${plan.bottomSheetLine.trim()}');
+    stdout.writeln('- ${plan.modelImportLine}');
+    stdout.writeln('- ${plan.bottomSheetEntryLine}');
+    stdout.writeln('- ${plan.serviceImportLine}');
     stdout.writeln('- ${plan.serviceLine.trim()}');
-    stdout.writeln('- ${plan.bottomSheetsImportLine}');
-    stdout.writeln('- ${plan.setupLine.trim()}');
-  } else {
-    stdout.writeln('Ran dart run build_runner build -d.');
   }
 }
 
@@ -735,17 +732,16 @@ void writeDialogResult(IOSink stdout, CreateDialogResult result) {
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.dialogPath}');
   stdout.writeln('- ${plan.modelPath}');
-  stdout.writeln('- ${plan.appPath}');
-  stdout.writeln('- ${plan.mainPath}');
+  stdout.writeln('- ${plan.dialogsPath}');
+  stdout.writeln('- ${plan.dialogServicePath} (first use only)');
+  stdout.writeln('- ${plan.locatorPath} (first use only)');
   if (plan.dryRun) {
     stdout.writeln('Planned changes:');
     stdout.writeln('- ${plan.dialogImportLine}');
-    stdout.writeln('- ${plan.dialogLine.trim()}');
+    stdout.writeln('- ${plan.modelImportLine}');
+    stdout.writeln('- ${plan.dialogEntryLine}');
+    stdout.writeln('- ${plan.serviceImportLine}');
     stdout.writeln('- ${plan.serviceLine.trim()}');
-    stdout.writeln('- ${plan.dialogsImportLine}');
-    stdout.writeln('- ${plan.setupLine.trim()}');
-  } else {
-    stdout.writeln('Ran dart run build_runner build -d.');
   }
 }
 
@@ -781,7 +777,6 @@ void writeDatabaseResult(IOSink stdout, CreateDatabaseResult result) {
   } else {
     stdout.writeln('Next steps:');
     stdout.writeln('- flutter pub get');
-    stdout.writeln('- dart run build_runner build -d');
     stdout.writeln(
       '- supabase db push (or `supabase migration up` for local dev)',
     );
@@ -803,13 +798,12 @@ void writeViewResult(IOSink stdout, CreateViewResult result) {
   for (final file in plan.files) {
     stdout.writeln('- $file');
   }
-  stdout.writeln('- ${plan.appPath}');
+  stdout.writeln('- ${plan.routerPath}');
   if (plan.dryRun) {
     stdout.writeln('Planned changes:');
-    stdout.writeln('- ${plan.routeImportLine}');
-    stdout.writeln('- ${plan.routeLine.trim()}');
-  } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
+    stdout.writeln('- ${plan.routeRegistration.importLine}');
+    stdout.writeln('- ${plan.routeRegistration.routeConstLine}');
+    stdout.writeln('- ${plan.routeRegistration.routeMapLine}');
   }
 }
 
@@ -865,7 +859,7 @@ class ViewCommand extends Command<int> {
 
   @override
   String get description =>
-      'Create an additional Stacked View inside an existing feature.';
+      'Create an additional Cuboid View inside an existing feature.';
 
   @override
   String get invocation => 'cuboid view [options] <name> <feature>';
@@ -906,13 +900,12 @@ class ViewCommand extends Command<int> {
     for (final file in plan.files) {
       _stdout.writeln('- $file');
     }
-    _stdout.writeln('- ${plan.appPath}');
+    _stdout.writeln('- ${plan.routerPath}');
     if (plan.dryRun) {
       _stdout.writeln('Planned changes:');
-      _stdout.writeln('- ${plan.routeImportLine}');
-      _stdout.writeln('- ${plan.routeLine.trim()}');
-    } else {
-      _stdout.writeln('Next step: dart run build_runner build -d');
+      _stdout.writeln('- ${plan.routeRegistration.importLine}');
+      _stdout.writeln('- ${plan.routeRegistration.routeConstLine}');
+      _stdout.writeln('- ${plan.routeRegistration.routeMapLine}');
     }
   }
 }
@@ -982,8 +975,6 @@ class ServiceCommand extends Command<int> {
       _stdout.writeln('Planned changes:');
       _stdout.writeln('- ${plan.importLine}');
       _stdout.writeln('- ${plan.serviceLine.trim()}');
-    } else {
-      _stdout.writeln('Next step: dart run build_runner build -d');
     }
   }
 }

@@ -1,8 +1,8 @@
 {
   "template_name": "cuboid_flutter_app",
   "template_version": 1,
-  "source_commit": "59284ae5620500168d0689e72958dc4d610bca12",
-  "archive_sha256": "4fe19d90921725e4703d55b8c7f118e25cca0de7c1668645083761854a093092",
+  "source_commit": "61afbfbcf194bcccfb1fdf5e66a3ef26c53d1678",
+  "archive_sha256": "61cbe1edc673a4923bdb282daef90ca26a6f7047c7f6ad3ae098a4ee9dfdbd61",
   "files": [
     {
       "path": ".gitignore",
@@ -16,23 +16,23 @@
     },
     {
       "path": "ARCHITECTURE.md",
-      "size": 22361,
-      "sha256": "af1d13d57e834d3c99dd0b03e318ae96e64a25dd556e9bccda0fef87ac0aeb6d"
+      "size": 24168,
+      "sha256": "ec265cd5dc7583fc9d7ef72264017afc9be9d4b7d190a9fbd058f31aa1622bf7"
     },
     {
       "path": "README.md",
-      "size": 6305,
-      "sha256": "18d43c79fd2d2058f1672e15b1a09854279d988fe40c09676a24eab6e8ef7366"
+      "size": 6106,
+      "sha256": "f52caa3658739aff3171cd73830b8c32048e8aac15f707f2f648729d56874c3c"
     },
     {
       "path": "RULES.md",
-      "size": 20678,
-      "sha256": "54789d9834881c6d750c261c0d6fce549feb2d4415022a4123f981f87746ad7a"
+      "size": 20922,
+      "sha256": "876c0ba17d99bb248054137899117be642ebf9dcbdc280dd2ff88fb05528a224"
     },
     {
       "path": "analysis_options.yaml",
-      "size": 1640,
-      "sha256": "abfd98725bfc6c872bf7b12cc25a6f640bcf7d965c505a5f8ba2ad9b9d3e10b6"
+      "size": 1701,
+      "sha256": "549ab25630a157e35a26f980059c4205354d0816c467f71e4d4144055a76635f"
     },
     {
       "path": "android/.gitignore",
@@ -510,29 +510,24 @@
       "sha256": "5e8f4908dacea6f29b2a790e4d38bf5fded69096063f9a27a2f21584d62b30c0"
     },
     {
-      "path": "lib/app/app.dart",
-      "size": 586,
-      "sha256": "659e73d61d18dd6adb52e823586419e2c7579549dc6124be87fccd98b31958dc"
-    },
-    {
       "path": "lib/app/app.locator.dart",
-      "size": 847,
-      "sha256": "534e547ea6fbbb0d47b2918a6d0a72cf12d3e5b26d959953086cb36c78670498"
+      "size": 307,
+      "sha256": "9cc795eeaa3d27836f7b0945d1211fdd7c3a6f2eae99911bdc07f724bcbde24f"
     },
     {
       "path": "lib/app/app.logger.dart",
-      "size": 5179,
-      "sha256": "1217666c8ffc9189c08c381edbef86c0e37ed635cb75f16ede1351f75be13239"
+      "size": 5119,
+      "sha256": "0697ba8514a5ae46d97207abe5241575044944a2b55eea409cd70bbd7fad29c6"
     },
     {
       "path": "lib/app/app.router.dart",
-      "size": 4618,
-      "sha256": "b9496a4b4585679dc0e0504bb0f924427028795195b2b3b8530d026e08932b72"
+      "size": 709,
+      "sha256": "8ab4883668bb1a0f9b202beb30679d6dcbf36f9927c734b86265702416e01a39"
     },
     {
       "path": "lib/app/app_root.dart",
-      "size": 840,
-      "sha256": "6d4d46c0288cbde0939cf308a8f5628de48fa9ff6df45d0ea39d32cd0eb2e082"
+      "size": 850,
+      "sha256": "66c8c7f6e3b06f8191f30dc3102e122bed3c5b73d16dcbe53f0dd43c0407d42f"
     },
     {
       "path": "lib/core/constants/app_constants.dart",
@@ -570,6 +565,21 @@
       "sha256": "4ca8bcd4319fbd1393caf68c5bd5aff57dcda7bf3663d1b0f5199097ccdeaa29"
     },
     {
+      "path": "lib/core/mvvm/cuboid_view.dart",
+      "size": 1286,
+      "sha256": "2f37bc644f4aa4045231e20eda47a2c842e8a294a714b32a065c9a8eed331a0b"
+    },
+    {
+      "path": "lib/core/mvvm/cuboid_view_model.dart",
+      "size": 729,
+      "sha256": "0e473daa97dad02eca6432f6b323bae9c8364a157f3f83164f3098f93065798c"
+    },
+    {
+      "path": "lib/core/services/navigation_service.dart",
+      "size": 940,
+      "sha256": "88ea20572bbdd7c7977365d21e491ed6ea1c2964fb706ab5515191a279271c2f"
+    },
+    {
       "path": "lib/core/storage/cache_entry.dart",
       "size": 1035,
       "sha256": "869e5d955ea00b185affec5dd5c25e81dc2e16a83f50da0e722ec4869623efd5"
@@ -596,23 +606,23 @@
     },
     {
       "path": "lib/features/home/ui/home_view.dart",
-      "size": 569,
-      "sha256": "f22309a0ec950dd8a3853376514295156f3cc06ee2d3cabca9f0c97f978ef22e"
+      "size": 598,
+      "sha256": "44af7884f257f095022c1d7ddf2b6ff94e3af2d2fd13b0e69de1eed73f6eac63"
     },
     {
       "path": "lib/features/home/ui/home_viewmodel.dart",
-      "size": 85,
-      "sha256": "fa20cca87d383ec5384f966cff665f71e390645a34fbd96b6a6f67e2591bc24d"
+      "size": 123,
+      "sha256": "572b8e6125460b9bfd6b931d50b148ca54d51d0cc0ab3e83f7e2ebf41834a166"
     },
     {
       "path": "lib/features/startup/ui/startup_view.dart",
-      "size": 2266,
-      "sha256": "b6318677a99a00046929eafc02443cc78b5fbadc54b4eb62cc0dae586eb2509a"
+      "size": 2295,
+      "sha256": "037a961453adfe62a0d05ad2ff0d9fc889553cb4c98c118ed08b3d00aa704ef7"
     },
     {
       "path": "lib/features/startup/ui/startup_viewmodel.dart",
-      "size": 424,
-      "sha256": "2e23cbfc46b356451809b6f704e1ff0bf2fd91f24c2ad71907e446f56dc221b1"
+      "size": 485,
+      "sha256": "c99fdf40899f900dbc203fb6d7115344e101417de604c578dcd1305543ac87c8"
     },
     {
       "path": "lib/main.dart",
@@ -676,18 +686,13 @@
     },
     {
       "path": "pubspec.lock",
-      "size": 31816,
-      "sha256": "1a1a6ca415e6ed123b566a4a9d95e05ff2ad3cdc72f871429d31b19b019419ff"
+      "size": 23734,
+      "sha256": "2eaf0b754d98155b33162c300a1b7d48b4fa5699429e1822da39caef6c6212a4"
     },
     {
       "path": "pubspec.yaml",
-      "size": 1143,
-      "sha256": "c68cb620d288bb00b5c331912a64b1a805508f6e9ab4dfa9582b8b7b3f91add4"
-    },
-    {
-      "path": "stacked.json",
-      "size": 330,
-      "sha256": "1daa8cef25b211df3243965a98ae06fff7f4302a03bb7b3cfca32d45e4f983b9"
+      "size": 1080,
+      "sha256": "5b3754b1f5f6832ba1e43f7a94ad701a744c01a46abea60c192abec274bd0c8e"
     },
     {
       "path": "test/core/models/paginated_result_test.dart",
@@ -700,9 +705,9 @@
       "sha256": "65b3130d6b5470b93b24a6de55274a8dc52693bba681273cfb5d5d38c881690d"
     },
     {
-      "path": "test/helpers/stacked_service_mocks.dart",
-      "size": 393,
-      "sha256": "e1c964fe554a3dcc429cddc805aafa2814f56d43974cda79da7402e84af6e71a"
+      "path": "test/helpers/service_mocks.dart",
+      "size": 416,
+      "sha256": "def66eff10ccbe887d58f01cf259dd31814d520017fbbef762b9bb1245d343b5"
     },
     {
       "path": "test/shared/widgets/paginated_list/pagination_controller_test.dart",

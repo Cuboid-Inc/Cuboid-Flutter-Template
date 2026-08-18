@@ -1,17 +1,8 @@
 import 'dart:io';
 
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
-import 'package:cuboid/src/create/create_project.dart'
-    show PostStep, PostStepResult, ProcessRunner;
 
 typedef DialogFileWriter = void Function(File file, String contents);
-
-const _buildRunnerStep = PostStep('dart', [
-  'run',
-  'build_runner',
-  'build',
-  '-d',
-], label: 'build_runner');
 
 class CreateDialogInput {
   const CreateDialogInput({
@@ -35,13 +26,14 @@ class CreateDialogPlan {
     required this.directoryPath,
     required this.dialogPath,
     required this.modelPath,
-    required this.appPath,
-    required this.mainPath,
+    required this.locatorPath,
+    required this.dialogsPath,
+    required this.dialogServicePath,
     required this.dialogImportLine,
-    required this.dialogLine,
+    required this.modelImportLine,
+    required this.dialogEntryLine,
+    required this.serviceImportLine,
     required this.serviceLine,
-    required this.dialogsImportLine,
-    required this.setupLine,
     required this.dryRun,
   });
 
@@ -53,26 +45,23 @@ class CreateDialogPlan {
   final String directoryPath;
   final String dialogPath;
   final String modelPath;
-  final String appPath;
-  final String mainPath;
+  final String locatorPath;
+  final String dialogsPath;
+  final String dialogServicePath;
   final String dialogImportLine;
-  final String dialogLine;
+  final String modelImportLine;
+  final String dialogEntryLine;
+  final String serviceImportLine;
   final String serviceLine;
-  final String dialogsImportLine;
-  final String setupLine;
   final bool dryRun;
 
   List<String> get files => [dialogPath, modelPath];
 }
 
 class CreateDialogResult {
-  const CreateDialogResult({required this.plan, this.buildRunnerResult});
+  const CreateDialogResult({required this.plan});
 
   final CreateDialogPlan plan;
-
-  /// The outcome of automatically running `dart run build_runner build -d`
-  /// after writing the dialog and its registration. `null` for a dry run.
-  final PostStepResult? buildRunnerResult;
 }
 
 class CreateDialogException implements Exception {
@@ -85,15 +74,11 @@ class CreateDialogException implements Exception {
 }
 
 class CreateDialogService {
-  CreateDialogService({
-    DialogFileWriter? fileWriter,
-    ProcessRunner? processRunner,
-  }) : _fileWriter =
-           fileWriter ?? ((file, contents) => file.writeAsStringSync(contents)),
-       _processRunner = processRunner ?? _defaultProcessRunner;
+  CreateDialogService({DialogFileWriter? fileWriter})
+    : _fileWriter =
+          fileWriter ?? ((file, contents) => file.writeAsStringSync(contents));
 
   final DialogFileWriter _fileWriter;
-  final ProcessRunner _processRunner;
 
   Future<CreateDialogPlan> plan(CreateDialogInput input) async {
     final dialogName = _normalizeDialogName(input.name);
@@ -115,17 +100,18 @@ class CreateDialogService {
       directoryPath: directoryPath,
       dialogPath: dialogPath,
       modelPath: modelPath,
-      appPath: 'lib/app/app.dart',
-      mainPath: 'lib/main.dart',
+      locatorPath: 'lib/app/app.locator.dart',
+      dialogsPath: 'lib/app/app.dialogs.dart',
+      dialogServicePath: 'lib/core/services/dialog_service.dart',
       dialogImportLine:
           "import 'package:$packageName/shared/dialogs/$dialogName/${dialogName}_dialog.dart';",
-      dialogLine:
-          '    StackedDialog(\n'
-          '      classType: $dialogClassName,\n'
-          '    ),',
-      serviceLine: '    LazySingleton(classType: DialogService),',
-      dialogsImportLine: "import 'package:$packageName/app/app.dialogs.dart';",
-      setupLine: '  setupDialogUi();',
+      modelImportLine:
+          "import 'package:$packageName/shared/dialogs/$dialogName/${dialogName}_dialog_model.dart';",
+      dialogEntryLine: '$modelClassName: (_) => const $dialogClassName(),',
+      serviceImportLine:
+          "import 'package:$packageName/core/services/dialog_service.dart';",
+      serviceLine:
+          '  locator.registerLazySingleton<DialogService>(() => DialogService());',
       dryRun: input.dryRun,
     );
   }
@@ -133,8 +119,9 @@ class CreateDialogService {
   Future<CreateDialogResult> create(CreateDialogInput input) async {
     final createPlan = await plan(input);
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
-    final appFile = _targetFile(projectRoot, createPlan.appPath);
-    final mainFile = _targetFile(projectRoot, createPlan.mainPath);
+    final locatorFile = _targetFile(projectRoot, createPlan.locatorPath);
+    final dialogsFile = _targetFile(projectRoot, createPlan.dialogsPath);
+    final serviceFile = _targetFile(projectRoot, createPlan.dialogServicePath);
     final dialogFile = _targetFile(projectRoot, createPlan.dialogPath);
     final modelFile = _targetFile(projectRoot, createPlan.modelPath);
     final dialogDirectory = _targetDirectory(
@@ -142,8 +129,17 @@ class CreateDialogService {
       createPlan.directoryPath,
     );
 
-    final appContents = _validateApp(projectRoot, createPlan, appFile);
-    final mainContents = _validateMain(createPlan, mainFile);
+    final needsService = !serviceFile.existsSync();
+    final dialogsExists = dialogsFile.existsSync();
+
+    final locatorContents = _validateLocator(
+      createPlan,
+      locatorFile,
+      needsService: needsService,
+    );
+    final dialogsContents = dialogsExists
+        ? _validateDialogs(createPlan, dialogsFile)
+        : null;
     _validateGeneratedTargets(
       projectRoot,
       createPlan,
@@ -151,9 +147,16 @@ class CreateDialogService {
       dialogFile,
       modelFile,
     );
+    if (needsService) {
+      _ensureNotExisting(serviceFile, label: createPlan.dialogServicePath);
+    }
 
-    final nextAppContents = _applyAppPlan(appContents, createPlan);
-    final nextMainContents = _applyMainPlan(mainContents, createPlan);
+    final nextLocatorContents = needsService
+        ? _applyLocatorPlan(locatorContents, createPlan)
+        : locatorContents;
+    final nextDialogsContents = dialogsExists
+        ? _applyDialogsPlan(dialogsContents!, createPlan)
+        : _freshDialogsContents(createPlan);
 
     if (createPlan.dryRun) {
       return CreateDialogResult(plan: createPlan);
@@ -171,17 +174,40 @@ class CreateDialogService {
       createdFiles.add(dialogFile);
       _fileWriter(modelFile, _modelContents(createPlan));
       createdFiles.add(modelFile);
-      _replaceFileContents(appFile, nextAppContents, label: createPlan.appPath);
-      _replaceFileContents(
-        mainFile,
-        nextMainContents,
-        label: createPlan.mainPath,
-      );
+      if (needsService) {
+        _createParentDirectories(
+          projectRoot,
+          serviceFile.parent,
+          createdDirectories,
+        );
+        _fileWriter(serviceFile, _dialogServiceContents(createPlan));
+        createdFiles.add(serviceFile);
+      }
+      if (dialogsExists) {
+        _replaceFileContents(
+          dialogsFile,
+          nextDialogsContents,
+          label: createPlan.dialogsPath,
+        );
+      } else {
+        _fileWriter(dialogsFile, nextDialogsContents);
+        createdFiles.add(dialogsFile);
+      }
+      if (needsService) {
+        _replaceFileContents(
+          locatorFile,
+          nextLocatorContents,
+          label: createPlan.locatorPath,
+        );
+      }
     } on FileSystemException catch (error) {
       _rollback(
         createdFiles,
         createdDirectories,
-        restoredFiles: {appFile: appContents, mainFile: mainContents},
+        restoredFiles: {
+          locatorFile: locatorContents,
+          if (dialogsExists) dialogsFile: dialogsContents!,
+        },
       );
       throw CreateDialogException(
         'Unable to create dialog ${createPlan.displayName}: '
@@ -191,72 +217,18 @@ class CreateDialogService {
       _rollback(
         createdFiles,
         createdDirectories,
-        restoredFiles: {appFile: appContents, mainFile: mainContents},
+        restoredFiles: {
+          locatorFile: locatorContents,
+          if (dialogsExists) dialogsFile: dialogsContents!,
+        },
       );
       throw CreateDialogException(
         'Unable to create dialog ${createPlan.displayName}: $error',
       );
     }
 
-    final buildRunnerResult = await _runBuildRunner(projectRoot, createPlan);
-    return CreateDialogResult(
-      plan: createPlan,
-      buildRunnerResult: buildRunnerResult,
-    );
+    return CreateDialogResult(plan: createPlan);
   }
-
-  /// Regenerates `lib/app/app.dialogs.dart` (and the other Stacked outputs)
-  /// so the `setupDialogUi()` call this command just wired into
-  /// `lib/main.dart` resolves immediately, instead of leaving the project
-  /// uncompilable until a developer remembers a manual follow-up step. The
-  /// dialog, model, and registration have already been written successfully
-  /// by this point, so a build_runner failure is reported clearly rather
-  /// than unwinding otherwise-valid source changes.
-  Future<PostStepResult> _runBuildRunner(
-    Directory projectRoot,
-    CreateDialogPlan plan,
-  ) async {
-    final ProcessResult result;
-    try {
-      result = await _processRunner(
-        _buildRunnerStep.executable,
-        _buildRunnerStep.arguments,
-        workingDirectory: projectRoot.path,
-      );
-    } on ProcessException catch (error) {
-      throw CreateDialogException(
-        '${_buildRunnerStep.command} could not be started: '
-        '${error.message}. Dialog ${plan.displayName} was created; '
-        'run ${_buildRunnerStep.command} manually.',
-      );
-    }
-    if (result.exitCode != 0) {
-      final stderrText = '${result.stderr}'.trim();
-      throw CreateDialogException(
-        [
-          '${_buildRunnerStep.command} failed with exit code '
-              '${result.exitCode}.',
-          if (stderrText.isNotEmpty) stderrText,
-          'Dialog ${plan.displayName} was created; run '
-              '${_buildRunnerStep.command} manually.',
-        ].join('\n'),
-      );
-    }
-    return PostStepResult(step: _buildRunnerStep, exitCode: result.exitCode);
-  }
-}
-
-Future<ProcessResult> _defaultProcessRunner(
-  String executable,
-  List<String> arguments, {
-  required String workingDirectory,
-}) {
-  return Process.run(
-    executable,
-    arguments,
-    workingDirectory: workingDirectory,
-    runInShell: false,
-  );
 }
 
 void _validateGeneratedTargets(
@@ -281,82 +253,50 @@ void _validateGeneratedTargets(
   }
 }
 
-String _validateApp(
-  Directory projectRoot,
-  CreateDialogPlan plan,
-  File appFile,
-) {
-  _ensureRegularFile(appFile.path, plan.appPath);
-  final contents = _readFile(appFile, plan.appPath);
+void _ensureNotExisting(File file, {required String label}) {
+  final type = FileSystemEntity.typeSync(file.path, followLinks: false);
+  if (type != FileSystemEntityType.notFound) {
+    throw CreateDialogException('Target already exists: $label');
+  }
+}
 
-  _requireSingleMarker(contents, '// @stacked-import');
-  _requireSingleMarker(contents, '// @stacked-service');
-  if (_hasMatchingDialogImport(contents, plan)) {
+String _validateLocator(
+  CreateDialogPlan plan,
+  File locatorFile, {
+  required bool needsService,
+}) {
+  _ensureRegularFile(locatorFile.path, plan.locatorPath);
+  final contents = _readFile(locatorFile, plan.locatorPath);
+
+  if (!needsService) {
+    return contents;
+  }
+
+  _requireSingleMarker(contents, '// @cuboid-import');
+  _requireSingleMarker(contents, '// @cuboid-service');
+  if (RegExp(r'register\w*\s*<\s*DialogService\s*>').hasMatch(contents)) {
+    throw const CreateDialogException('Duplicate DialogService registration.');
+  }
+  return contents;
+}
+
+String _validateDialogs(CreateDialogPlan plan, File dialogsFile) {
+  _ensureRegularFile(dialogsFile.path, plan.dialogsPath);
+  final contents = _readFile(dialogsFile, plan.dialogsPath);
+
+  _requireSingleMarker(contents, '// @cuboid-import');
+  _requireSingleMarker(contents, '// @cuboid-dialog');
+  if (contents.contains(plan.dialogImportLine)) {
     throw CreateDialogException(
       'Dialog import already exists for ${plan.dialogClassName}.',
     );
   }
-  if (_hasConflictingDialogImport(contents, plan)) {
-    throw CreateDialogException(
-      'Conflicting dialog import exists for ${plan.dialogClassName}.',
-    );
-  }
-  if (_hasDialogRegistration(contents, plan)) {
+  if (RegExp(RegExp.escape(plan.modelClassName) + r'\s*:').hasMatch(contents)) {
     throw CreateDialogException(
       'Dialog already exists for ${plan.dialogClassName}.',
     );
   }
-  if (_dialogServiceRegistrationCount(contents) > 1) {
-    throw const CreateDialogException('Duplicate DialogService registration.');
-  }
-  if (!_hasDialogsConfiguration(contents)) {
-    _validateCanCreateDialogsConfiguration(contents);
-  } else {
-    _requireSingleMarker(contents, '// @stacked-dialog');
-  }
-
-  final dialogDirectory = _targetDirectory(projectRoot, plan.directoryPath);
-  _ensureSafeParentDirectories(projectRoot, dialogDirectory.parent);
   return contents;
-}
-
-String _validateMain(CreateDialogPlan plan, File mainFile) {
-  _ensureRegularFile(mainFile.path, plan.mainPath);
-  final contents = _readFile(mainFile, plan.mainPath);
-
-  if (_importCount(contents, plan.dialogsImportLine) > 1) {
-    throw const CreateDialogException('Duplicate app.dialogs.dart import.');
-  }
-  if (_hasConflictingDialogsImport(contents, plan)) {
-    throw const CreateDialogException(
-      'Conflicting app.dialogs.dart import exists.',
-    );
-  }
-  if (_setupDialogUiCount(contents) > 1) {
-    throw const CreateDialogException('Duplicate setupDialogUi call.');
-  }
-  if (!contents.contains(RegExp(r'\bawait\s+setupLocator\(\)\s*;'))) {
-    throw const CreateDialogException(
-      'lib/main.dart must call await setupLocator();',
-    );
-  }
-  return contents;
-}
-
-void _validateCanCreateDialogsConfiguration(String contents) {
-  final appStart = contents.indexOf('@StackedApp(');
-  if (appStart == -1) {
-    throw const CreateDialogException('Missing @StackedApp annotation.');
-  }
-  final dependenciesStart = contents.indexOf(
-    RegExp(r'^[ \t]*dependencies\s*:\s*\[', multiLine: true),
-    appStart,
-  );
-  if (dependenciesStart == -1) {
-    throw const CreateDialogException(
-      'Missing dependencies configuration in @StackedApp.',
-    );
-  }
 }
 
 void _ensureRegularFile(String path, String label) {
@@ -419,133 +359,32 @@ void _requireSingleMarker(String contents, String marker) {
   }
 }
 
-bool _hasDialogsConfiguration(String contents) {
-  return RegExp(r'^[ \t]*dialogs\s*:\s*\[', multiLine: true).hasMatch(contents);
-}
-
-bool _hasMatchingDialogImport(String contents, CreateDialogPlan plan) {
-  return _dialogImports(contents, plan).contains(plan.dialogImportLine);
-}
-
-bool _hasConflictingDialogImport(String contents, CreateDialogPlan plan) {
-  return _dialogImports(
-    contents,
-    plan,
-  ).any((line) => line != plan.dialogImportLine);
-}
-
-List<String> _dialogImports(String contents, CreateDialogPlan plan) {
-  final pattern = RegExp(
-    r'''^import\s+(['"])([^'"]*/shared/dialogs/''' +
-        RegExp.escape(plan.name) +
-        r'''/''' +
-        RegExp.escape('${plan.name}_dialog.dart') +
-        r''')\1\s*;''',
-    multiLine: true,
-  );
-  return pattern
-      .allMatches(contents)
-      .map((match) => "import '${match.group(2)}';")
-      .toList();
-}
-
-bool _hasDialogRegistration(String contents, CreateDialogPlan plan) {
-  final pattern = RegExp(
-    r'StackedDialog\s*\(\s*classType\s*:\s*' +
-        RegExp.escape(plan.dialogClassName) +
-        r'\b',
-  );
-  return pattern.hasMatch(contents);
-}
-
-int _dialogServiceRegistrationCount(String contents) {
-  return RegExp(r'classType\s*:\s*DialogService\b').allMatches(contents).length;
-}
-
-int _importCount(String contents, String importLine) {
-  return RegExp(
-    '^${RegExp.escape(importLine)}\$',
-    multiLine: true,
-  ).allMatches(contents).length;
-}
-
-bool _hasConflictingDialogsImport(String contents, CreateDialogPlan plan) {
-  final pattern = RegExp(
-    r'''^import\s+(['"])([^'"]*/app/app\.dialogs\.dart)\1\s*;''',
-    multiLine: true,
-  );
-  return pattern
-      .allMatches(contents)
-      .map((match) => "import '${match.group(2)}';")
-      .any((line) => line != plan.dialogsImportLine);
-}
-
-int _setupDialogUiCount(String contents) {
-  return RegExp(r'\bsetupDialogUi\s*\(\s*\)\s*;').allMatches(contents).length;
-}
-
-String _applyAppPlan(String contents, CreateDialogPlan plan) {
+String _applyLocatorPlan(String contents, CreateDialogPlan plan) {
   final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
-  var next = contents.replaceFirst(
-    RegExp(r'^[ \t]*// @stacked-import', multiLine: true),
-    '${plan.dialogImportLine}$lineEnding// @stacked-import',
-  );
-
-  if (_dialogServiceRegistrationCount(next) == 0) {
-    next = next.replaceFirst(
-      RegExp(r'^[ \t]*// @stacked-service', multiLine: true),
-      '${plan.serviceLine}$lineEnding    // @stacked-service',
-    );
-  }
-
-  if (_hasDialogsConfiguration(next)) {
-    return next.replaceFirst(
-      RegExp(r'^[ \t]*// @stacked-dialog', multiLine: true),
-      '${plan.dialogLine}$lineEnding    // @stacked-dialog',
-    );
-  }
-
-  return next.replaceFirst(
-    RegExp(r'^[ \t]*dependencies\s*:\s*\[', multiLine: true),
-    '  dialogs: [$lineEnding'
-    '${plan.dialogLine}$lineEnding'
-    '    // @stacked-dialog$lineEnding'
-    '  ],$lineEnding'
-    '  dependencies: [',
-  );
+  return contents
+      .replaceFirst(
+        RegExp(r'^[ \t]*// @cuboid-import', multiLine: true),
+        '${plan.serviceImportLine}$lineEnding// @cuboid-import',
+      )
+      .replaceFirst(
+        RegExp(r'^[ \t]*// @cuboid-service', multiLine: true),
+        '${plan.serviceLine}$lineEnding  // @cuboid-service',
+      );
 }
 
-String _applyMainPlan(String contents, CreateDialogPlan plan) {
+String _applyDialogsPlan(String contents, CreateDialogPlan plan) {
   final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
-  var next = contents;
-  if (_importCount(next, plan.dialogsImportLine) == 0) {
-    next = _insertImport(next, plan.dialogsImportLine, lineEnding);
-  }
-  if (_setupDialogUiCount(next) == 0) {
-    next = next.replaceFirst(
-      RegExp(r'^[ \t]*await\s+setupLocator\(\)\s*;', multiLine: true),
-      '  await setupLocator();$lineEnding${plan.setupLine}',
-    );
-  }
-  return next;
-}
-
-String _insertImport(String contents, String importLine, String lineEnding) {
-  final importMatches = RegExp(
-    r'^import .+;$',
-    multiLine: true,
-  ).allMatches(contents);
-  if (importMatches.isEmpty) {
-    throw const CreateDialogException(
-      'lib/main.dart must contain import declarations.',
-    );
-  }
-  final lastImport = importMatches.last;
-  return contents.replaceRange(
-    lastImport.end,
-    lastImport.end,
-    '$lineEnding$importLine',
-  );
+  return contents
+      .replaceFirst(
+        RegExp(r'^[ \t]*// @cuboid-import', multiLine: true),
+        '${plan.dialogImportLine}$lineEnding'
+        '${plan.modelImportLine}$lineEnding'
+        '// @cuboid-import',
+      )
+      .replaceFirst(
+        RegExp(r'^[ \t]*// @cuboid-dialog', multiLine: true),
+        '  ${plan.dialogEntryLine}$lineEnding  // @cuboid-dialog',
+      );
 }
 
 void _replaceFileContents(File file, String contents, {required String label}) {
@@ -723,20 +562,12 @@ String _humanize(List<String> words) {
 
 String _dialogContents(CreateDialogPlan plan) {
   return '''
+import 'package:${plan.packageName}/core/mvvm/cuboid_view.dart';
 import 'package:${plan.packageName}/shared/dialogs/${plan.name}/${plan.name}_dialog_model.dart';
 import 'package:flutter/material.dart';
-import 'package:stacked/stacked.dart';
-import 'package:stacked_services/stacked_services.dart';
 
-class ${plan.dialogClassName} extends StackedView<${plan.modelClassName}> {
-  const ${plan.dialogClassName}({
-    super.key,
-    required this.request,
-    required this.completer,
-  });
-
-  final DialogRequest<dynamic> request;
-  final void Function(DialogResponse<dynamic> response) completer;
+class ${plan.dialogClassName} extends CuboidView<${plan.modelClassName}> {
+  const ${plan.dialogClassName}({super.key});
 
   @override
   ${plan.modelClassName} viewModelBuilder(BuildContext context) =>
@@ -756,8 +587,46 @@ class ${plan.dialogClassName} extends StackedView<${plan.modelClassName}> {
 
 String _modelContents(CreateDialogPlan plan) {
   return '''
-import 'package:stacked/stacked.dart';
+import 'package:${plan.packageName}/core/mvvm/cuboid_view_model.dart';
 
-class ${plan.modelClassName} extends BaseViewModel {}
+class ${plan.modelClassName} extends CuboidViewModel {}
+''';
+}
+
+String _freshDialogsContents(CreateDialogPlan plan) {
+  return '''
+import 'package:flutter/material.dart';
+${plan.dialogImportLine}
+${plan.modelImportLine}
+// @cuboid-import
+
+final Map<Type, WidgetBuilder> cuboidDialogBuilders = {
+  ${plan.dialogEntryLine}
+  // @cuboid-dialog
+};
+''';
+}
+
+String _dialogServiceContents(CreateDialogPlan plan) {
+  return '''
+import 'package:${plan.packageName}/app/app.dialogs.dart';
+import 'package:${plan.packageName}/core/services/navigation_service.dart';
+import 'package:flutter/material.dart';
+
+/// Shows a registered dialog by its view model type, looked up in
+/// [cuboidDialogBuilders] (lib/app/app.dialogs.dart).
+class DialogService {
+  Future<TResult?> show<TModel, TResult>() {
+    final builder = cuboidDialogBuilders[TModel];
+    if (builder == null) {
+      throw StateError('No dialog registered for \$TModel.');
+    }
+    final context = NavigationService.navigatorKey.currentContext;
+    if (context == null) {
+      throw StateError('DialogService used before a Navigator exists.');
+    }
+    return showDialog<TResult>(context: context, builder: builder);
+  }
+}
 ''';
 }

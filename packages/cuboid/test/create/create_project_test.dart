@@ -85,11 +85,7 @@ void main() {
       isTrue,
     );
     expect(result.bootstrapResult!.modifiedFiles, contains('pubspec.yaml'));
-    expect(calls, [
-      'flutter pub get',
-      'dart run build_runner build --delete-conflicting-outputs',
-      'dart format .',
-    ]);
+    expect(calls, ['flutter pub get', 'dart format .']);
 
     for (final shellFile in [
       'lib/app/shell_view.dart',
@@ -292,11 +288,7 @@ void main() {
         ),
       ),
     );
-    expect(calls, [
-      'flutter pub get',
-      'dart run build_runner build --delete-conflicting-outputs',
-      'dart format .',
-    ]);
+    expect(calls, ['flutter pub get', 'dart format .']);
     expect(Directory('${temp.path}/my_app').existsSync(), isFalse);
   });
 

@@ -43,7 +43,7 @@ void main() {
     expect(
       view,
       contains(
-        'class ForgotPasswordView extends StackedView<ForgotPasswordViewModel>',
+        'class ForgotPasswordView extends CuboidView<ForgotPasswordViewModel>',
       ),
     );
     expect(
@@ -59,17 +59,24 @@ void main() {
     );
     expect(
       viewModel,
-      contains('class ForgotPasswordViewModel extends BaseViewModel {}'),
+      contains('class ForgotPasswordViewModel extends CuboidViewModel {}'),
     );
 
-    final app = File('${root.path}/lib/app/app.dart').readAsStringSync();
+    final router = _routerFile(root).readAsStringSync();
     expect(
-      app,
+      router,
       contains(
         "import 'package:test_app/features/auth/ui/forgot_password_view.dart';",
       ),
     );
-    expect(app, contains('MaterialRoute(page: ForgotPasswordView),'));
+    expect(
+      router,
+      contains("static const forgotPasswordView = '/forgot-password-view';"),
+    );
+    expect(
+      router,
+      contains('Routes.forgotPasswordView: (_) => const ForgotPasswordView(),'),
+    );
   });
 
   test(
@@ -108,19 +115,19 @@ void main() {
       );
       expect(
         view,
-        contains('class LoginView extends StackedView<LoginViewModel>'),
+        contains('class LoginView extends CuboidView<LoginViewModel>'),
       );
       expect(
         viewModel,
-        contains('class LoginViewModel extends BaseViewModel {}'),
+        contains('class LoginViewModel extends CuboidViewModel {}'),
       );
 
-      final app = File('${root.path}/lib/app/app.dart').readAsStringSync();
+      final router = _routerFile(root).readAsStringSync();
       expect(
-        app,
+        router,
         contains("import 'package:test_app/shared/views/login_view.dart';"),
       );
-      expect(app, contains('MaterialRoute(page: LoginView),'));
+      expect(router, contains('Routes.loginView: (_) => const LoginView(),'));
 
       expect(
         Directory('${root.path}/lib/features').existsSync() &&
@@ -572,7 +579,7 @@ void main() {
 
     expect(unrelated.readAsStringSync(), 'keep\n');
     expect(_relativeFiles(root), [
-      'lib/app/app.dart',
+      'lib/app/app.router.dart',
       'lib/features/auth/keep.txt',
       'lib/features/auth/ui/login_view.dart',
       'lib/features/auth/ui/login_viewmodel.dart',
@@ -580,10 +587,10 @@ void main() {
     ]);
   });
 
-  test('rejects when lib/app/app.dart is missing', () async {
+  test('rejects when lib/app/app.router.dart is missing', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    File('${root.path}/lib/app/app.dart').deleteSync();
+    _routerFile(root).deleteSync();
     final service = CreateViewService();
 
     await expectLater(
@@ -594,7 +601,7 @@ void main() {
         isA<CreateViewException>().having(
           (error) => error.message,
           'message',
-          'lib/app/app.dart was not found.',
+          'lib/app/app.router.dart was not found.',
         ),
       ),
     );
@@ -603,17 +610,19 @@ void main() {
   test('rejects a route that already exists for the view', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    File('${root.path}/lib/app/app.dart').writeAsStringSync('''
+    _routerFile(root).writeAsStringSync('''
 import 'package:test_app/features/auth/ui/login_view.dart';
-// @stacked-import
+// @cuboid-import
 
-@StackedApp(
-  routes: [
-    MaterialRoute(page: LoginView),
-    // @stacked-route
-  ],
-)
-class App {}
+class Routes {
+  static const loginView = '/login-view';
+  // @cuboid-route-const
+}
+
+final Map<String, WidgetBuilder> appRoutes = {
+  Routes.loginView: (_) => const LoginView(),
+  // @cuboid-route
+};
 ''');
     final service = CreateViewService();
 
@@ -671,13 +680,13 @@ class App {}
     );
   });
 
-  test('cleans up first file and leaves app.dart untouched when second final '
-      'publish fails', () async {
+  test('cleans up first file and leaves the router untouched when second '
+      'final publish fails', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final unrelated = File('${root.path}/lib/features/auth/keep.txt')
       ..writeAsStringSync('keep\n');
-    final beforeApp = File('${root.path}/lib/app/app.dart').readAsStringSync();
+    final beforeRouter = _routerFile(root).readAsStringSync();
     var writes = 0;
     final service = CreateViewService(
       fileWriter: (file, contents) {
@@ -718,23 +727,26 @@ class App {}
       Directory('${root.path}/lib/features/auth/ui').existsSync(),
       isFalse,
     );
-    expect(File('${root.path}/lib/app/app.dart').readAsStringSync(), beforeApp);
+    expect(_routerFile(root).readAsStringSync(), beforeRouter);
   });
 }
 
-String _appContents() {
+String _routerContents() {
   return '''
-import 'package:stacked/stacked_annotations.dart';
-// @stacked-import
+// @cuboid-import
 
-@StackedApp(
-  routes: [
-    // @stacked-route
-  ],
-)
-class App {}
+class Routes {
+  // @cuboid-route-const
+}
+
+final Map<String, WidgetBuilder> appRoutes = {
+  // @cuboid-route
+};
 ''';
 }
+
+File _routerFile(Directory root) =>
+    File('${root.path}/lib/app/app.router.dart');
 
 Directory _projectRoot({
   String pubspec = 'name: test_app\n',
@@ -743,9 +755,9 @@ Directory _projectRoot({
   final root = Directory.systemTemp.createTempSync('cuboid_view_test_');
   File('${root.path}/pubspec.yaml').writeAsStringSync(pubspec);
   Directory('${root.path}/lib/features/$feature').createSync(recursive: true);
-  File('${root.path}/lib/app/app.dart')
+  _routerFile(root)
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync(_appContents());
+    ..writeAsStringSync(_routerContents());
   return root;
 }
 

@@ -1,17 +1,8 @@
 import 'dart:io';
 
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
-import 'package:cuboid/src/create/create_project.dart'
-    show PostStep, PostStepResult, ProcessRunner;
 
 typedef BottomSheetFileWriter = void Function(File file, String contents);
-
-const _buildRunnerStep = PostStep('dart', [
-  'run',
-  'build_runner',
-  'build',
-  '-d',
-], label: 'build_runner');
 
 class CreateBottomSheetInput {
   const CreateBottomSheetInput({
@@ -35,13 +26,14 @@ class CreateBottomSheetPlan {
     required this.directoryPath,
     required this.sheetPath,
     required this.modelPath,
-    required this.appPath,
-    required this.mainPath,
+    required this.locatorPath,
+    required this.bottomSheetsPath,
+    required this.bottomSheetServicePath,
     required this.sheetImportLine,
-    required this.bottomSheetLine,
+    required this.modelImportLine,
+    required this.bottomSheetEntryLine,
+    required this.serviceImportLine,
     required this.serviceLine,
-    required this.bottomSheetsImportLine,
-    required this.setupLine,
     required this.dryRun,
   });
 
@@ -53,26 +45,23 @@ class CreateBottomSheetPlan {
   final String directoryPath;
   final String sheetPath;
   final String modelPath;
-  final String appPath;
-  final String mainPath;
+  final String locatorPath;
+  final String bottomSheetsPath;
+  final String bottomSheetServicePath;
   final String sheetImportLine;
-  final String bottomSheetLine;
+  final String modelImportLine;
+  final String bottomSheetEntryLine;
+  final String serviceImportLine;
   final String serviceLine;
-  final String bottomSheetsImportLine;
-  final String setupLine;
   final bool dryRun;
 
   List<String> get files => [sheetPath, modelPath];
 }
 
 class CreateBottomSheetResult {
-  const CreateBottomSheetResult({required this.plan, this.buildRunnerResult});
+  const CreateBottomSheetResult({required this.plan});
 
   final CreateBottomSheetPlan plan;
-
-  /// The outcome of automatically running `dart run build_runner build -d`
-  /// after writing the sheet and its registration. `null` for a dry run.
-  final PostStepResult? buildRunnerResult;
 }
 
 class CreateBottomSheetException implements Exception {
@@ -85,15 +74,11 @@ class CreateBottomSheetException implements Exception {
 }
 
 class CreateBottomSheetService {
-  CreateBottomSheetService({
-    BottomSheetFileWriter? fileWriter,
-    ProcessRunner? processRunner,
-  }) : _fileWriter =
-           fileWriter ?? ((file, contents) => file.writeAsStringSync(contents)),
-       _processRunner = processRunner ?? _defaultProcessRunner;
+  CreateBottomSheetService({BottomSheetFileWriter? fileWriter})
+    : _fileWriter =
+          fileWriter ?? ((file, contents) => file.writeAsStringSync(contents));
 
   final BottomSheetFileWriter _fileWriter;
-  final ProcessRunner _processRunner;
 
   Future<CreateBottomSheetPlan> plan(CreateBottomSheetInput input) async {
     final bottomSheetName = _normalizeBottomSheetName(input.name);
@@ -115,15 +100,18 @@ class CreateBottomSheetService {
       directoryPath: directoryPath,
       sheetPath: sheetPath,
       modelPath: modelPath,
-      appPath: 'lib/app/app.dart',
-      mainPath: 'lib/main.dart',
+      locatorPath: 'lib/app/app.locator.dart',
+      bottomSheetsPath: 'lib/app/app.bottomsheets.dart',
+      bottomSheetServicePath: 'lib/core/services/bottom_sheet_service.dart',
       sheetImportLine:
           "import 'package:$packageName/shared/bottom_sheets/$bottomSheetName/${bottomSheetName}_sheet.dart';",
-      bottomSheetLine: '    StackedBottomsheet(classType: $sheetClassName),',
-      serviceLine: '    LazySingleton(classType: BottomSheetService),',
-      bottomSheetsImportLine:
-          "import 'package:$packageName/app/app.bottomsheets.dart';",
-      setupLine: '  setupBottomSheetUi();',
+      modelImportLine:
+          "import 'package:$packageName/shared/bottom_sheets/$bottomSheetName/${bottomSheetName}_sheet_model.dart';",
+      bottomSheetEntryLine: '$modelClassName: (_) => const $sheetClassName(),',
+      serviceImportLine:
+          "import 'package:$packageName/core/services/bottom_sheet_service.dart';",
+      serviceLine:
+          '  locator.registerLazySingleton<BottomSheetService>(() => BottomSheetService());',
       dryRun: input.dryRun,
     );
   }
@@ -131,8 +119,15 @@ class CreateBottomSheetService {
   Future<CreateBottomSheetResult> create(CreateBottomSheetInput input) async {
     final createPlan = await plan(input);
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
-    final appFile = _targetFile(projectRoot, createPlan.appPath);
-    final mainFile = _targetFile(projectRoot, createPlan.mainPath);
+    final locatorFile = _targetFile(projectRoot, createPlan.locatorPath);
+    final bottomSheetsFile = _targetFile(
+      projectRoot,
+      createPlan.bottomSheetsPath,
+    );
+    final serviceFile = _targetFile(
+      projectRoot,
+      createPlan.bottomSheetServicePath,
+    );
     final sheetFile = _targetFile(projectRoot, createPlan.sheetPath);
     final modelFile = _targetFile(projectRoot, createPlan.modelPath);
     final bottomSheetDirectory = _targetDirectory(
@@ -140,8 +135,17 @@ class CreateBottomSheetService {
       createPlan.directoryPath,
     );
 
-    final appContents = _validateApp(projectRoot, createPlan, appFile);
-    final mainContents = _validateMain(createPlan, mainFile);
+    final needsService = !serviceFile.existsSync();
+    final bottomSheetsExists = bottomSheetsFile.existsSync();
+
+    final locatorContents = _validateLocator(
+      createPlan,
+      locatorFile,
+      needsService: needsService,
+    );
+    final bottomSheetsContents = bottomSheetsExists
+        ? _validateBottomSheets(createPlan, bottomSheetsFile)
+        : null;
     _validateGeneratedTargets(
       projectRoot,
       createPlan,
@@ -149,9 +153,16 @@ class CreateBottomSheetService {
       sheetFile,
       modelFile,
     );
+    if (needsService) {
+      _ensureNotExisting(serviceFile, label: createPlan.bottomSheetServicePath);
+    }
 
-    final nextAppContents = _applyAppPlan(appContents, createPlan);
-    final nextMainContents = _applyMainPlan(mainContents, createPlan);
+    final nextLocatorContents = needsService
+        ? _applyLocatorPlan(locatorContents, createPlan)
+        : locatorContents;
+    final nextBottomSheetsContents = bottomSheetsExists
+        ? _applyBottomSheetsPlan(bottomSheetsContents!, createPlan)
+        : _freshBottomSheetsContents(createPlan);
 
     if (createPlan.dryRun) {
       return CreateBottomSheetResult(plan: createPlan);
@@ -169,17 +180,40 @@ class CreateBottomSheetService {
       createdFiles.add(sheetFile);
       _fileWriter(modelFile, _modelContents(createPlan));
       createdFiles.add(modelFile);
-      _replaceFileContents(appFile, nextAppContents, label: createPlan.appPath);
-      _replaceFileContents(
-        mainFile,
-        nextMainContents,
-        label: createPlan.mainPath,
-      );
+      if (needsService) {
+        _createParentDirectories(
+          projectRoot,
+          serviceFile.parent,
+          createdDirectories,
+        );
+        _fileWriter(serviceFile, _bottomSheetServiceContents(createPlan));
+        createdFiles.add(serviceFile);
+      }
+      if (bottomSheetsExists) {
+        _replaceFileContents(
+          bottomSheetsFile,
+          nextBottomSheetsContents,
+          label: createPlan.bottomSheetsPath,
+        );
+      } else {
+        _fileWriter(bottomSheetsFile, nextBottomSheetsContents);
+        createdFiles.add(bottomSheetsFile);
+      }
+      if (needsService) {
+        _replaceFileContents(
+          locatorFile,
+          nextLocatorContents,
+          label: createPlan.locatorPath,
+        );
+      }
     } on FileSystemException catch (error) {
       _rollback(
         createdFiles,
         createdDirectories,
-        restoredFiles: {appFile: appContents, mainFile: mainContents},
+        restoredFiles: {
+          locatorFile: locatorContents,
+          if (bottomSheetsExists) bottomSheetsFile: bottomSheetsContents!,
+        },
       );
       throw CreateBottomSheetException(
         'Unable to create bottom sheet ${createPlan.displayName}: '
@@ -189,72 +223,18 @@ class CreateBottomSheetService {
       _rollback(
         createdFiles,
         createdDirectories,
-        restoredFiles: {appFile: appContents, mainFile: mainContents},
+        restoredFiles: {
+          locatorFile: locatorContents,
+          if (bottomSheetsExists) bottomSheetsFile: bottomSheetsContents!,
+        },
       );
       throw CreateBottomSheetException(
         'Unable to create bottom sheet ${createPlan.displayName}: $error',
       );
     }
 
-    final buildRunnerResult = await _runBuildRunner(projectRoot, createPlan);
-    return CreateBottomSheetResult(
-      plan: createPlan,
-      buildRunnerResult: buildRunnerResult,
-    );
+    return CreateBottomSheetResult(plan: createPlan);
   }
-
-  /// Regenerates `lib/app/app.bottomsheets.dart` (and the other Stacked
-  /// outputs) so the `setupBottomSheetUi()` call this command just wired
-  /// into `lib/main.dart` resolves immediately, instead of leaving the
-  /// project uncompilable until a developer remembers a manual follow-up
-  /// step. The sheet, model, and registration have already been written
-  /// successfully by this point, so a build_runner failure is reported
-  /// clearly rather than unwinding otherwise-valid source changes.
-  Future<PostStepResult> _runBuildRunner(
-    Directory projectRoot,
-    CreateBottomSheetPlan plan,
-  ) async {
-    final ProcessResult result;
-    try {
-      result = await _processRunner(
-        _buildRunnerStep.executable,
-        _buildRunnerStep.arguments,
-        workingDirectory: projectRoot.path,
-      );
-    } on ProcessException catch (error) {
-      throw CreateBottomSheetException(
-        '${_buildRunnerStep.command} could not be started: '
-        '${error.message}. Bottom sheet ${plan.displayName} was created; '
-        'run ${_buildRunnerStep.command} manually.',
-      );
-    }
-    if (result.exitCode != 0) {
-      final stderrText = '${result.stderr}'.trim();
-      throw CreateBottomSheetException(
-        [
-          '${_buildRunnerStep.command} failed with exit code '
-              '${result.exitCode}.',
-          if (stderrText.isNotEmpty) stderrText,
-          'Bottom sheet ${plan.displayName} was created; run '
-              '${_buildRunnerStep.command} manually.',
-        ].join('\n'),
-      );
-    }
-    return PostStepResult(step: _buildRunnerStep, exitCode: result.exitCode);
-  }
-}
-
-Future<ProcessResult> _defaultProcessRunner(
-  String executable,
-  List<String> arguments, {
-  required String workingDirectory,
-}) {
-  return Process.run(
-    executable,
-    arguments,
-    workingDirectory: workingDirectory,
-    runInShell: false,
-  );
 }
 
 void _validateGeneratedTargets(
@@ -279,88 +259,55 @@ void _validateGeneratedTargets(
   }
 }
 
-String _validateApp(
-  Directory projectRoot,
-  CreateBottomSheetPlan plan,
-  File appFile,
-) {
-  _ensureRegularFile(appFile.path, plan.appPath);
-  final contents = _readFile(appFile, plan.appPath);
+void _ensureNotExisting(File file, {required String label}) {
+  final type = FileSystemEntity.typeSync(file.path, followLinks: false);
+  if (type != FileSystemEntityType.notFound) {
+    throw CreateBottomSheetException('Target already exists: $label');
+  }
+}
 
-  _requireSingleMarker(contents, '// @stacked-import');
-  _requireSingleMarker(contents, '// @stacked-service');
-  if (_hasMatchingSheetImport(contents, plan)) {
-    throw CreateBottomSheetException(
-      'Bottom sheet import already exists for ${plan.sheetClassName}.',
-    );
+String _validateLocator(
+  CreateBottomSheetPlan plan,
+  File locatorFile, {
+  required bool needsService,
+}) {
+  _ensureRegularFile(locatorFile.path, plan.locatorPath);
+  final contents = _readFile(locatorFile, plan.locatorPath);
+
+  if (!needsService) {
+    return contents;
   }
-  if (_hasConflictingSheetImport(contents, plan)) {
-    throw CreateBottomSheetException(
-      'Conflicting bottom sheet import exists for ${plan.sheetClassName}.',
-    );
-  }
-  if (_hasBottomSheetRegistration(contents, plan)) {
-    throw CreateBottomSheetException(
-      'Bottom sheet already exists for ${plan.sheetClassName}.',
-    );
-  }
-  if (_bottomSheetServiceRegistrationCount(contents) > 1) {
+
+  _requireSingleMarker(contents, '// @cuboid-import');
+  _requireSingleMarker(contents, '// @cuboid-service');
+  if (RegExp(r'register\w*\s*<\s*BottomSheetService\s*>').hasMatch(contents)) {
     throw const CreateBottomSheetException(
       'Duplicate BottomSheetService registration.',
     );
   }
-  if (!_hasBottomSheetsConfiguration(contents)) {
-    _validateCanCreateBottomSheetsConfiguration(contents);
-  } else {
-    _requireSingleMarker(contents, '// @stacked-bottom-sheet');
-  }
-
-  final sheetDirectory = _targetDirectory(projectRoot, plan.directoryPath);
-  _ensureSafeParentDirectories(projectRoot, sheetDirectory.parent);
   return contents;
 }
 
-String _validateMain(CreateBottomSheetPlan plan, File mainFile) {
-  _ensureRegularFile(mainFile.path, plan.mainPath);
-  final contents = _readFile(mainFile, plan.mainPath);
+String _validateBottomSheets(
+  CreateBottomSheetPlan plan,
+  File bottomSheetsFile,
+) {
+  _ensureRegularFile(bottomSheetsFile.path, plan.bottomSheetsPath);
+  final contents = _readFile(bottomSheetsFile, plan.bottomSheetsPath);
 
-  if (_importCount(contents, plan.bottomSheetsImportLine) > 1) {
-    throw const CreateBottomSheetException(
-      'Duplicate app.bottomsheets.dart import.',
+  _requireSingleMarker(contents, '// @cuboid-import');
+  _requireSingleMarker(contents, '// @cuboid-bottom-sheet');
+  if (contents.contains(plan.sheetImportLine)) {
+    throw CreateBottomSheetException(
+      'Bottom sheet import already exists for ${plan.sheetClassName}.',
     );
   }
-  if (_hasConflictingBottomSheetsImport(contents, plan)) {
-    throw const CreateBottomSheetException(
-      'Conflicting app.bottomsheets.dart import exists.',
-    );
-  }
-  if (_setupBottomSheetUiCount(contents) > 1) {
-    throw const CreateBottomSheetException(
-      'Duplicate setupBottomSheetUi call.',
-    );
-  }
-  if (!contents.contains(RegExp(r'\bawait\s+setupLocator\(\)\s*;'))) {
-    throw const CreateBottomSheetException(
-      'lib/main.dart must call await setupLocator();',
+  if (RegExp(RegExp.escape(plan.modelClassName) + r'\s*:').hasMatch(contents)) {
+    throw CreateBottomSheetException(
+      'Bottom sheet already exists for ${plan.sheetClassName}.',
     );
   }
   return contents;
-}
-
-void _validateCanCreateBottomSheetsConfiguration(String contents) {
-  final appStart = contents.indexOf('@StackedApp(');
-  if (appStart == -1) {
-    throw const CreateBottomSheetException('Missing @StackedApp annotation.');
-  }
-  final dependenciesStart = contents.indexOf(
-    RegExp(r'^[ \t]*dependencies\s*:\s*\[', multiLine: true),
-    appStart,
-  );
-  if (dependenciesStart == -1) {
-    throw const CreateBottomSheetException(
-      'Missing dependencies configuration in @StackedApp.',
-    );
-  }
 }
 
 void _ensureRegularFile(String path, String label) {
@@ -423,143 +370,32 @@ void _requireSingleMarker(String contents, String marker) {
   }
 }
 
-bool _hasBottomSheetsConfiguration(String contents) {
-  return RegExp(
-    r'^[ \t]*bottomsheets\s*:\s*\[',
-    multiLine: true,
-  ).hasMatch(contents);
-}
-
-bool _hasMatchingSheetImport(String contents, CreateBottomSheetPlan plan) {
-  return _sheetImports(contents, plan).contains(plan.sheetImportLine);
-}
-
-bool _hasConflictingSheetImport(String contents, CreateBottomSheetPlan plan) {
-  return _sheetImports(
-    contents,
-    plan,
-  ).any((line) => line != plan.sheetImportLine);
-}
-
-List<String> _sheetImports(String contents, CreateBottomSheetPlan plan) {
-  final pattern = RegExp(
-    r'''^import\s+(['"])([^'"]*/shared/bottom_sheets/''' +
-        RegExp.escape(plan.name) +
-        r'''/''' +
-        RegExp.escape('${plan.name}_sheet.dart') +
-        r''')\1\s*;''',
-    multiLine: true,
-  );
-  return pattern
-      .allMatches(contents)
-      .map((match) => "import '${match.group(2)}';")
-      .toList();
-}
-
-bool _hasBottomSheetRegistration(String contents, CreateBottomSheetPlan plan) {
-  final pattern = RegExp(
-    r'StackedBottomsheet\s*\(\s*classType\s*:\s*' +
-        RegExp.escape(plan.sheetClassName) +
-        r'\b',
-  );
-  return pattern.hasMatch(contents);
-}
-
-int _bottomSheetServiceRegistrationCount(String contents) {
-  return RegExp(
-    r'classType\s*:\s*BottomSheetService\b',
-  ).allMatches(contents).length;
-}
-
-int _importCount(String contents, String importLine) {
-  return RegExp(
-    '^${RegExp.escape(importLine)}\$',
-    multiLine: true,
-  ).allMatches(contents).length;
-}
-
-bool _hasConflictingBottomSheetsImport(
-  String contents,
-  CreateBottomSheetPlan plan,
-) {
-  final pattern = RegExp(
-    r'''^import\s+(['"])([^'"]*/app/app\.bottomsheets\.dart)\1\s*;''',
-    multiLine: true,
-  );
-  return pattern
-      .allMatches(contents)
-      .map((match) => "import '${match.group(2)}';")
-      .any((line) => line != plan.bottomSheetsImportLine);
-}
-
-int _setupBottomSheetUiCount(String contents) {
-  return RegExp(
-    r'\bsetupBottomSheetUi\s*\(\s*\)\s*;',
-  ).allMatches(contents).length;
-}
-
-String _applyAppPlan(String contents, CreateBottomSheetPlan plan) {
+String _applyLocatorPlan(String contents, CreateBottomSheetPlan plan) {
   final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
-  var next = contents.replaceFirst(
-    RegExp(r'^[ \t]*// @stacked-import', multiLine: true),
-    '${plan.sheetImportLine}$lineEnding// @stacked-import',
-  );
-
-  if (_bottomSheetServiceRegistrationCount(next) == 0) {
-    next = next.replaceFirst(
-      RegExp(r'^[ \t]*// @stacked-service', multiLine: true),
-      '${plan.serviceLine}$lineEnding    // @stacked-service',
-    );
-  }
-
-  if (_hasBottomSheetsConfiguration(next)) {
-    return next.replaceFirst(
-      RegExp(r'^[ \t]*// @stacked-bottom-sheet', multiLine: true),
-      '${plan.bottomSheetLine}$lineEnding    // @stacked-bottom-sheet',
-    );
-  }
-
-  return next.replaceFirst(
-    RegExp(r'^[ \t]*dependencies\s*:\s*\[', multiLine: true),
-    '  bottomsheets: [$lineEnding'
-    '${plan.bottomSheetLine}$lineEnding'
-    '    // @stacked-bottom-sheet$lineEnding'
-    '  ],$lineEnding'
-    '  dependencies: [',
-  );
+  return contents
+      .replaceFirst(
+        RegExp(r'^[ \t]*// @cuboid-import', multiLine: true),
+        '${plan.serviceImportLine}$lineEnding// @cuboid-import',
+      )
+      .replaceFirst(
+        RegExp(r'^[ \t]*// @cuboid-service', multiLine: true),
+        '${plan.serviceLine}$lineEnding  // @cuboid-service',
+      );
 }
 
-String _applyMainPlan(String contents, CreateBottomSheetPlan plan) {
+String _applyBottomSheetsPlan(String contents, CreateBottomSheetPlan plan) {
   final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
-  var next = contents;
-  if (_importCount(next, plan.bottomSheetsImportLine) == 0) {
-    next = _insertImport(next, plan.bottomSheetsImportLine, lineEnding);
-  }
-  if (_setupBottomSheetUiCount(next) == 0) {
-    next = next.replaceFirst(
-      RegExp(r'^[ \t]*await\s+setupLocator\(\)\s*;', multiLine: true),
-      '  await setupLocator();$lineEnding${plan.setupLine}',
-    );
-  }
-  return next;
-}
-
-String _insertImport(String contents, String importLine, String lineEnding) {
-  final importMatches = RegExp(
-    r'^import .+;$',
-    multiLine: true,
-  ).allMatches(contents);
-  if (importMatches.isEmpty) {
-    throw const CreateBottomSheetException(
-      'lib/main.dart must contain import declarations.',
-    );
-  }
-  final lastImport = importMatches.last;
-  return contents.replaceRange(
-    lastImport.end,
-    lastImport.end,
-    '$lineEnding$importLine',
-  );
+  return contents
+      .replaceFirst(
+        RegExp(r'^[ \t]*// @cuboid-import', multiLine: true),
+        '${plan.sheetImportLine}$lineEnding'
+        '${plan.modelImportLine}$lineEnding'
+        '// @cuboid-import',
+      )
+      .replaceFirst(
+        RegExp(r'^[ \t]*// @cuboid-bottom-sheet', multiLine: true),
+        '  ${plan.bottomSheetEntryLine}$lineEnding  // @cuboid-bottom-sheet',
+      );
 }
 
 void _replaceFileContents(File file, String contents, {required String label}) {
@@ -743,20 +579,12 @@ String _humanize(List<String> words) {
 
 String _sheetContents(CreateBottomSheetPlan plan) {
   return '''
+import 'package:${plan.packageName}/core/mvvm/cuboid_view.dart';
 import 'package:${plan.packageName}/shared/bottom_sheets/${plan.name}/${plan.name}_sheet_model.dart';
 import 'package:flutter/material.dart';
-import 'package:stacked/stacked.dart';
-import 'package:stacked_services/stacked_services.dart';
 
-class ${plan.sheetClassName} extends StackedView<${plan.modelClassName}> {
-  const ${plan.sheetClassName}({
-    super.key,
-    required this.request,
-    required this.completer,
-  });
-
-  final SheetRequest<dynamic> request;
-  final void Function(SheetResponse<dynamic> response) completer;
+class ${plan.sheetClassName} extends CuboidView<${plan.modelClassName}> {
+  const ${plan.sheetClassName}({super.key});
 
   @override
   ${plan.modelClassName} viewModelBuilder(BuildContext context) =>
@@ -776,8 +604,46 @@ class ${plan.sheetClassName} extends StackedView<${plan.modelClassName}> {
 
 String _modelContents(CreateBottomSheetPlan plan) {
   return '''
-import 'package:stacked/stacked.dart';
+import 'package:${plan.packageName}/core/mvvm/cuboid_view_model.dart';
 
-class ${plan.modelClassName} extends BaseViewModel {}
+class ${plan.modelClassName} extends CuboidViewModel {}
+''';
+}
+
+String _freshBottomSheetsContents(CreateBottomSheetPlan plan) {
+  return '''
+import 'package:flutter/material.dart';
+${plan.sheetImportLine}
+${plan.modelImportLine}
+// @cuboid-import
+
+final Map<Type, WidgetBuilder> cuboidBottomSheetBuilders = {
+  ${plan.bottomSheetEntryLine}
+  // @cuboid-bottom-sheet
+};
+''';
+}
+
+String _bottomSheetServiceContents(CreateBottomSheetPlan plan) {
+  return '''
+import 'package:${plan.packageName}/app/app.bottomsheets.dart';
+import 'package:${plan.packageName}/core/services/navigation_service.dart';
+import 'package:flutter/material.dart';
+
+/// Shows a registered bottom sheet by its view model type, looked up in
+/// [cuboidBottomSheetBuilders] (lib/app/app.bottomsheets.dart).
+class BottomSheetService {
+  Future<TResult?> show<TModel, TResult>() {
+    final builder = cuboidBottomSheetBuilders[TModel];
+    if (builder == null) {
+      throw StateError('No bottom sheet registered for \$TModel.');
+    }
+    final context = NavigationService.navigatorKey.currentContext;
+    if (context == null) {
+      throw StateError('BottomSheetService used before a Navigator exists.');
+    }
+    return showModalBottomSheet<TResult>(context: context, builder: builder);
+  }
+}
 ''';
 }

@@ -1,3 +1,3 @@
-import 'package:stacked/stacked.dart';
+import 'package:cuboid_flutter_template/core/mvvm/cuboid_view_model.dart';
 
-class HomeViewModel extends BaseViewModel {}
+class HomeViewModel extends CuboidViewModel {}

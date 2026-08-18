@@ -1,6 +1,7 @@
 # Cuboid Flutter Template
 
-Reusable Flutter + Stacked starter template for Cuboid applications.
+Reusable Flutter starter template for Cuboid applications, built on Cuboid's
+own MVVM, dependency injection, and routing.
 
 This repository is infrastructure for starting a new app. It is not a production
 domain application and does not contain application-specific business workflows,
@@ -9,7 +10,8 @@ database schema, or repository/data layers.
 ## Technology
 
 - Flutter and Dart
-- Stacked MVVM, routing, service locator, dialogs, and bottom sheets
+- Cuboid's own in-house MVVM, routing, service locator (get_it-based),
+  dialogs, and bottom sheets -- no third-party MVVM framework
 - Technology-neutral base: no backend or storage technology is pre-installed;
   add one explicitly via the Cuboid CLI (e.g. `cuboid create database
   supabase`, `cuboid create storage`) when a project actually needs one
@@ -20,8 +22,8 @@ database schema, or repository/data layers.
 
 ```text
 lib/
-|-- app/                  Stacked registration, router, locator, app root
-|-- core/                 Constants, errors, formatters, forms, models,
+|-- app/                  Locator, router, app root (CLI-patched, hand-editable)
+|-- core/                 Constants, errors, formatters, forms, models, mvvm,
 |                         services, storage, theme, and validators
 |-- features/
 |   |-- startup/          Startup view and view model
@@ -38,8 +40,9 @@ doc/design/               Generic design guidance
 template -- they're added once a generated app needs backend configuration or
 network guards. See [ARCHITECTURE.md §10](ARCHITECTURE.md#10-core-foundations).
 
-Generated Stacked files live under `lib/app/` and should be regenerated from
-their editable sources, not edited by hand.
+`lib/app/app.locator.dart` and `lib/app/app.router.dart` are plain,
+hand-maintained Dart -- not code-generated output. Edit them directly, or let
+`cuboid create <artifact>` patch them idempotently.
 
 ## Bootstrap a new application
 
@@ -77,13 +80,13 @@ Inside a generated project, scaffold artifacts with `cuboid create <artifact>`:
 ```text
 cuboid create feature <name>           # also creates its repository and route
 cuboid create service <name>
-cuboid create bottomsheet <name>       # regenerates app.bottomsheets.dart itself
-cuboid create dialog <name>            # regenerates app.dialogs.dart itself
+cuboid create bottomsheet <name>       # patches app.bottomsheets.dart itself
+cuboid create dialog <name>            # patches app.dialogs.dart itself
 cuboid create storage
 cuboid create database supabase
 cuboid create view <name> <feature>    # also registers the view's route
 cuboid create model <name>
-cuboid create widget <name>            # shared, under lib/shared/widgets/
+cuboid create widget <name>            # shared, under lib/shared/widgets/<name>/
 cuboid create widget <name> <feature>  # feature-scoped
 ```
 
@@ -92,14 +95,11 @@ generates and registers its repository, and creating a feature or view
 registers its route, automatically.
 
 Every command supports `--dry-run` to preview the plan without writing
-anything. Commands that register an artifact with Stacked (`feature`,
-`service`, `database`, `view`) print the `dart run build_runner build -d`
-step to run afterward instead of running it automatically. `bottomsheet` and
-`dialog` are the exception: they run that step for you, because otherwise
-`lib/main.dart`'s `setupBottomSheetUi()`/`setupDialogUi()` calls would
-reference a file (`app.bottomsheets.dart`/`app.dialogs.dart`) that doesn't
-exist yet and the project wouldn't compile. Full per-command contracts
-(generated files, registration behavior, safety guarantees) live in
+anything. No command needs a code-generation step afterward: `lib/app/
+app.locator.dart`, `app.router.dart`, `app.bottomsheets.dart`, and
+`app.dialogs.dart` are plain Dart files each command patches directly. Full
+per-command contracts (generated files, registration behavior, safety
+guarantees) live in
 [ARCHITECTURE.md §9](ARCHITECTURE.md#9-cuboid-cli-command-contract).
 
 ## Local development
@@ -114,13 +114,6 @@ Run the app:
 
 ```bash
 flutter run
-```
-
-Regenerate Stacked output after changing Stacked registration or route
-annotations:
-
-```bash
-dart run build_runner build -d
 ```
 
 ## Optional backend/storage setup

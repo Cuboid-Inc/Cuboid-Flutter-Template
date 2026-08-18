@@ -32,9 +32,8 @@ class CreateViewPlan {
     required this.viewModelClassName,
     required this.featureDirectory,
     required this.files,
-    required this.appPath,
-    required this.routeImportLine,
-    required this.routeLine,
+    required this.routerPath,
+    required this.routeRegistration,
     required this.dryRun,
   });
 
@@ -49,9 +48,8 @@ class CreateViewPlan {
   /// Null when the view is shared rather than feature-scoped.
   final Directory? featureDirectory;
   final List<String> files;
-  final String appPath;
-  final String routeImportLine;
-  final String routeLine;
+  final String routerPath;
+  final RouteRegistration routeRegistration;
   final bool dryRun;
 
   bool get isShared => featureName == null;
@@ -102,9 +100,8 @@ class CreateViewService {
           'lib/shared/views/${viewName}_view.dart',
           'lib/shared/views/${viewName}_viewmodel.dart',
         ],
-        appPath: 'lib/app/app.dart',
-        routeImportLine: routeRegistration.importLine,
-        routeLine: routeRegistration.routeLine,
+        routerPath: 'lib/app/app.router.dart',
+        routeRegistration: routeRegistration,
         dryRun: input.dryRun,
       );
     }
@@ -132,9 +129,8 @@ class CreateViewService {
       viewModelClassName: '${_pascalCase(words)}ViewModel',
       featureDirectory: featureDirectory,
       files: [viewPath, viewModelPath],
-      appPath: 'lib/app/app.dart',
-      routeImportLine: routeRegistration.importLine,
-      routeLine: routeRegistration.routeLine,
+      routerPath: 'lib/app/app.router.dart',
+      routeRegistration: routeRegistration,
       dryRun: input.dryRun,
     );
   }
@@ -144,9 +140,12 @@ class CreateViewService {
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     _validateTargets(projectRoot, createPlan);
 
-    final appFile = _targetFile(projectRoot, createPlan.appPath);
-    final appContents = _validateApp(createPlan, appFile);
-    final nextAppContents = _applyAppPlan(appContents, createPlan);
+    final routerFile = _targetFile(projectRoot, createPlan.routerPath);
+    final routerContents = _validateRouter(createPlan, routerFile);
+    final nextRouterContents = applyRouteRegistration(
+      routerContents,
+      createPlan.routeRegistration,
+    );
 
     final viewContents = _viewContents(createPlan);
     final viewModelContents = _viewModelContents(createPlan);
@@ -172,12 +171,16 @@ class CreateViewService {
       );
       _fileWriter(viewFile, viewContents);
       _fileWriter(viewModelFile, viewModelContents);
-      _replaceFileContents(appFile, nextAppContents, label: createPlan.appPath);
+      _replaceFileContents(
+        routerFile,
+        nextRouterContents,
+        label: createPlan.routerPath,
+      );
     } on FileSystemException catch (error) {
       _deleteCreatedFile(viewFile);
       _deleteCreatedFile(viewModelFile);
       _pruneCreatedDirectories(createdDirectories);
-      _restoreFileContents(appFile, appContents);
+      _restoreFileContents(routerFile, routerContents);
       throw CreateViewException(
         'Unable to create view ${createPlan.displayName}: ${error.message}',
       );
@@ -206,31 +209,17 @@ void _validateTargets(Directory projectRoot, CreateViewPlan plan) {
   }
 }
 
-String _validateApp(CreateViewPlan plan, File appFile) {
-  _ensureRegularFile(appFile.path, plan.appPath);
-  final contents = _readFile(appFile, plan.appPath);
+String _validateRouter(CreateViewPlan plan, File routerFile) {
+  _ensureRegularFile(routerFile.path, plan.routerPath);
+  final contents = _readFile(routerFile, plan.routerPath);
 
-  final routeRegistration = RouteRegistration(
-    viewClassName: plan.viewClassName,
-    importLine: plan.routeImportLine,
-    routeLine: plan.routeLine,
-  );
   try {
-    validateRouteRegistration(contents, routeRegistration);
+    validateRouteRegistration(contents, plan.routeRegistration);
   } on RouteRegistrationException catch (error) {
     throw CreateViewException(error.message);
   }
 
   return contents;
-}
-
-String _applyAppPlan(String contents, CreateViewPlan plan) {
-  final routeRegistration = RouteRegistration(
-    viewClassName: plan.viewClassName,
-    importLine: plan.routeImportLine,
-    routeLine: plan.routeLine,
-  );
-  return applyRouteRegistration(contents, routeRegistration);
 }
 
 void _ensureRegularDirectory(String path, String label) {
@@ -396,11 +385,11 @@ String _viewContents(CreateViewPlan plan) {
       ? 'shared/views/${viewName}_viewmodel.dart'
       : 'features/${plan.featureName}/ui/${viewName}_viewmodel.dart';
   return '''
+import 'package:${plan.packageName}/core/mvvm/cuboid_view.dart';
 import 'package:${plan.packageName}/$viewModelImportPath';
 import 'package:flutter/material.dart';
-import 'package:stacked/stacked.dart';
 
-class ${plan.viewClassName} extends StackedView<${plan.viewModelClassName}> {
+class ${plan.viewClassName} extends CuboidView<${plan.viewModelClassName}> {
   const ${plan.viewClassName}({super.key});
 
   @override
@@ -424,9 +413,9 @@ class ${plan.viewClassName} extends StackedView<${plan.viewModelClassName}> {
 
 String _viewModelContents(CreateViewPlan plan) {
   return '''
-import 'package:stacked/stacked.dart';
+import 'package:${plan.packageName}/core/mvvm/cuboid_view_model.dart';
 
-class ${plan.viewModelClassName} extends BaseViewModel {}
+class ${plan.viewModelClassName} extends CuboidViewModel {}
 ''';
 }
 

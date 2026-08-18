@@ -6,7 +6,8 @@ This document describes the architecture that exists in this repository and the
 boundaries a generated application should follow when it adds product-specific
 features.
 
-The repository is a generic Flutter + Stacked template. It does not currently
+The repository is a generic Flutter template using Cuboid's own MVVM,
+dependency injection, and routing. It does not currently
 contain a production business domain, production repository/data layer, active
 product migrations, or application-specific database schema.
 
@@ -30,16 +31,17 @@ When sources conflict, stop and resolve the conflict before changing behavior.
 
 ## 2. Current runtime shape
 
-The template uses Flutter with Stacked MVVM.
+The template uses Flutter with Cuboid's own in-house MVVM, dependency
+injection, and routing -- there is no third-party MVVM framework dependency.
 
 The current runtime flow is:
 
 ```text
 main.dart
     |
-AppRoot
+setupLocator() (lib/app/app.locator.dart)
     |
-Stacked app registration
+AppRoot (MaterialApp using lib/app/app.router.dart)
     |
 StartupView
     |
@@ -62,17 +64,17 @@ top-level destination.
 lib/
 |-- main.dart
 |-- app/
-|   |-- app.dart
 |   |-- app_root.dart
-|   |-- app.locator.dart       Generated
-|   |-- app.logger.dart        Generated
-|   `-- app.router.dart        Generated
+|   |-- app.locator.dart       CLI-patched; DI setup (get_it)
+|   |-- app.logger.dart        Hand-maintained app logger
+|   `-- app.router.dart        CLI-patched; route table
 |-- core/
 |   |-- constants/
 |   |-- errors/
 |   |-- formatters/
 |   |-- forms/
 |   |-- models/
+|   |-- mvvm/                  CuboidView / CuboidViewModel base classes
 |   |-- services/
 |   |-- storage/
 |   |-- theme/
@@ -104,7 +106,7 @@ requirements.
 
 ## 4. Feature structure
 
-Features use a feature-first Stacked layout:
+Features use a feature-first Cuboid layout:
 
 ```text
 lib/features/<feature>/
@@ -128,9 +130,10 @@ lib/features/home/
 ```
 
 `cuboid create feature` always generates the feature's repository under
-`lib/features/<feature>/data/` and registers it as a `LazySingleton`, and it
-registers the feature's view as a route in `lib/app/app.dart` -- see
-[9](#9-cuboid-cli-command-contract). The repository starts as an empty,
+`lib/features/<feature>/data/` and registers it as a `LazySingleton` in
+`lib/app/app.locator.dart`, and it registers the feature's view as a route in
+`lib/app/app.router.dart` -- see [9](#9-cuboid-cli-command-contract). The
+repository starts as an empty,
 technology-neutral shell; wire it to a real data source once the feature
 actually owns persistent data, matching
 [ADR-3](#adr-3-repositories-are-the-persistent-data-boundary).
@@ -142,7 +145,8 @@ look more layered. No UseCase layer is required.
 fully built product feature.
 
 `Home` (`lib/features/home/`) is an ordinary feature, registered as a normal
-route in `lib/app/app.dart` like any other `cuboid create feature` output. The
+route in `lib/app/app.router.dart` like any other `cuboid create feature`
+output. The
 base template has no application-level navigation shell (tab bar, drawer,
 etc.); it owns only Home-specific UI/model/data. A generated application that
 needs tab/section navigation across multiple features adds that
@@ -194,41 +198,46 @@ persistent feature data is added, repositories own backend access.
 
 ## 7. Services
 
-Shared reactive services are appropriate only when multiple features require the
-same live application state. The base template does not currently ship one;
-`cuboid create service <name>` scaffolds a new one under
-`lib/core/services/` and registers it (see
-[9](#9-cuboid-cli-command-contract)).
+`lib/core/services/` ships one framework service in the base template --
+`NavigationService`, used by view models to navigate without holding a
+`BuildContext` (see [8](#8-navigation-locator-and-routing-files)). Beyond
+that, shared reactive services are appropriate only when multiple features
+require the same live application state. `cuboid create service <name>`
+scaffolds an app-level service alongside it in `lib/core/services/` and
+registers it (see [9](#9-cuboid-cli-command-contract)).
 
 Do not create services simply to wrap one method or one repository call.
 
-## 8. Navigation and generated Stacked code
+## 8. Navigation, locator, and routing files
 
-`lib/app/app.dart` is the editable Stacked composition root. It defines
-registration for routes, services, repositories, bottom sheets, and dialogs.
-
-Generated Stacked files are outputs and must not receive manual edits:
+Cuboid does not use a third-party MVVM/DI/routing framework or code
+generation for these concerns. Three files under `lib/app/` are
+hand-maintained, plain Dart, and are also the files the Cuboid CLI patches
+directly (idempotently, via marker comments) when it registers a new
+artifact:
 
 ```text
-lib/app/app.router.dart
-lib/app/app.locator.dart
-lib/app/app.logger.dart
+lib/app/app.locator.dart   DI setup: `locator` (a get_it instance) and
+                            setupLocator(), registering services and
+                            repositories as LazySingleton
+lib/app/app.router.dart    Route-name constants (`Routes`), the
+                            `appRoutes` builder map, and `onGenerateRoute`
+lib/app/app.logger.dart    The app's `AppLogger` helper (package:logger)
 ```
 
-Depending on registered Stacked features, generated dialog or bottom-sheet files
-may also exist.
+Depending on which optional artifacts a generated application has added,
+`lib/app/app.bottomsheets.dart` and/or `lib/app/app.dialogs.dart` may also
+exist, each holding a `Map<Type, WidgetBuilder>` of registered sheets/dialogs
+keyed by their view model type.
 
-Optional Stacked registration folders such as `lib/shared/dialogs/` and
-`lib/shared/bottom_sheets/` should be added only when the generated application
-registers dialogs or bottom sheets.
+Optional registration folders such as `lib/shared/dialogs/` and
+`lib/shared/bottom_sheets/` should be added only when the generated
+application registers dialogs or bottom sheets.
 
-When registration or route annotations change, regenerate output:
-
-```bash
-dart run build_runner build -d
-```
-
-Generated changes are kept only when their editable source changed.
+These files are not code-generated output: edit them directly for manual
+changes, and expect `cuboid create <artifact>` commands to patch them for
+generated ones. No build step is required to keep them valid -- there is no
+`build_runner` step in this template.
 
 ## 9. Cuboid CLI command contract
 
@@ -265,18 +274,21 @@ rather than kept as redundant, backend-coupled commands.
 
 Shipped `create` command family:
 
-| Command | Generates | Modifies | Registration | Requires build_runner |
-| --- | --- | --- | --- | --- |
-| `cuboid create app <display> <package>` | New Flutter project from the template payload | — | Bootstraps package identifiers, Dart project name, bundle IDs | Runs `flutter pub get`, `build_runner`, `dart format` as post-steps (skippable with `--no-post-steps`) |
-| `cuboid create feature <name>` | `lib/features/<name>/ui/<name>_view.dart` + `.../ui/<name>_viewmodel.dart` + `.../data/<name>_repository.dart` | `lib/app/app.dart` | Registers the view as a route and the repository as a `LazySingleton` | Yes |
-| `cuboid create service <name>` | `lib/core/services/<name>_service.dart` | `lib/app/app.dart` | Registers the service as a `LazySingleton` | Yes |
-| `cuboid create bottomsheet <name>` | `lib/shared/bottom_sheets/<name>/<name>_sheet.dart` + `_sheet_model.dart` | `lib/app/app.dart`, `lib/main.dart` | Registers the sheet + `setupBottomSheetUi()` call | Runs it automatically |
-| `cuboid create dialog <name>` | `lib/shared/dialogs/<name>/<name>_dialog.dart` + `_dialog_model.dart` | `lib/app/app.dart`, `lib/main.dart` | Registers the dialog + `setupDialogUi()` call | Runs it automatically |
-| `cuboid create storage` | `lib/core/storage/local_storage.dart` | — | None | No |
-| `cuboid create database <provider>` | `lib/supabase/example_model.dart`, `example_repository.dart`, a timestamped migration under `supabase/migrations/` (provider must be `supabase`; no other provider is currently supported) | `lib/app/app.dart`, `pubspec.yaml`, `lib/core/network/supabase_guard.dart` | Registers the example repository; provisions the `supabase_flutter` dependency and the guard file when either is missing | Yes, plus `flutter pub get` and `supabase db push` |
-| `cuboid create view <name> <feature>` | Additional `..._view.dart` + `..._viewmodel.dart` pair, flat inside the feature's `ui/` | `lib/app/app.dart` | Registers the new view as a route | Yes |
-| `cuboid create model <name>` | `lib/core/models/<name>.dart` | — | None | No |
-| `cuboid create widget <name>` or `<name> <feature>` | `lib/shared/widgets/<name>.dart` (shared) or `lib/features/<feature>/ui/widgets/<name>.dart` (feature-scoped; the feature must already exist) | — | None | No |
+| Command | Generates | Modifies | Registration |
+| --- | --- | --- | --- |
+| `cuboid create app <display> <package>` | New Flutter project from the template payload | — | Bootstraps package identifiers, Dart project name, app class name, bundle IDs; runs `flutter pub get` and `dart format` as post-steps (skippable with `--no-post-steps`) |
+| `cuboid create feature <name>` | `lib/features/<name>/ui/<name>_view.dart` + `.../ui/<name>_viewmodel.dart` + `.../data/<name>_repository.dart` | `lib/app/app.locator.dart`, `lib/app/app.router.dart` | Registers the view as a route and the repository as a `LazySingleton` |
+| `cuboid create service <name>` | `lib/core/services/<name>_service.dart` | `lib/app/app.locator.dart` | Registers the service as a `LazySingleton` |
+| `cuboid create bottomsheet <name>` | `lib/shared/bottom_sheets/<name>/<name>_sheet.dart` + `_sheet_model.dart` | `lib/app/app.locator.dart` (first use only), `lib/app/app.bottomsheets.dart` | Registers `BottomSheetService` (first use) and the sheet's builder |
+| `cuboid create dialog <name>` | `lib/shared/dialogs/<name>/<name>_dialog.dart` + `_dialog_model.dart` | `lib/app/app.locator.dart` (first use only), `lib/app/app.dialogs.dart` | Registers `DialogService` (first use) and the dialog's builder |
+| `cuboid create storage` | `lib/core/storage/local_storage.dart` | — | None |
+| `cuboid create database <provider>` | `lib/supabase/example_model.dart`, `example_repository.dart`, a timestamped migration under `supabase/migrations/` (provider must be `supabase`; no other provider is currently supported) | `lib/app/app.locator.dart`, `pubspec.yaml`, `lib/core/network/supabase_guard.dart` | Registers the example repository; provisions the `supabase_flutter` dependency and the guard file when either is missing |
+| `cuboid create view <name> <feature>` | Additional `..._view.dart` + `..._viewmodel.dart` pair, flat inside the feature's `ui/` | `lib/app/app.router.dart` | Registers the new view as a route |
+| `cuboid create model <name>` | `lib/core/models/<name>.dart` | — | None |
+| `cuboid create widget <name>` or `<name> <feature>` | `lib/shared/widgets/<name>/<name>_widget.dart` + `<name>_view_model.dart` (shared) or `lib/features/<feature>/ui/widgets/<name>/<name>_widget.dart` + `<name>_view_model.dart` (feature-scoped; the feature must already exist) | — | None |
+
+No command needs `build_runner`: locator, router, and bottom sheet/dialog
+registries are plain, CLI-patched Dart files, not code-generated output.
 
 `database` provisions its own Supabase foundation: it adds the
 `supabase_flutter` dependency to `pubspec.yaml` and creates
@@ -310,19 +322,15 @@ source inspection and tests, not assumed):
   that each ancestor path segment between the project root and the target
   stays a real directory (not a symlink, not outside the project).
 - Rollback: a failure partway through a multi-file write deletes files it had
-  already created, restores any registration file (`app.dart`/`main.dart`) to
-  its original contents, and prunes any parent directories the operation
-  itself created (empty-only; pre-existing directories are left alone).
-- No generator runs `build_runner` automatically, with two exceptions:
-  `bottomsheet` and `dialog` do, because the `lib/main.dart` import they wire
-  up (`app.bottomsheets.dart`/`app.dialogs.dart`) does not exist until
-  build_runner produces it, so without regenerating immediately the project
-  would not compile at all. Every other generator only needs build_runner to
-  refresh DI/route wiring, not to keep the project compiling, and prints the
-  exact next command instead of running it.
-- Generated Stacked files (`lib/app/app.router.dart`, `.locator.dart`,
-  `.logger.dart`) are never hand-edited by a generator; only the editable
-  source (`lib/app/app.dart`) is patched.
+  already created, restores any registration file (`app.locator.dart`,
+  `app.router.dart`, `app.bottomsheets.dart`, `app.dialogs.dart`) to its
+  original contents, and prunes any parent directories the operation itself
+  created (empty-only; pre-existing directories are left alone).
+- No generator needs `build_runner`: `lib/app/app.locator.dart`,
+  `app.router.dart`, `app.bottomsheets.dart`, and `app.dialogs.dart` are
+  plain Dart files patched directly and idempotently via marker comments
+  (`// @cuboid-import`, `// @cuboid-service`, `// @cuboid-route`, etc.) --
+  there is no generated/source split and no codegen step to run afterward.
 
 A new artifact command (an 11th category, or a new option on an existing one)
 still requires: command syntax, required/optional arguments, normalized names,
@@ -365,6 +373,13 @@ Reusable form and validation helpers.
 
 Shared models that do not have a clear single feature owner.
 
+`lib/core/mvvm/`
+
+`CuboidView` and `CuboidViewModel`, the base classes every View/ViewModel in
+the template and every `cuboid create feature`/`view`/`widget`/
+`bottomsheet`/`dialog` output extends. See
+[6](#6-presentation-architecture).
+
 `lib/core/network/` (not present in the base template)
 
 Network/backend boundary helpers, added once a generated application
@@ -375,7 +390,10 @@ here; `cuboid create database supabase` requires it to already exist (see
 
 `lib/core/services/`
 
-Application-wide services with shared lifecycle or state.
+Application-wide services with shared lifecycle or state. Ships
+`NavigationService` in the base template (see
+[8](#8-navigation-locator-and-routing-files)); `cuboid create service`
+adds app-level services here.
 
 `lib/core/storage/`
 
@@ -508,9 +526,10 @@ Backend tests become application-specific when a backend schema exists.
 
 ## 15. Architecture decisions
 
-### ADR-1: Feature-first Stacked MVVM
+### ADR-1: Feature-first Cuboid MVVM
 
-Use feature-first folders with Stacked views and view models.
+Use feature-first folders with `CuboidView`/`CuboidViewModel` views and view
+models (see [10](#10-core-foundations)).
 
 This keeps screen ownership clear while allowing shared infrastructure under
 `core/` and shared presentation under `shared/`.
@@ -549,12 +568,13 @@ base template does not assume or require any backend/storage choice.
 For applications using Supabase, prefer Supabase's backend boundary unless an
 explicit product or infrastructure requirement justifies a custom server.
 
-### ADR-6: Generated Stacked files remain generated
+### ADR-6: Locator, router, and UI-registry files stay CLI-patched, not hand-authored business logic
 
-Registration sources are edited manually; generated route and locator files are
-regenerated.
+`lib/app/app.locator.dart`, `app.router.dart`, `app.bottomsheets.dart`, and
+`app.dialogs.dart` hold only registration/wiring, edited directly or patched
+by the CLI (see [8](#8-navigation-locator-and-routing-files)).
 
-Never place custom logic in generated files.
+Never place application business logic in these files.
 
 ## 16. Current template limitations
 

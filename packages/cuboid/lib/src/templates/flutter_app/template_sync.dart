@@ -22,7 +22,6 @@ const templateAllowedFiles = [
   'devtools_options.yaml',
   'pubspec.lock',
   'pubspec.yaml',
-  'stacked.json',
 ];
 
 const templateAllowedDirectories = ['android', 'assets', 'ios', 'lib', 'test'];
@@ -310,11 +309,7 @@ List<String> verifyTemplatePayload(Directory root) {
 }
 
 void validateRepositoryRoot(Directory root) {
-  final requiredPaths = [
-    'pubspec.yaml',
-    'stacked.json',
-    'packages/cuboid/pubspec.yaml',
-  ];
+  final requiredPaths = ['pubspec.yaml', 'packages/cuboid/pubspec.yaml'];
   for (final path in requiredPaths) {
     if (!fileFor(root, path).existsSync()) {
       throw TemplateSyncException(

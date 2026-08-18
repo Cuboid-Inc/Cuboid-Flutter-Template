@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('shared widgets', () {
-    test('creates a shared widget under lib/shared/widgets', () async {
+    test('creates a shared widget under lib/shared/widgets/<name>/', () async {
       final root = _projectRoot();
       addTearDown(() => root.deleteSync(recursive: true));
       final service = CreateWidgetService();
@@ -19,42 +19,61 @@ void main() {
       expect(result.plan.isShared, isTrue);
       expect(result.plan.className, 'StatusBadge');
       expect(result.plan.viewModelClassName, 'StatusBadgeViewModel');
-      expect(result.plan.path, 'lib/shared/widgets/status_badge.dart');
+      expect(
+        result.plan.path,
+        'lib/shared/widgets/status_badge/status_badge_widget.dart',
+      );
       expect(
         result.plan.viewModelPath,
-        'lib/shared/widgets/status_badge_viewmodel.dart',
+        'lib/shared/widgets/status_badge/status_badge_view_model.dart',
       );
 
       final contents = File(
-        '${root.path}/lib/shared/widgets/status_badge.dart',
+        '${root.path}/lib/shared/widgets/status_badge/status_badge_widget.dart',
       ).readAsStringSync();
       expect(
         contents,
-        contains(
-          "import 'package:test_app/shared/widgets/status_badge_viewmodel.dart';",
-        ),
+        contains("import 'package:test_app/core/mvvm/cuboid_view.dart';"),
       );
-      expect(contents, contains("import 'package:flutter/material.dart';"));
-      expect(contents, contains("import 'package:stacked/stacked.dart';"));
       expect(
         contents,
         contains(
-          'class StatusBadge extends StackedView<StatusBadgeViewModel> {',
+          "import 'package:test_app/shared/widgets/status_badge/"
+          "status_badge_view_model.dart';",
+        ),
+      );
+      expect(contents, contains("import 'package:flutter/material.dart';"));
+      expect(
+        contents,
+        contains(
+          'class StatusBadge extends CuboidView<StatusBadgeViewModel> {',
         ),
       );
       expect(contents, contains('const StatusBadge({super.key});'));
 
       final viewModelContents = File(
-        '${root.path}/lib/shared/widgets/status_badge_viewmodel.dart',
+        '${root.path}/lib/shared/widgets/status_badge/status_badge_view_model.dart',
       ).readAsStringSync();
       expect(
         viewModelContents,
-        contains("import 'package:stacked/stacked.dart';"),
+        contains("import 'package:test_app/core/mvvm/cuboid_view_model.dart';"),
       );
       expect(
         viewModelContents,
-        contains('class StatusBadgeViewModel extends BaseViewModel {}'),
+        contains('class StatusBadgeViewModel extends CuboidViewModel {}'),
       );
+    });
+
+    test('never creates a lib/ui directory', () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateWidgetService();
+
+      await service.create(
+        CreateWidgetInput(name: 'status_badge', projectRoot: root),
+      );
+
+      expect(Directory('${root.path}/lib/ui').existsSync(), isFalse);
     });
 
     test('dry-run validates and writes nothing', () async {
@@ -97,9 +116,12 @@ void main() {
     test('does not overwrite an existing target file', () async {
       final root = _projectRoot();
       addTearDown(() => root.deleteSync(recursive: true));
-      final target = File('${root.path}/lib/shared/widgets/status_badge.dart')
-        ..parent.createSync(recursive: true)
-        ..writeAsStringSync('keep\n');
+      final target =
+          File(
+              '${root.path}/lib/shared/widgets/status_badge/status_badge_widget.dart',
+            )
+            ..parent.createSync(recursive: true)
+            ..writeAsStringSync('keep\n');
       final service = CreateWidgetService();
 
       await expectLater(
@@ -174,36 +196,36 @@ void main() {
       expect(result.plan.viewModelClassName, 'PasswordFieldViewModel');
       expect(
         result.plan.path,
-        'lib/features/auth/ui/widgets/password_field.dart',
+        'lib/features/auth/ui/widgets/password_field/password_field_widget.dart',
       );
       expect(
         result.plan.viewModelPath,
-        'lib/features/auth/ui/widgets/password_field_viewmodel.dart',
+        'lib/features/auth/ui/widgets/password_field/password_field_view_model.dart',
       );
 
       final contents = File(
-        '${root.path}/lib/features/auth/ui/widgets/password_field.dart',
+        '${root.path}/lib/features/auth/ui/widgets/password_field/password_field_widget.dart',
       ).readAsStringSync();
       expect(
         contents,
         contains(
           "import 'package:test_app/features/auth/ui/widgets/"
-          "password_field_viewmodel.dart';",
+          "password_field/password_field_view_model.dart';",
         ),
       );
       expect(
         contents,
         contains(
-          'class PasswordField extends StackedView<PasswordFieldViewModel> {',
+          'class PasswordField extends CuboidView<PasswordFieldViewModel> {',
         ),
       );
 
       final viewModelContents = File(
-        '${root.path}/lib/features/auth/ui/widgets/password_field_viewmodel.dart',
+        '${root.path}/lib/features/auth/ui/widgets/password_field/password_field_view_model.dart',
       ).readAsStringSync();
       expect(
         viewModelContents,
-        contains('class PasswordFieldViewModel extends BaseViewModel {}'),
+        contains('class PasswordFieldViewModel extends CuboidViewModel {}'),
       );
     });
 
@@ -254,7 +276,9 @@ void main() {
       final root = _projectRoot();
       addTearDown(() => root.deleteSync(recursive: true));
       final target =
-          File('${root.path}/lib/features/auth/ui/widgets/password_field.dart')
+          File(
+              '${root.path}/lib/features/auth/ui/widgets/password_field/password_field_widget.dart',
+            )
             ..parent.createSync(recursive: true)
             ..writeAsStringSync('keep\n');
       final service = CreateWidgetService();
@@ -292,20 +316,20 @@ void main() {
 
       expect(
         File(
-          '${root.path}/lib/shared/widgets/password_field.dart',
+          '${root.path}/lib/shared/widgets/password_field/password_field_widget.dart',
         ).existsSync(),
         isTrue,
       );
       expect(
         File(
-          '${root.path}/lib/features/auth/ui/widgets/password_field.dart',
+          '${root.path}/lib/features/auth/ui/widgets/password_field/password_field_widget.dart',
         ).existsSync(),
         isTrue,
       );
     });
 
     test(
-      'creates both the widget and its viewmodel for "bar" in "login"',
+      'creates both the widget and its view model for "bar" in "login"',
       () async {
         final root = _projectRoot();
         addTearDown(() => root.deleteSync(recursive: true));
@@ -318,31 +342,36 @@ void main() {
           CreateWidgetInput(feature: 'login', name: 'bar', projectRoot: root),
         );
 
-        expect(result.plan.path, 'lib/features/login/ui/widgets/bar.dart');
+        expect(
+          result.plan.path,
+          'lib/features/login/ui/widgets/bar/bar_widget.dart',
+        );
         expect(
           result.plan.viewModelPath,
-          'lib/features/login/ui/widgets/bar_viewmodel.dart',
+          'lib/features/login/ui/widgets/bar/bar_view_model.dart',
         );
 
         final widgetFile = File(
-          '${root.path}/lib/features/login/ui/widgets/bar.dart',
+          '${root.path}/lib/features/login/ui/widgets/bar/bar_widget.dart',
         );
         final viewModelFile = File(
-          '${root.path}/lib/features/login/ui/widgets/bar_viewmodel.dart',
+          '${root.path}/lib/features/login/ui/widgets/bar/bar_view_model.dart',
         );
         expect(widgetFile.existsSync(), isTrue);
         expect(viewModelFile.existsSync(), isTrue);
+        expect(Directory('${root.path}/lib/ui').existsSync(), isFalse);
 
         final widgetContents = widgetFile.readAsStringSync();
         expect(
           widgetContents,
           contains(
-            "import 'package:test_app/features/login/ui/widgets/bar_viewmodel.dart';",
+            "import 'package:test_app/features/login/ui/widgets/bar/"
+            "bar_view_model.dart';",
           ),
         );
         expect(
           widgetContents,
-          contains('class Bar extends StackedView<BarViewModel> {'),
+          contains('class Bar extends CuboidView<BarViewModel> {'),
         );
         expect(
           widgetContents,
@@ -352,7 +381,7 @@ void main() {
         final viewModelContents = viewModelFile.readAsStringSync();
         expect(
           viewModelContents,
-          contains('class BarViewModel extends BaseViewModel {}'),
+          contains('class BarViewModel extends CuboidViewModel {}'),
         );
       },
     );

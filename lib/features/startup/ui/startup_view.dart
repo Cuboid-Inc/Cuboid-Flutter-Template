@@ -1,13 +1,13 @@
 import 'package:cuboid_flutter_template/core/constants/app_constants.dart';
 import 'package:cuboid_flutter_template/core/constants/asset_paths.dart';
+import 'package:cuboid_flutter_template/core/mvvm/cuboid_view.dart';
 import 'package:cuboid_flutter_template/core/theme/app_colors.dart';
 import 'package:cuboid_flutter_template/core/theme/ui_helpers.dart';
 import 'package:cuboid_flutter_template/features/startup/ui/startup_viewmodel.dart';
 import 'package:flutter/material.dart';
-import 'package:stacked/stacked.dart';
 
 /// Brief branded splash shown while we check for an existing session.
-class StartupView extends StackedView<StartupViewModel> {
+class StartupView extends CuboidView<StartupViewModel> {
   const StartupView({super.key});
 
   @override

@@ -75,7 +75,7 @@ void main() {
     expect(runner.commands['view'], isA<ViewCommand>());
     expect(
       runner.commands['view']!.description,
-      contains('Create an additional Stacked View'),
+      contains('Create an additional Cuboid View'),
     );
   });
 
@@ -260,6 +260,8 @@ void main() {
       );
       expect(output.content, contains('cuboid create model <name>'));
       expect(output.content, contains('cuboid create widget <name>'));
+      expect(output.content, contains('Run flutter pub get and dart format.'));
+      expect(output.content, isNot(contains('build_runner')));
       expect(output.content, isNot(contains('cuboid create route')));
       expect(output.content, isNot(contains('cuboid create repository')));
     },
@@ -289,10 +291,7 @@ void main() {
 
       expect(exitCode, 0);
       expect(output.content, contains('Created feature Auth.'));
-      expect(
-        output.content,
-        contains('Next step: dart run build_runner build -d'),
-      );
+      expect(output.content, isNot(contains('build_runner')));
       expect(errorOutput.content, isEmpty);
       expect(
         File('${temp.path}/lib/features/auth/ui/auth_view.dart').existsSync(),
@@ -310,25 +309,38 @@ void main() {
         ).existsSync(),
         isTrue,
       );
-      final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+      final router = File(
+        '${temp.path}/lib/app/app.router.dart',
+      ).readAsStringSync();
       expect(
-        app,
+        router,
         contains("import 'package:my_app/features/auth/ui/auth_view.dart';"),
       );
-      expect(app, contains('MaterialRoute(page: AuthView),'));
+      expect(router, contains("static const authView = '/auth-view';"));
+      expect(router, contains('Routes.authView: (_) => const AuthView(),'));
+      final locator = File(
+        '${temp.path}/lib/app/app.locator.dart',
+      ).readAsStringSync();
       expect(
-        app,
+        locator,
         contains(
           "import 'package:my_app/features/auth/data/auth_repository.dart';",
         ),
       );
-      expect(app, contains('LazySingleton(classType: AuthRepository),'));
+      expect(
+        locator,
+        contains(
+          '  locator.registerLazySingleton<AuthRepository>('
+          '() => const AuthRepository());',
+        ),
+      );
       expect(
         File('${temp.path}/pubspec.yaml').readAsStringSync(),
         beforePubspec,
       );
       expect(_relativeFiles(temp), [
-        'lib/app/app.dart',
+        'lib/app/app.locator.dart',
+        'lib/app/app.router.dart',
         'lib/features/auth/data/auth_repository.dart',
         'lib/features/auth/ui/auth_view.dart',
         'lib/features/auth/ui/auth_viewmodel.dart',
@@ -365,18 +377,19 @@ void main() {
     expect(
       view,
       contains(
-        "import 'package:custom_app/features/user_profile/ui/user_profile_viewmodel.dart';",
+        "import 'package:custom_app/features/user_profile/ui/"
+        "user_profile_viewmodel.dart';",
       ),
     );
     expect(
       view,
       contains(
-        'class UserProfileView extends StackedView<UserProfileViewModel>',
+        'class UserProfileView extends CuboidView<UserProfileViewModel>',
       ),
     );
     expect(
       viewModel,
-      contains('class UserProfileViewModel extends BaseViewModel {}'),
+      contains('class UserProfileViewModel extends CuboidViewModel {}'),
     );
   });
 
@@ -410,10 +423,19 @@ void main() {
       output.content,
       contains('- lib/features/auth/data/auth_repository.dart'),
     );
-    expect(output.content, contains('MaterialRoute(page: AuthView),'));
+    expect(output.content, contains('- lib/app/app.router.dart'));
+    expect(output.content, contains('- lib/app/app.locator.dart'));
+    expect(output.content, contains("static const authView = '/auth-view';"));
     expect(
       output.content,
-      contains('LazySingleton(classType: AuthRepository),'),
+      contains('Routes.authView: (_) => const AuthView(),'),
+    );
+    expect(
+      output.content,
+      contains(
+        'locator.registerLazySingleton<AuthRepository>('
+        '() => const AuthRepository());',
+      ),
     );
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
@@ -584,12 +606,19 @@ void main() {
     expect(output.content, contains('Dry run: no files were written.'));
     expect(output.content, contains('Service: AuthService'));
     expect(output.content, contains('- lib/core/services/auth_service.dart'));
-    expect(output.content, contains('- lib/app/app.dart'));
+    expect(output.content, contains('- lib/app/app.locator.dart'));
+    expect(output.content, contains('- class AuthService {}'));
     expect(
       output.content,
       contains("import 'package:my_app/core/services/auth_service.dart';"),
     );
-    expect(output.content, contains('LazySingleton(classType: AuthService),'));
+    expect(
+      output.content,
+      contains(
+        'locator.registerLazySingleton<AuthService>(() => AuthService());',
+      ),
+    );
+    expect(output.content, isNot(contains('build_runner')));
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -613,25 +642,30 @@ void main() {
 
     expect(exitCode, 0);
     expect(output.content, contains('Created service UserProfileService.'));
-    expect(
-      output.content,
-      contains('Next step: dart run build_runner build -d'),
-    );
+    expect(output.content, isNot(contains('build_runner')));
     expect(errorOutput.content, isEmpty);
     final serviceFile = File(
       '${temp.path}/lib/core/services/user_profile_service.dart',
     );
     expect(serviceFile.readAsStringSync(), 'class UserProfileService {}\n');
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    final locator = File(
+      '${temp.path}/lib/app/app.locator.dart',
+    ).readAsStringSync();
     expect(
-      app,
+      locator,
       contains(
         "import 'package:my_app/core/services/user_profile_service.dart';",
       ),
     );
-    expect(app, contains('    LazySingleton(classType: UserProfileService),'));
+    expect(
+      locator,
+      contains(
+        '  locator.registerLazySingleton<UserProfileService>('
+        '() => UserProfileService());',
+      ),
+    );
     expect(_relativeFiles(temp), [
-      'lib/app/app.dart',
+      'lib/app/app.locator.dart',
       'lib/core/services/user_profile_service.dart',
       'pubspec.yaml',
     ]);
@@ -660,7 +694,9 @@ void main() {
       expect(errorOutput.content, isEmpty, reason: name);
     }
 
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    final locator = File(
+      '${temp.path}/lib/app/app.locator.dart',
+    ).readAsStringSync();
     for (final entry in {
       'auth': 'AuthService',
       'payment': 'PaymentService',
@@ -674,12 +710,16 @@ void main() {
         reason: entry.value,
       );
       expect(
-        app,
-        contains('    LazySingleton(classType: ${entry.value}),'),
+        locator,
+        contains(
+          '  locator.registerLazySingleton<${entry.value}>('
+          '() => ${entry.value}());',
+        ),
         reason: entry.value,
       );
     }
-    expect('// @stacked-service'.allMatches(app), hasLength(1));
+    expect('// @cuboid-service'.allMatches(locator), hasLength(1));
+    expect('// @cuboid-import'.allMatches(locator), hasLength(1));
   });
 
   test('create service rejects project creation options', () async {
@@ -742,20 +782,37 @@ void main() {
         'confirm_delete_sheet_model.dart',
       ),
     );
-    expect(output.content, contains('- lib/app/app.dart'));
-    expect(output.content, contains('- lib/main.dart'));
+    expect(output.content, contains('- lib/app/app.bottomsheets.dart'));
     expect(
       output.content,
-      contains('StackedBottomsheet(classType: ConfirmDeleteSheet),'),
+      contains(
+        '- lib/core/services/bottom_sheet_service.dart '
+        '(first use only)',
+      ),
     );
     expect(
       output.content,
-      contains('LazySingleton(classType: BottomSheetService),'),
+      contains('- lib/app/app.locator.dart (first use only)'),
     );
     expect(
       output.content,
-      contains("import 'package:my_app/app/app.bottomsheets.dart';"),
+      contains('ConfirmDeleteSheetModel: (_) => const ConfirmDeleteSheet(),'),
     );
+    expect(
+      output.content,
+      contains(
+        'locator.registerLazySingleton<BottomSheetService>('
+        '() => BottomSheetService());',
+      ),
+    );
+    expect(
+      output.content,
+      contains(
+        "import 'package:my_app/core/services/bottom_sheet_service.dart';",
+      ),
+    );
+    expect(output.content, isNot(contains('lib/main.dart')));
+    expect(output.content, isNot(contains('build_runner')));
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -771,25 +828,18 @@ void main() {
     Directory.current = temp;
     final output = _memorySink();
     final errorOutput = _memorySink();
-    final runner = CuboidCommandRunner(
+    final exitCode = await runCuboid(
+      ['create', 'bottomsheet', 'confirm_delete'],
       stdout: output,
       stderr: errorOutput,
-      createBottomSheetService: CreateBottomSheetService(
-        processRunner: _successProcessRunner,
-      ),
     );
-    final exitCode = await runner.run([
-      'create',
-      'bottomsheet',
-      'confirm_delete',
-    ]);
 
     expect(exitCode, 0);
     expect(
       output.content,
       contains('Created bottom sheet ConfirmDeleteSheet.'),
     );
-    expect(output.content, contains('Ran dart run build_runner build -d.'));
+    expect(output.content, isNot(contains('build_runner')));
     expect(errorOutput.content, isEmpty);
     final sheet = File(
       '${temp.path}/lib/shared/bottom_sheets/confirm_delete/'
@@ -799,8 +849,12 @@ void main() {
       sheet,
       contains(
         'class ConfirmDeleteSheet extends '
-        'StackedView<ConfirmDeleteSheetModel>',
+        'CuboidView<ConfirmDeleteSheetModel>',
       ),
+    );
+    expect(
+      sheet,
+      contains("import 'package:my_app/core/mvvm/cuboid_view.dart';"),
     );
     final model = File(
       '${temp.path}/lib/shared/bottom_sheets/confirm_delete/'
@@ -808,28 +862,54 @@ void main() {
     ).readAsStringSync();
     expect(
       model,
-      contains('class ConfirmDeleteSheetModel extends BaseViewModel {}'),
+      contains('class ConfirmDeleteSheetModel extends CuboidViewModel {}'),
     );
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    final bottomSheets = File(
+      '${temp.path}/lib/app/app.bottomsheets.dart',
+    ).readAsStringSync();
     expect(
-      app,
+      bottomSheets,
       contains(
         "import 'package:my_app/shared/bottom_sheets/confirm_delete/"
         "confirm_delete_sheet.dart';",
       ),
     );
-    expect(app, contains('  bottomsheets: ['));
     expect(
-      app,
-      contains('    StackedBottomsheet(classType: ConfirmDeleteSheet),'),
+      bottomSheets,
+      contains(
+        "import 'package:my_app/shared/bottom_sheets/confirm_delete/"
+        "confirm_delete_sheet_model.dart';",
+      ),
     );
-    expect(app, contains('    LazySingleton(classType: BottomSheetService),'));
-    final main = File('${temp.path}/lib/main.dart').readAsStringSync();
     expect(
-      main,
+      bottomSheets,
+      contains('ConfirmDeleteSheetModel: (_) => const ConfirmDeleteSheet(),'),
+    );
+    final serviceFile = File(
+      '${temp.path}/lib/core/services/bottom_sheet_service.dart',
+    ).readAsStringSync();
+    expect(serviceFile, contains('class BottomSheetService {'));
+    expect(
+      serviceFile,
       contains("import 'package:my_app/app/app.bottomsheets.dart';"),
     );
-    expect(main, contains('  await setupLocator();\n  setupBottomSheetUi();'));
+    final locator = File(
+      '${temp.path}/lib/app/app.locator.dart',
+    ).readAsStringSync();
+    expect(
+      locator,
+      contains(
+        "import 'package:my_app/core/services/bottom_sheet_service.dart';",
+      ),
+    );
+    expect(
+      locator,
+      contains(
+        '  locator.registerLazySingleton<BottomSheetService>('
+        '() => BottomSheetService());',
+      ),
+    );
+    expect(File('${temp.path}/lib/main.dart').existsSync(), isFalse);
   });
 
   test('create bottomsheet rejects project creation options', () async {
@@ -892,18 +972,31 @@ void main() {
         'confirm_delete_dialog_model.dart',
       ),
     );
-    expect(output.content, contains('- lib/app/app.dart'));
-    expect(output.content, contains('- lib/main.dart'));
-    expect(output.content, contains('StackedDialog('));
-    expect(output.content, contains('classType: ConfirmDeleteDialog,'));
+    expect(output.content, contains('- lib/app/app.dialogs.dart'));
     expect(
       output.content,
-      contains('LazySingleton(classType: DialogService),'),
+      contains('- lib/core/services/dialog_service.dart (first use only)'),
     );
     expect(
       output.content,
-      contains("import 'package:my_app/app/app.dialogs.dart';"),
+      contains('- lib/app/app.locator.dart (first use only)'),
     );
+    expect(
+      output.content,
+      contains('ConfirmDeleteDialogModel: (_) => const ConfirmDeleteDialog(),'),
+    );
+    expect(
+      output.content,
+      contains(
+        'locator.registerLazySingleton<DialogService>(() => DialogService());',
+      ),
+    );
+    expect(
+      output.content,
+      contains("import 'package:my_app/core/services/dialog_service.dart';"),
+    );
+    expect(output.content, isNot(contains('lib/main.dart')));
+    expect(output.content, isNot(contains('build_runner')));
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -919,18 +1012,15 @@ void main() {
     Directory.current = temp;
     final output = _memorySink();
     final errorOutput = _memorySink();
-    final runner = CuboidCommandRunner(
+    final exitCode = await runCuboid(
+      ['create', 'dialog', 'confirm_delete'],
       stdout: output,
       stderr: errorOutput,
-      createDialogService: CreateDialogService(
-        processRunner: _successProcessRunner,
-      ),
     );
-    final exitCode = await runner.run(['create', 'dialog', 'confirm_delete']);
 
     expect(exitCode, 0);
     expect(output.content, contains('Created dialog ConfirmDeleteDialog.'));
-    expect(output.content, contains('Ran dart run build_runner build -d.'));
+    expect(output.content, isNot(contains('build_runner')));
     expect(errorOutput.content, isEmpty);
     final dialog = File(
       '${temp.path}/lib/shared/dialogs/confirm_delete/'
@@ -940,33 +1030,60 @@ void main() {
       dialog,
       contains(
         'class ConfirmDeleteDialog extends '
-        'StackedView<ConfirmDeleteDialogModel>',
+        'CuboidView<ConfirmDeleteDialogModel>',
       ),
     );
-    expect(dialog, contains('DialogRequest<dynamic> request'));
-    expect(dialog, contains('DialogResponse<dynamic> response'));
+    expect(
+      dialog,
+      contains(
+        'ConfirmDeleteDialogModel viewModelBuilder(BuildContext context)',
+      ),
+    );
     final model = File(
       '${temp.path}/lib/shared/dialogs/confirm_delete/'
       'confirm_delete_dialog_model.dart',
     ).readAsStringSync();
     expect(
       model,
-      contains('class ConfirmDeleteDialogModel extends BaseViewModel {}'),
+      contains('class ConfirmDeleteDialogModel extends CuboidViewModel {}'),
     );
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    final dialogs = File(
+      '${temp.path}/lib/app/app.dialogs.dart',
+    ).readAsStringSync();
     expect(
-      app,
+      dialogs,
       contains(
         "import 'package:my_app/shared/dialogs/confirm_delete/"
         "confirm_delete_dialog.dart';",
       ),
     );
-    expect(app, contains('  dialogs: ['));
-    expect(app, contains('      classType: ConfirmDeleteDialog,'));
-    expect(app, contains('    LazySingleton(classType: DialogService),'));
-    final main = File('${temp.path}/lib/main.dart').readAsStringSync();
-    expect(main, contains("import 'package:my_app/app/app.dialogs.dart';"));
-    expect(main, contains('  await setupLocator();\n  setupDialogUi();'));
+    expect(
+      dialogs,
+      contains('ConfirmDeleteDialogModel: (_) => const ConfirmDeleteDialog(),'),
+    );
+    final serviceFile = File(
+      '${temp.path}/lib/core/services/dialog_service.dart',
+    ).readAsStringSync();
+    expect(serviceFile, contains('class DialogService {'));
+    expect(
+      serviceFile,
+      contains("import 'package:my_app/app/app.dialogs.dart';"),
+    );
+    final locator = File(
+      '${temp.path}/lib/app/app.locator.dart',
+    ).readAsStringSync();
+    expect(
+      locator,
+      contains("import 'package:my_app/core/services/dialog_service.dart';"),
+    );
+    expect(
+      locator,
+      contains(
+        '  locator.registerLazySingleton<DialogService>('
+        '() => DialogService());',
+      ),
+    );
+    expect(File('${temp.path}/lib/main.dart').existsSync(), isFalse);
   });
 
   test('create dialog rejects project creation options', () async {
@@ -1125,9 +1242,17 @@ void main() {
     expect(output.content, contains('Dry run: no files were written.'));
     expect(output.content, contains('Database: supabase'));
     expect(output.content, contains('- lib/supabase/example_repository.dart'));
+    expect(output.content, contains('- lib/app/app.locator.dart'));
     expect(
       output.content,
-      contains('LazySingleton(classType: ExampleRepository),'),
+      contains("import 'package:my_app/supabase/example_repository.dart';"),
+    );
+    expect(
+      output.content,
+      contains(
+        'locator.registerLazySingleton<ExampleRepository>('
+        '() => const ExampleRepository());',
+      ),
     );
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
@@ -1154,20 +1279,29 @@ void main() {
 
       expect(exitCode, 0);
       expect(output.content, contains('Created supabase database example.'));
+      expect(output.content, contains('Next steps:'));
       expect(output.content, contains('- flutter pub get'));
-      expect(output.content, contains('- dart run build_runner build -d'));
       expect(output.content, contains('supabase db push'));
+      expect(output.content, isNot(contains('build_runner')));
       expect(errorOutput.content, isEmpty);
       final repository = File(
         '${temp.path}/lib/supabase/example_repository.dart',
       ).readAsStringSync();
       expect(repository, contains('class ExampleRepository {'));
-      final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+      final locator = File(
+        '${temp.path}/lib/app/app.locator.dart',
+      ).readAsStringSync();
       expect(
-        app,
+        locator,
         contains("import 'package:my_app/supabase/example_repository.dart';"),
       );
-      expect(app, contains('LazySingleton(classType: ExampleRepository),'));
+      expect(
+        locator,
+        contains(
+          '  locator.registerLazySingleton<ExampleRepository>('
+          '() => const ExampleRepository());',
+        ),
+      );
       expect(
         Directory(
           '${temp.path}/supabase/migrations',
@@ -1319,10 +1453,18 @@ void main() {
         output.content,
         contains('- lib/features/auth/ui/forgot_password_view.dart'),
       );
+      expect(output.content, contains('- lib/app/app.router.dart'));
       expect(
         output.content,
-        contains('MaterialRoute(page: ForgotPasswordView),'),
+        contains("static const forgotPasswordView = '/forgot-password-view';"),
       );
+      expect(
+        output.content,
+        contains(
+          'Routes.forgotPasswordView: (_) => const ForgotPasswordView(),',
+        ),
+      );
+      expect(output.content, isNot(contains('build_runner')));
       expect(errorOutput.content, isEmpty);
       expect(_relativeFiles(temp), beforeFiles);
     },
@@ -1347,10 +1489,7 @@ void main() {
 
     expect(exitCode, 0);
     expect(output.content, contains('Created view Forgot Password.'));
-    expect(
-      output.content,
-      contains('Next step: dart run build_runner build -d'),
-    );
+    expect(output.content, isNot(contains('build_runner')));
     expect(errorOutput.content, isEmpty);
     final view = File(
       '${temp.path}/lib/features/auth/ui/forgot_password_view.dart',
@@ -1358,7 +1497,7 @@ void main() {
     expect(
       view,
       contains(
-        'class ForgotPasswordView extends StackedView<ForgotPasswordViewModel>',
+        'class ForgotPasswordView extends CuboidView<ForgotPasswordViewModel>',
       ),
     );
     final viewModel = File(
@@ -1366,16 +1505,25 @@ void main() {
     ).readAsStringSync();
     expect(
       viewModel,
-      contains('class ForgotPasswordViewModel extends BaseViewModel {}'),
+      contains('class ForgotPasswordViewModel extends CuboidViewModel {}'),
     );
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    final router = File(
+      '${temp.path}/lib/app/app.router.dart',
+    ).readAsStringSync();
     expect(
-      app,
+      router,
       contains(
         "import 'package:my_app/features/auth/ui/forgot_password_view.dart';",
       ),
     );
-    expect(app, contains('MaterialRoute(page: ForgotPasswordView),'));
+    expect(
+      router,
+      contains("static const forgotPasswordView = '/forgot-password-view';"),
+    );
+    expect(
+      router,
+      contains('Routes.forgotPasswordView: (_) => const ForgotPasswordView(),'),
+    );
   });
 
   test('create view rejects project creation options', () async {
@@ -1459,21 +1607,24 @@ void main() {
     );
     expect(
       view,
-      contains('class LoginView extends StackedView<LoginViewModel>'),
+      contains('class LoginView extends CuboidView<LoginViewModel>'),
     );
     expect(
       File(
         '${temp.path}/lib/shared/views/login_viewmodel.dart',
       ).readAsStringSync(),
-      contains('class LoginViewModel extends BaseViewModel {}'),
+      contains('class LoginViewModel extends CuboidViewModel {}'),
     );
 
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    final router = File(
+      '${temp.path}/lib/app/app.router.dart',
+    ).readAsStringSync();
     expect(
-      app,
+      router,
       contains("import 'package:my_app/shared/views/login_view.dart';"),
     );
-    expect(app, contains('MaterialRoute(page: LoginView),'));
+    expect(router, contains("static const loginView = '/login-view';"));
+    expect(router, contains('Routes.loginView: (_) => const LoginView(),'));
   });
 
   test('create model with dry-run creates no files', () async {
@@ -1575,30 +1726,37 @@ void main() {
     expect(output.content, contains('Created widget StatusBadge.'));
     expect(errorOutput.content, isEmpty);
     expect(output.content, isNot(contains('Feature:')));
-    expect(output.content, contains('- lib/shared/widgets/status_badge.dart'));
     expect(
       output.content,
-      contains('- lib/shared/widgets/status_badge_viewmodel.dart'),
+      contains('- lib/shared/widgets/status_badge/status_badge_widget.dart'),
+    );
+    expect(
+      output.content,
+      contains(
+        '- lib/shared/widgets/status_badge/status_badge_view_model.dart',
+      ),
     );
     final widget = File(
-      '${temp.path}/lib/shared/widgets/status_badge.dart',
+      '${temp.path}/lib/shared/widgets/status_badge/status_badge_widget.dart',
     ).readAsStringSync();
     expect(
       widget,
       contains(
-        "import 'package:my_app/shared/widgets/status_badge_viewmodel.dart';",
+        "import 'package:my_app/shared/widgets/status_badge/"
+        "status_badge_view_model.dart';",
       ),
     );
     expect(
       widget,
-      contains('class StatusBadge extends StackedView<StatusBadgeViewModel> {'),
+      contains('class StatusBadge extends CuboidView<StatusBadgeViewModel> {'),
     );
     final viewModel = File(
-      '${temp.path}/lib/shared/widgets/status_badge_viewmodel.dart',
+      '${temp.path}/lib/shared/widgets/status_badge/'
+      'status_badge_view_model.dart',
     ).readAsStringSync();
     expect(
       viewModel,
-      contains('class StatusBadgeViewModel extends BaseViewModel {}'),
+      contains('class StatusBadgeViewModel extends CuboidViewModel {}'),
     );
   });
 
@@ -1626,27 +1784,29 @@ void main() {
       expect(output.content, contains('Feature: auth'));
       expect(errorOutput.content, isEmpty);
       final widget = File(
-        '${temp.path}/lib/features/auth/ui/widgets/password_field.dart',
+        '${temp.path}/lib/features/auth/ui/widgets/password_field/'
+        'password_field_widget.dart',
       ).readAsStringSync();
       expect(
         widget,
         contains(
-          "import 'package:my_app/features/auth/ui/widgets/"
-          "password_field_viewmodel.dart';",
+          "import 'package:my_app/features/auth/ui/widgets/password_field/"
+          "password_field_view_model.dart';",
         ),
       );
       expect(
         widget,
         contains(
-          'class PasswordField extends StackedView<PasswordFieldViewModel> {',
+          'class PasswordField extends CuboidView<PasswordFieldViewModel> {',
         ),
       );
       final viewModel = File(
-        '${temp.path}/lib/features/auth/ui/widgets/password_field_viewmodel.dart',
+        '${temp.path}/lib/features/auth/ui/widgets/password_field/'
+        'password_field_view_model.dart',
       ).readAsStringSync();
       expect(
         viewModel,
-        contains('class PasswordFieldViewModel extends BaseViewModel {}'),
+        contains('class PasswordFieldViewModel extends CuboidViewModel {}'),
       );
     },
   );
@@ -1671,7 +1831,10 @@ void main() {
 
     expect(exitCode, 0);
     expect(output.content, contains('Dry run: no files were written.'));
-    expect(output.content, contains('- lib/shared/widgets/status_badge.dart'));
+    expect(
+      output.content,
+      contains('- lib/shared/widgets/status_badge/status_badge_widget.dart'),
+    );
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -1828,7 +1991,9 @@ void main() {
         temp.deleteSync(recursive: true);
       });
       _writeServiceProject(temp);
-      final before = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+      final before = File(
+        '${temp.path}/lib/app/app.locator.dart',
+      ).readAsStringSync();
       Directory.current = temp;
       final output = _memorySink();
       final errorOutput = _memorySink();
@@ -1841,7 +2006,7 @@ void main() {
       expect(exitCode, 0);
       expect(output.content, contains('Dry run: no files were written.'));
       expect(output.content, contains('Service: AuthSessionService'));
-      expect(output.content, contains('- lib/app/app.dart'));
+      expect(output.content, contains('- lib/app/app.locator.dart'));
       expect(
         output.content,
         contains(
@@ -1850,10 +2015,16 @@ void main() {
       );
       expect(
         output.content,
-        contains('LazySingleton(classType: AuthSessionService),'),
+        contains(
+          'locator.registerLazySingleton<AuthSessionService>('
+          '() => AuthSessionService());',
+        ),
       );
       expect(errorOutput.content, isEmpty);
-      expect(File('${temp.path}/lib/app/app.dart').readAsStringSync(), before);
+      expect(
+        File('${temp.path}/lib/app/app.locator.dart').readAsStringSync(),
+        before,
+      );
     },
   );
 
@@ -1876,19 +2047,24 @@ void main() {
 
     expect(exitCode, 0);
     expect(output.content, contains('Registered service AuthSessionService.'));
-    expect(
-      output.content,
-      contains('Next step: dart run build_runner build -d'),
-    );
+    expect(output.content, isNot(contains('build_runner')));
     expect(errorOutput.content, isEmpty);
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
+    final locator = File(
+      '${temp.path}/lib/app/app.locator.dart',
+    ).readAsStringSync();
     expect(
-      app,
+      locator,
       contains(
         "import 'package:my_app/core/services/auth_session_service.dart';",
       ),
     );
-    expect(app, contains('    LazySingleton(classType: AuthSessionService),'));
+    expect(
+      locator,
+      contains(
+        '  locator.registerLazySingleton<AuthSessionService>('
+        '() => AuthSessionService());',
+      ),
+    );
   });
 
   test('service validates required positional arguments', () async {
@@ -1959,6 +2135,11 @@ void main() {
       output.content,
       contains('- lib/features/auth/ui/forgot_password_viewmodel.dart'),
     );
+    expect(output.content, contains('- lib/app/app.router.dart'));
+    expect(
+      output.content,
+      contains('Routes.forgotPasswordView: (_) => const ForgotPasswordView(),'),
+    );
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -1992,21 +2173,27 @@ void main() {
     expect(
       view,
       contains(
-        "import 'package:my_app/features/auth/ui/forgot_password_viewmodel.dart';",
+        "import 'package:my_app/features/auth/ui/"
+        "forgot_password_viewmodel.dart';",
       ),
     );
     expect(
       view,
       contains(
-        'class ForgotPasswordView extends StackedView<ForgotPasswordViewModel>',
+        'class ForgotPasswordView extends CuboidView<ForgotPasswordViewModel>',
       ),
     );
     expect(
       viewModel,
-      contains('class ForgotPasswordViewModel extends BaseViewModel {}'),
+      contains('class ForgotPasswordViewModel extends CuboidViewModel {}'),
     );
-    final app = File('${temp.path}/lib/app/app.dart').readAsStringSync();
-    expect(app, contains('MaterialRoute(page: ForgotPasswordView),'));
+    final router = File(
+      '${temp.path}/lib/app/app.router.dart',
+    ).readAsStringSync();
+    expect(
+      router,
+      contains('Routes.forgotPasswordView: (_) => const ForgotPasswordView(),'),
+    );
   });
 
   test('view validates required positional arguments', () async {
@@ -2065,13 +2252,22 @@ void main() {
       '--no-post-steps',
       '--output-dir',
       temp.path,
-      'My App',
-      'com.example.myapp',
+      'Nemara Homes',
+      'com.nemara.homes',
     ]);
 
     expect(exitCode, 0);
-    expect(output.content, contains('Created My App.'));
-    expect(Directory('${temp.path}/my_app').existsSync(), isTrue);
+    expect(output.content, contains('Created Nemara Homes.'));
+    expect(Directory('${temp.path}/nemara_homes').existsSync(), isTrue);
+    final appRoot = File(
+      '${temp.path}/nemara_homes/lib/app/app_root.dart',
+    ).readAsStringSync();
+    expect(appRoot, contains('class NemaraHomes extends StatelessWidget'));
+    expect(appRoot, contains('const NemaraHomes({super.key});'));
+    final main = File(
+      '${temp.path}/nemara_homes/lib/main.dart',
+    ).readAsStringSync();
+    expect(main, contains('runApp(const NemaraHomes());'));
   });
 
   test('invalid command returns non-zero and writes usage', () async {
@@ -2099,27 +2295,38 @@ void main() {
 
 _MemorySink _memorySink() => _MemorySink();
 
-Future<ProcessResult> _successProcessRunner(
-  String executable,
-  List<String> arguments, {
-  required String workingDirectory,
-}) async => ProcessResult(0, 0, '', '');
+String _routerContents() {
+  return '''
+// @cuboid-import
+
+class Routes {
+  // @cuboid-route-const
+}
+
+final Map<String, WidgetBuilder> appRoutes = {
+  // @cuboid-route
+};
+''';
+}
+
+String _locatorContents({String extraImport = '', String extraService = ''}) {
+  return '''
+${extraImport}import 'package:get_it/get_it.dart';
+// @cuboid-import
+
+final locator = GetIt.instance;
+
+Future<void> setupLocator() async {
+$extraService  // @cuboid-service
+}
+''';
+}
 
 void _writeViewProject(Directory root, String featureName) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
-  File('${root.path}/lib/app/app.dart')
+  File('${root.path}/lib/app/app.router.dart')
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync('''
-import 'package:stacked/stacked_annotations.dart';
-// @stacked-import
-
-@StackedApp(
-  routes: [
-    // @stacked-route
-  ],
-)
-class App {}
-''');
+    ..writeAsStringSync(_routerContents());
   Directory(
     '${root.path}/lib/features/$featureName',
   ).createSync(recursive: true);
@@ -2127,22 +2334,12 @@ class App {}
 
 void _writeFeatureProject(Directory root, {String pubspec = 'name: my_app\n'}) {
   File('${root.path}/pubspec.yaml').writeAsStringSync(pubspec);
-  File('${root.path}/lib/app/app.dart')
+  File('${root.path}/lib/app/app.router.dart')
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync('''
-import 'package:stacked/stacked_annotations.dart';
-// @stacked-import
-
-@StackedApp(
-  routes: [
-    // @stacked-route
-  ],
-  dependencies: [
-    // @stacked-service
-  ],
-)
-class App {}
-''');
+    ..writeAsStringSync(_routerContents());
+  File(
+    '${root.path}/lib/app/app.locator.dart',
+  ).writeAsStringSync(_locatorContents());
   Directory('${root.path}/lib/features').createSync(recursive: true);
 }
 
@@ -2152,21 +2349,17 @@ void _writeServiceProject(
   bool createFile = true,
 }) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
-  File('${root.path}/lib/app/app.dart')
+  File('${root.path}/lib/app/app.locator.dart')
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync('''
-import 'package:my_app/core/services/analytics_service.dart';
-import 'package:stacked/stacked_annotations.dart';
-// @stacked-import
-
-@StackedApp(
-  dependencies: [
-    LazySingleton(classType: AnalyticsService),
-    // @stacked-service
-  ],
-)
-class App {}
-''');
+    ..writeAsStringSync(
+      _locatorContents(
+        extraImport:
+            "import 'package:my_app/core/services/analytics_service.dart';\n",
+        extraService:
+            '  locator.registerLazySingleton<AnalyticsService>('
+            '() => AnalyticsService());\n',
+      ),
+    );
   if (!createFile) {
     return;
   }
@@ -2181,66 +2374,32 @@ class App {}
 
 void _writeBottomSheetProject(Directory root) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
-  File('${root.path}/lib/app/app.dart')
+  File('${root.path}/lib/app/app.locator.dart')
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync('''
-import 'package:my_app/core/services/analytics_service.dart';
-import 'package:stacked/stacked_annotations.dart';
-import 'package:stacked_services/stacked_services.dart';
-// @stacked-import
-
-@StackedApp(
-  routes: [
-    // @stacked-route
-  ],
-  dependencies: [
-    LazySingleton(classType: AnalyticsService),
-    // @stacked-service
-  ],
-)
-class App {}
-''');
-  File('${root.path}/lib/main.dart')
-    ..parent.createSync(recursive: true)
-    ..writeAsStringSync('''
-import 'package:my_app/app/app.locator.dart';
-
-Future<void> main() async {
-  await setupLocator();
-}
-''');
+    ..writeAsStringSync(
+      _locatorContents(
+        extraImport:
+            "import 'package:my_app/core/services/analytics_service.dart';\n",
+        extraService:
+            '  locator.registerLazySingleton<AnalyticsService>('
+            '() => AnalyticsService());\n',
+      ),
+    );
 }
 
 void _writeDialogProject(Directory root) {
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: my_app\n');
-  File('${root.path}/lib/app/app.dart')
+  File('${root.path}/lib/app/app.locator.dart')
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync('''
-import 'package:my_app/core/services/analytics_service.dart';
-import 'package:stacked/stacked_annotations.dart';
-import 'package:stacked_services/stacked_services.dart';
-// @stacked-import
-
-@StackedApp(
-  routes: [
-    // @stacked-route
-  ],
-  dependencies: [
-    LazySingleton(classType: AnalyticsService),
-    // @stacked-service
-  ],
-)
-class App {}
-''');
-  File('${root.path}/lib/main.dart')
-    ..parent.createSync(recursive: true)
-    ..writeAsStringSync('''
-import 'package:my_app/app/app.locator.dart';
-
-Future<void> main() async {
-  await setupLocator();
-}
-''');
+    ..writeAsStringSync(
+      _locatorContents(
+        extraImport:
+            "import 'package:my_app/core/services/analytics_service.dart';\n",
+        extraService:
+            '  locator.registerLazySingleton<AnalyticsService>('
+            '() => AnalyticsService());\n',
+      ),
+    );
 }
 
 void _writeStorageProject(Directory root) {
@@ -2260,25 +2419,17 @@ void _writeDatabaseProject(
         ? 'name: my_app\ndependencies:\n  supabase_flutter: ^2.16.0\n'
         : 'name: my_app\ndependencies:\n  flutter:\n    sdk: flutter\n',
   );
-  File('${root.path}/lib/app/app.dart')
+  File('${root.path}/lib/app/app.locator.dart')
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync('''
-import 'package:my_app/core/services/analytics_service.dart';
-import 'package:stacked/stacked_annotations.dart';
-import 'package:stacked_services/stacked_services.dart';
-// @stacked-import
-
-@StackedApp(
-  routes: [
-    // @stacked-route
-  ],
-  dependencies: [
-    LazySingleton(classType: AnalyticsService),
-    // @stacked-service
-  ],
-)
-class App {}
-''');
+    ..writeAsStringSync(
+      _locatorContents(
+        extraImport:
+            "import 'package:my_app/core/services/analytics_service.dart';\n",
+        extraService:
+            '  locator.registerLazySingleton<AnalyticsService>('
+            '() => AnalyticsService());\n',
+      ),
+    );
   if (withSupabaseFoundation) {
     File('${root.path}/lib/core/network/supabase_guard.dart')
       ..parent.createSync(recursive: true)

@@ -217,12 +217,6 @@ class CreateProjectService {
 
 const defaultPostSteps = [
   PostStep('flutter', ['pub', 'get'], label: 'flutter pub get'),
-  PostStep('dart', [
-    'run',
-    'build_runner',
-    'build',
-    '--delete-conflicting-outputs',
-  ], label: 'build_runner'),
   PostStep('dart', ['format', '.'], label: 'dart format'),
 ];
 
