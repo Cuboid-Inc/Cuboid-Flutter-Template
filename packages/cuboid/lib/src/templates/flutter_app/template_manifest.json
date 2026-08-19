@@ -1,8 +1,8 @@
 {
   "template_name": "cuboid_flutter_app",
   "template_version": 1,
-  "source_commit": "f21d8537eb4121b310ccd1ca05dd29c47eaa499f",
-  "archive_sha256": "d57a4f8795b400ddc454109cfee883de4f3f4a669aee8295226c4f716aa68b36",
+  "source_commit": "dd4a6e14515638f7fa878440009b6958ef68ac35",
+  "archive_sha256": "81d28e6999e29ac13f4f41327e12f7fadea3349c17ca0155901967fe2a427c75",
   "files": [
     {
       "path": ".gitignore",
@@ -21,8 +21,8 @@
     },
     {
       "path": "README.md",
-      "size": 8194,
-      "sha256": "4508017546bd570ebd84c64406f307826ca23e1c4935af6bc3e77710030f932b"
+      "size": 8335,
+      "sha256": "4de3c47a53cddde67378050b938b36dd31474dcf53256b7b5a5f825c1608e6ea"
     },
     {
       "path": "RULES.md",
@@ -675,6 +675,11 @@
       "sha256": "6c05225876d832a86e95ece72a732a71eff869330413877c7a947f3eeafa464b"
     },
     {
+      "path": "packages/cuboid_flutter/LICENSE",
+      "size": 1067,
+      "sha256": "0a2334d29f58dda497137c4dd85d15e2b4b5d8dc5019d6efe2cb1226566d5f4a"
+    },
+    {
       "path": "packages/cuboid_flutter/analysis_options.yaml",
       "size": 44,
       "sha256": "c1e9534c05acb3643e72a82ad3d92d56d2ba9b0df2add014c18f7e1d462f24e4"
@@ -711,8 +716,8 @@
     },
     {
       "path": "pubspec.lock",
-      "size": 23898,
-      "sha256": "ae2373865ba37266c0ac4f9cae7598b3a2bbb4d0ebc80ddc30ac2c8aa7ac9aa9"
+      "size": 24119,
+      "sha256": "673e4478640f1c6e73f5b41e84510060bb5b8a8fdd4fad03c7bb0091e14596dc"
     },
     {
       "path": "pubspec.yaml",

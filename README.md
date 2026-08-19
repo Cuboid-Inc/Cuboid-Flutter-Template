@@ -61,8 +61,15 @@ resulting diff before adding product code.
 ## Cuboid CLI
 
 `packages/cuboid` is a Dart CLI (`cuboid`) that stamps out new projects from
-this template and scaffolds artifacts inside a generated project. It is not
-published to pub.dev; install it locally from a checkout of this repository:
+this template and scaffolds artifacts inside a generated project. It is
+published on pub.dev; most users should install it with:
+
+```bash
+dart pub global activate cuboid
+```
+
+If you are developing `cuboid` itself from a checkout of this repository,
+install your local build instead:
 
 ```bash
 dart run packages/cuboid/tool/install.dart
@@ -70,13 +77,13 @@ dart run packages/cuboid/tool/install.dart
 
 This compiles `cuboid` to a native executable and places it on the same
 `~/.pub-cache/bin` PATH entry `dart pub global activate` would have used.
-Do not install with `dart pub global activate --source path packages/cuboid`:
-the shell shim it generates embeds the checkout's absolute path into an
-unquoted `[ -f ... ]` test, so it fails with `[: too many arguments` for
-every `cuboid` command whenever the checkout path contains a space -- a
-defect in `dart pub global activate`'s shim template, not something a
-package can work around from its own source. Re-run the install command
-above after pulling changes to `packages/cuboid`.
+Do not install a checkout with `dart pub global activate --source path
+packages/cuboid`: the shell shim it generates embeds the checkout's absolute
+path into an unquoted `[ -f ... ]` test, so it fails with `[: too many
+arguments` for every `cuboid` command whenever the checkout path contains a
+space -- a defect in `dart pub global activate`'s shim template, not
+something a package can work around from its own source. Re-run the install
+command above after pulling changes to `packages/cuboid`.
 
 Create a new project (an alternative to `tool/bootstrap.dart` for starting a
 brand-new project directory, rather than renaming this checkout in place):
