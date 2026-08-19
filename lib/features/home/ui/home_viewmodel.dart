@@ -1,3 +1,3 @@
-import 'package:cuboid_flutter_template/core/mvvm/cuboid_view_model.dart';
+import 'package:cuboid_flutter/cuboid_flutter.dart';
 
 class HomeViewModel extends CuboidViewModel {}

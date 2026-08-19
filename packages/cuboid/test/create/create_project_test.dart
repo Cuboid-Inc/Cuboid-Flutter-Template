@@ -87,6 +87,27 @@ void main() {
     expect(result.bootstrapResult!.modifiedFiles, contains('pubspec.yaml'));
     expect(calls, ['flutter pub get', 'dart format .']);
 
+    expect(
+      Directory('${destination.path}/lib/core/mvvm').existsSync(),
+      isFalse,
+    );
+    expect(
+      File(
+        '${destination.path}/packages/cuboid_flutter/pubspec.yaml',
+      ).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(
+        '${destination.path}/packages/cuboid_flutter/lib/cuboid_flutter.dart',
+      ).existsSync(),
+      isTrue,
+    );
+    expect(
+      File('${destination.path}/pubspec.yaml').readAsStringSync(),
+      contains('path: packages/cuboid_flutter'),
+    );
+
     for (final shellFile in [
       'lib/app/shell_view.dart',
       'lib/app/shell_viewmodel.dart',

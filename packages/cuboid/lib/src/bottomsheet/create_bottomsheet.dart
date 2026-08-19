@@ -578,10 +578,13 @@ String _humanize(List<String> words) {
 }
 
 String _sheetContents(CreateBottomSheetPlan plan) {
+  final imports = <String>[
+    "import 'package:cuboid_flutter/cuboid_flutter.dart';",
+    "import 'package:${plan.packageName}/shared/bottom_sheets/${plan.name}/${plan.name}_sheet_model.dart';",
+    "import 'package:flutter/material.dart';",
+  ]..sort();
   return '''
-import 'package:${plan.packageName}/core/mvvm/cuboid_view.dart';
-import 'package:${plan.packageName}/shared/bottom_sheets/${plan.name}/${plan.name}_sheet_model.dart';
-import 'package:flutter/material.dart';
+${imports.join('\n')}
 
 class ${plan.sheetClassName} extends CuboidView<${plan.modelClassName}> {
   const ${plan.sheetClassName}({super.key});
@@ -596,7 +599,42 @@ class ${plan.sheetClassName} extends CuboidView<${plan.modelClassName}> {
     ${plan.modelClassName} vm,
     Widget? child,
   ) {
-    return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Text('${plan.displayName}', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              'Replace this placeholder with the content for '
+              '${plan.displayName}.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 ''';
@@ -604,7 +642,7 @@ class ${plan.sheetClassName} extends CuboidView<${plan.modelClassName}> {
 
 String _modelContents(CreateBottomSheetPlan plan) {
   return '''
-import 'package:${plan.packageName}/core/mvvm/cuboid_view_model.dart';
+import 'package:cuboid_flutter/cuboid_flutter.dart';
 
 class ${plan.modelClassName} extends CuboidViewModel {}
 ''';

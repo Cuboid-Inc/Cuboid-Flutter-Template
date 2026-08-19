@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
+import 'package:cuboid/src/templates/flutter_app/template_payload.g.dart'
+    as embedded_payload;
 import 'package:cuboid/src/templates/flutter_app/template_sync.dart'
     as template;
 
@@ -279,24 +280,18 @@ class _TemplatePayload {
 }
 
 Future<_TemplatePayload> _loadBundledTemplatePayload() async {
-  final manifestUri = await Isolate.resolvePackageUri(
-    Uri.parse(
-      'package:cuboid/src/templates/flutter_app/template_manifest.json',
-    ),
+  // Reads the payload embedded as Dart source (see template_payload.g.dart)
+  // rather than resolving `template.tar.gz`/`template_manifest.json` via
+  // `package:` URI at runtime: `Isolate.resolvePackageUri` returns null
+  // inside a `dart compile exe` binary, so that approach cannot work for a
+  // compiled `cuboid` executable (see packages/cuboid/tool/install.dart).
+  final manifestBytes = base64Decode(
+    embedded_payload.templateManifestJsonBase64,
   );
-  final archiveUri = await Isolate.resolvePackageUri(
-    Uri.parse('package:cuboid/src/templates/flutter_app/template.tar.gz'),
-  );
-  if (manifestUri == null || archiveUri == null) {
-    throw const CreateProjectException('Bundled template payload is missing.');
-  }
-
-  final manifestFile = File.fromUri(manifestUri);
-  final archiveFile = File.fromUri(archiveUri);
+  final archiveBytes = base64Decode(embedded_payload.templateArchiveBase64);
   final manifest = template.TemplateManifest.fromJson(
-    jsonDecode(manifestFile.readAsStringSync()) as Map<String, Object?>,
+    jsonDecode(utf8.decode(manifestBytes)) as Map<String, Object?>,
   );
-  final archiveBytes = archiveFile.readAsBytesSync();
   if (template.sha256Hex(archiveBytes) != manifest.archiveSha256) {
     throw const CreateProjectException(
       'Bundled template archive failed SHA-256 verification.',

@@ -854,8 +854,10 @@ void main() {
     );
     expect(
       sheet,
-      contains("import 'package:my_app/core/mvvm/cuboid_view.dart';"),
+      contains("import 'package:cuboid_flutter/cuboid_flutter.dart';"),
     );
+    expect(sheet, isNot(contains('SizedBox.shrink()')));
+    expect(sheet, contains('Navigator.of(context).pop()'));
     final model = File(
       '${temp.path}/lib/shared/bottom_sheets/confirm_delete/'
       'confirm_delete_sheet_model.dart',
@@ -1039,6 +1041,9 @@ void main() {
         'ConfirmDeleteDialogModel viewModelBuilder(BuildContext context)',
       ),
     );
+    expect(dialog, isNot(contains('SizedBox.shrink()')));
+    expect(dialog, contains('AlertDialog('));
+    expect(dialog, contains('Navigator.of(context).pop()'));
     final model = File(
       '${temp.path}/lib/shared/dialogs/confirm_delete/'
       'confirm_delete_dialog_model.dart',
@@ -2290,6 +2295,263 @@ void main() {
     final runner = CuboidCommandRunner(stdout: _memorySink());
 
     expect(() => runner.run(['missing']), throwsA(isA<UsageException>()));
+  });
+
+  test('delete command is registered', () async {
+    final runner = CuboidCommandRunner(stdout: _memorySink());
+
+    expect(runner.commands['delete'], isA<DeleteCommand>());
+    expect(runner.commands['delete']!.description, contains('Delete a'));
+  });
+
+  test('--help mentions the delete command', () async {
+    final output = _memorySink();
+    final exitCode = await runCuboid(['--help'], stdout: output);
+
+    expect(exitCode, 0);
+    expect(output.content, contains('delete'));
+  });
+
+  test('delete help lists every delete artifact', () async {
+    final output = _memorySink();
+    final exitCode = await runCuboid(
+      ['delete', '--help'],
+      stdout: output,
+      stderr: _memorySink(),
+    );
+
+    expect(exitCode, 0);
+    expect(
+      output.content,
+      contains('cuboid delete <artifact> [arguments] [options]'),
+    );
+  });
+
+  test('bare delete with no artifact fails with a usage error', () async {
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['delete'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(errorOutput.content, contains('Expected an artifact and a name.'));
+  });
+
+  test('delete unknown artifact fails cleanly', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    Directory.current = temp;
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+    final exitCode = await runCuboid(
+      ['delete', 'gizmo', 'name'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(output.content, isEmpty);
+    expect(errorOutput.content, contains('Unknown delete artifact "gizmo".'));
+    expect(errorOutput.content, contains('Known artifacts:'));
+  });
+
+  test(
+    'create dialog then dry-run delete dialog round-trips without writing',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeDialogProject(temp);
+      Directory.current = temp;
+      await runCuboid(
+        ['create', 'dialog', 'confirm_delete'],
+        stdout: _memorySink(),
+        stderr: _memorySink(),
+      );
+      final beforeFiles = _relativeFiles(temp);
+      final beforeDialogs = File(
+        '${temp.path}/lib/app/app.dialogs.dart',
+      ).readAsStringSync();
+      final beforeLocator = File(
+        '${temp.path}/lib/app/app.locator.dart',
+      ).readAsStringSync();
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+
+      final exitCode = await runCuboid(
+        ['delete', 'dialog', 'confirm_delete', '--dry-run'],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Dry run: nothing was deleted.'));
+      expect(errorOutput.content, isEmpty);
+      expect(_relativeFiles(temp), beforeFiles);
+      expect(
+        File('${temp.path}/lib/app/app.dialogs.dart').readAsStringSync(),
+        beforeDialogs,
+      );
+      expect(
+        File('${temp.path}/lib/app/app.locator.dart').readAsStringSync(),
+        beforeLocator,
+      );
+    },
+  );
+
+  test(
+    'delete dialog removes app.dialogs.dart when it was the last dialog',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeDialogProject(temp);
+      Directory.current = temp;
+      await runCuboid(
+        ['create', 'dialog', 'confirm_delete'],
+        stdout: _memorySink(),
+        stderr: _memorySink(),
+      );
+      final output = _memorySink();
+      final errorOutput = _memorySink();
+
+      final exitCode = await runCuboid(
+        ['delete', 'dialog', 'confirm_delete'],
+        stdout: output,
+        stderr: errorOutput,
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Deleted dialog ConfirmDeleteDialog.'));
+      expect(output.content, contains('no dialogs remain'));
+      expect(errorOutput.content, isEmpty);
+      expect(
+        File('${temp.path}/lib/app/app.dialogs.dart').existsSync(),
+        isFalse,
+      );
+      expect(
+        File('${temp.path}/lib/core/services/dialog_service.dart').existsSync(),
+        isFalse,
+      );
+    },
+  );
+
+  test('delete service removes the file and locator registration', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeServiceProject(temp, createFile: false);
+    Directory.current = temp;
+    await runCuboid(
+      ['create', 'service', 'auth'],
+      stdout: _memorySink(),
+      stderr: _memorySink(),
+    );
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+
+    final exitCode = await runCuboid(
+      ['delete', 'service', 'auth'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Deleted service AuthService.'));
+    expect(errorOutput.content, isEmpty);
+    expect(
+      File('${temp.path}/lib/core/services/auth_service.dart').existsSync(),
+      isFalse,
+    );
+  });
+
+  test('delete feature removes the directory, route, and repository', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeFeatureProject(temp);
+    Directory.current = temp;
+    await runCuboid(
+      ['create', 'feature', 'auth'],
+      stdout: _memorySink(),
+      stderr: _memorySink(),
+    );
+    final output = _memorySink();
+    final errorOutput = _memorySink();
+
+    final exitCode = await runCuboid(
+      ['delete', 'feature', 'auth'],
+      stdout: output,
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 0);
+    expect(output.content, contains('Deleted feature Auth.'));
+    expect(errorOutput.content, isEmpty);
+    expect(Directory('${temp.path}/lib/features/auth').existsSync(), isFalse);
+  });
+
+  test('delete artifact failure returns a non-zero exit code', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeServiceProject(temp, createFile: false);
+    Directory.current = temp;
+    final errorOutput = _memorySink();
+
+    final exitCode = await runCuboid(
+      ['delete', 'service', 'ghost'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 1);
+    expect(errorOutput.content, contains('Service not found'));
+  });
+
+  test('delete storage rejects a storage name argument', () async {
+    final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+    final previousCurrent = Directory.current;
+    addTearDown(() {
+      Directory.current = previousCurrent;
+      temp.deleteSync(recursive: true);
+    });
+    _writeStorageProject(temp);
+    Directory.current = temp;
+    final errorOutput = _memorySink();
+
+    final exitCode = await runCuboid(
+      ['delete', 'storage', 'cache'],
+      stdout: _memorySink(),
+      stderr: errorOutput,
+    );
+
+    expect(exitCode, 64);
+    expect(
+      errorOutput.content,
+      contains('cuboid delete storage does not take a storage name.'),
+    );
   });
 }
 

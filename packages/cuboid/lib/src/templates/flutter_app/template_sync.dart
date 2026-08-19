@@ -11,6 +11,8 @@ const templateArchivePath =
     'packages/cuboid/lib/src/templates/flutter_app/template.tar.gz';
 const templateManifestPath =
     'packages/cuboid/lib/src/templates/flutter_app/template_manifest.json';
+const templatePayloadDartPath =
+    'packages/cuboid/lib/src/templates/flutter_app/template_payload.g.dart';
 
 const templateAllowedFiles = [
   '.gitignore',
@@ -24,7 +26,14 @@ const templateAllowedFiles = [
   'pubspec.yaml',
 ];
 
-const templateAllowedDirectories = ['android', 'assets', 'ios', 'lib', 'test'];
+const templateAllowedDirectories = [
+  'android',
+  'assets',
+  'ios',
+  'lib',
+  'packages/cuboid_flutter',
+  'test',
+];
 
 const templateExcludedPatterns = [
   '.git/**',
@@ -214,10 +223,14 @@ Future<void> regenerateTemplatePayload(
   final result = await buildTemplatePayload(root);
   final archiveFile = fileFor(root, templateArchivePath);
   final manifestFile = fileFor(root, templateManifestPath);
+  final payloadDartFile = fileFor(root, templatePayloadDartPath);
   archiveFile.parent.createSync(recursive: true);
   manifestFile.parent.createSync(recursive: true);
   archiveFile.writeAsBytesSync(result.archiveBytes);
   manifestFile.writeAsBytesSync(result.manifestBytes);
+  payloadDartFile.writeAsBytesSync(
+    encodeTemplatePayloadDart(result.archiveBytes, result.manifestBytes),
+  );
 }
 
 Future<TemplateCheckResult> checkTemplatePayload(
@@ -254,6 +267,20 @@ Future<TemplateCheckResult> checkTemplatePayload(
 
   if (archiveFile.existsSync() && manifestFile.existsSync()) {
     failures.addAll(verifyTemplatePayload(root));
+  }
+
+  final payloadDartFile = fileFor(root, templatePayloadDartPath);
+  final expectedPayloadDartBytes = encodeTemplatePayloadDart(
+    expected.archiveBytes,
+    expected.manifestBytes,
+  );
+  if (!payloadDartFile.existsSync()) {
+    failures.add('$templatePayloadDartPath is missing.');
+  } else if (!_bytesEqual(
+    payloadDartFile.readAsBytesSync(),
+    expectedPayloadDartBytes,
+  )) {
+    failures.add('$templatePayloadDartPath is stale.');
   }
 
   return TemplateCheckResult(
@@ -452,6 +479,40 @@ Uint8List encodeManifest(TemplateManifest manifest) {
   );
 }
 
+/// Embeds [archiveBytes]/[manifestBytes] as Dart source (base64-encoded
+/// string constants) instead of files a `package:` URI would need to
+/// resolve at runtime.
+///
+/// `Isolate.resolvePackageUri` -- the mechanism `create_project.dart`
+/// previously used to locate `template.tar.gz`/`template_manifest.json` at
+/// runtime -- returns null inside a `dart compile exe` binary; AOT-compiled
+/// executables do not support runtime `package:` URI resolution. Compiling
+/// this bundled payload directly into the CLI's source keeps `cuboid create
+/// app` working identically whether the CLI runs from source (`dart run`)
+/// or as a compiled native executable (see packages/cuboid/tool/install.dart).
+Uint8List encodeTemplatePayloadDart(
+  Uint8List archiveBytes,
+  Uint8List manifestBytes,
+) {
+  final content =
+      '''
+// GENERATED FILE. Do not edit by hand.
+// Run `dart run tool/sync_cuboid_template.dart` to regenerate.
+//
+// Embeds the same bytes as template.tar.gz / template_manifest.json as Dart
+// source (base64) so this CLI can load its bundled template payload without
+// runtime `package:` URI resolution, which `dart compile exe` binaries do
+// not support.
+
+const String templateArchiveBase64 =
+    '${base64Encode(archiveBytes)}';
+
+const String templateManifestJsonBase64 =
+    '${base64Encode(manifestBytes)}';
+''';
+  return Uint8List.fromList(utf8.encode(content));
+}
+
 String sha256Hex(List<int> bytes) => sha256.convert(bytes).toString();
 
 File fileFor(Directory root, String relativePath) {
@@ -560,7 +621,8 @@ String _readNullTerminated(List<int> bytes, int offset, int length) {
 }
 
 bool _isExcluded(String path) {
-  if (path == 'test/tool/bootstrap_test.dart') {
+  if (path == 'test/tool/bootstrap_test.dart' ||
+      path == 'packages/cuboid_flutter/pubspec.lock') {
     return true;
   }
   final segments = path.split('/');

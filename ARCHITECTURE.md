@@ -34,6 +34,22 @@ When sources conflict, stop and resolve the conflict before changing behavior.
 The template uses Flutter with Cuboid's own in-house MVVM, dependency
 injection, and routing -- there is no third-party MVVM framework dependency.
 
+The MVVM implementation itself (`CuboidView`/`CuboidViewModel`) lives outside
+the application's `lib/` tree, in a separate framework package:
+
+```text
+Cuboid CLI (packages/cuboid)
+    |
+Cuboid runtime/framework (packages/cuboid_flutter)
+    |
+Generated application (lib/app, lib/features, lib/shared, lib/main.dart)
+```
+
+`packages/cuboid_flutter` is vendored into the repository root and into every
+`cuboid create app` output, and depended on via a `path:` entry in
+`pubspec.yaml` -- see [10](#10-core-foundations). The application's `lib/`
+tree contains only application code.
+
 The current runtime flow is:
 
 ```text
@@ -74,7 +90,6 @@ lib/
 |   |-- formatters/
 |   |-- forms/
 |   |-- models/
-|   |-- mvvm/                  CuboidView / CuboidViewModel base classes
 |   |-- services/
 |   |-- storage/
 |   |-- theme/
@@ -91,9 +106,12 @@ lib/
 Supporting folders:
 
 ```text
-test/        Unit, widget, and bootstrap tests
-tool/        Template bootstrap tooling
-doc/design/  Generic design guidance
+packages/cuboid_flutter/  Cuboid's MVVM runtime (CuboidView/CuboidViewModel),
+                          a framework package depended on via `path:` --
+                          not part of the application's own lib/ tree
+test/                     Unit, widget, and bootstrap tests
+tool/                     Template bootstrap tooling
+doc/design/               Generic design guidance
 ```
 
 `lib/core/config/` and `lib/core/network/` are not part of the base template.
@@ -340,6 +358,39 @@ rollback/atomicity expectations, filesystem/path safety, package-name
 resolution, and exit-code behavior — defined explicitly before implementation,
 matching the standard the 10 shipped commands were held to.
 
+Shipped `delete` command family (the structural mirror image of `create`,
+under `cuboid delete <artifact> [arguments] [options]`):
+
+| Command | Removes | Modifies | De-registration / teardown condition |
+| --- | --- | --- | --- |
+| `cuboid delete service <name>` | `lib/core/services/<name>_service.dart` | `lib/app/app.locator.dart` | Removes the service's import and registration. Refuses `navigation`, `dialog`, and `bottom_sheet` -- those are owned by the framework or by `delete dialog`/`delete bottomsheet` |
+| `cuboid delete feature <name>` | `lib/features/<name>/` (recursive) | `lib/app/app.locator.dart`, `lib/app/app.router.dart` | Removes the route for every View found under the feature's `ui/` (the primary View and any added later via `create view`); removes the repository registration only if present (hand-written base-template features have none, and that absence is not an error) |
+| `cuboid delete bottomsheet <name>` | `lib/shared/bottom_sheets/<name>/` (recursive) | `lib/app/app.bottomsheets.dart`; `lib/app/app.locator.dart` and `lib/core/services/bottom_sheet_service.dart` only when last | Removes this sheet's two imports and builder entry from `app.bottomsheets.dart`. If it was the last one, also deletes `app.bottomsheets.dart` itself and tears down `BottomSheetService` |
+| `cuboid delete dialog <name>` | `lib/shared/dialogs/<name>/` (recursive) | `lib/app/app.dialogs.dart`; `lib/app/app.locator.dart` and `lib/core/services/dialog_service.dart` only when last | Removes this dialog's two imports and builder entry from `app.dialogs.dart`. If it was the last one, also deletes `app.dialogs.dart` itself and tears down `DialogService` |
+| `cuboid delete storage` | `lib/core/storage/local_storage.dart` | — | None |
+| `cuboid delete database <provider>` | `lib/supabase/example_model.dart`, `example_repository.dart`, its timestamped migration under `supabase/migrations/`, `lib/core/network/supabase_guard.dart` | `lib/app/app.locator.dart`, `pubspec.yaml` | Removes the repository registration and the `supabase_flutter` dependency line. Since only one database resource can ever exist, this is always a full teardown; an ambiguous migration match (more than one `*_create_examples.sql`) is refused rather than guessed |
+| `cuboid delete view <name>` or `<name> <feature>` | The `..._view.dart` + `..._viewmodel.dart` pair | `lib/app/app.router.dart` | Removes the route. Prunes `lib/shared/views/` if it becomes empty (shared views only) |
+| `cuboid delete widget <name>` or `<name> <feature>` | The widget's own directory (recursive) | — | None. Prunes the widgets container directory if it becomes empty, never the feature's `ui/` directory itself |
+| `cuboid delete route <name>` | Nothing (no View/ViewModel files touched) | `lib/app/app.router.dart` | Removes the route only; the narrow inverse of automatic route registration, for un-registering a route by hand without deleting its files |
+
+There is no `cuboid delete model` or `cuboid delete app`. Deleting a resource
+that was never created is an error (`<Type> not found: <name>`), not a silent
+no-op, matching how every `create` command treats unexpected state -- this is
+also what makes repeated deletion fail safely rather than corrupt anything.
+
+**Shared infrastructure ownership.** `DialogService` / `app.dialogs.dart` and
+`BottomSheetService` / `app.bottomsheets.dart` are each owned collectively by
+every dialog (or bottom sheet) that currently exists, not by whichever one
+happened to create them first. Deleting counts how many builder-map entries
+remain in the registry file *before* removing anything: if this is the last
+entry, the whole registry file and its owning service are torn down as part
+of the same deletion; if others remain, only this resource's own two import
+lines and one builder entry are removed, and the registry file, the service,
+and its locator registration are left completely untouched. `lib/app/
+app.locator.dart` and `lib/app/app.router.dart` themselves are foundational
+and are never deleted by any `delete` command -- only the entries a matching
+`create` command had added to them.
+
 ## 10. Core foundations
 
 `lib/core/config/` (not present in the base template)
@@ -373,11 +424,16 @@ Reusable form and validation helpers.
 
 Shared models that do not have a clear single feature owner.
 
-`lib/core/mvvm/`
+`packages/cuboid_flutter/` (framework package, outside `lib/`)
 
 `CuboidView` and `CuboidViewModel`, the base classes every View/ViewModel in
 the template and every `cuboid create feature`/`view`/`widget`/
-`bottomsheet`/`dialog` output extends. See
+`bottomsheet`/`dialog` output extends. This is Cuboid's runtime/framework
+layer, not application code: a separate Dart/Flutter package vendored into
+the repository root and into every generated application, depended on via a
+`path: packages/cuboid_flutter` entry in `pubspec.yaml` rather than shipping
+framework source inside the application's own `lib/` tree. Generated code
+imports it as `package:cuboid_flutter/cuboid_flutter.dart`. See
 [6](#6-presentation-architecture).
 
 `lib/core/network/` (not present in the base template)

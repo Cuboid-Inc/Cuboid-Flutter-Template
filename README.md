@@ -11,7 +11,9 @@ database schema, or repository/data layers.
 
 - Flutter and Dart
 - Cuboid's own in-house MVVM, routing, service locator (get_it-based),
-  dialogs, and bottom sheets -- no third-party MVVM framework
+  dialogs, and bottom sheets -- no third-party MVVM framework. The MVVM
+  runtime (`CuboidView`/`CuboidViewModel`) lives in `packages/cuboid_flutter`,
+  a framework package depended on via `path:`, not inside `lib/`
 - Technology-neutral base: no backend or storage technology is pre-installed;
   add one explicitly via the Cuboid CLI (e.g. `cuboid create database
   supabase`, `cuboid create storage`) when a project actually needs one
@@ -23,7 +25,7 @@ database schema, or repository/data layers.
 ```text
 lib/
 |-- app/                  Locator, router, app root (CLI-patched, hand-editable)
-|-- core/                 Constants, errors, formatters, forms, models, mvvm,
+|-- core/                 Constants, errors, formatters, forms, models,
 |                         services, storage, theme, and validators
 |-- features/
 |   |-- startup/          Startup view and view model
@@ -31,6 +33,7 @@ lib/
 `-- shared/
     `-- widgets/          Reusable UI widgets
 
+packages/cuboid_flutter/  CuboidView/CuboidViewModel runtime (path dependency)
 test/                     Unit, widget, and bootstrap tests
 tool/                     Template bootstrap tooling
 doc/design/               Generic design guidance
@@ -62,8 +65,18 @@ this template and scaffolds artifacts inside a generated project. It is not
 published to pub.dev; install it locally from a checkout of this repository:
 
 ```bash
-dart pub global activate --source path packages/cuboid
+dart run packages/cuboid/tool/install.dart
 ```
+
+This compiles `cuboid` to a native executable and places it on the same
+`~/.pub-cache/bin` PATH entry `dart pub global activate` would have used.
+Do not install with `dart pub global activate --source path packages/cuboid`:
+the shell shim it generates embeds the checkout's absolute path into an
+unquoted `[ -f ... ]` test, so it fails with `[: too many arguments` for
+every `cuboid` command whenever the checkout path contains a space -- a
+defect in `dart pub global activate`'s shim template, not something a
+package can work around from its own source. Re-run the install command
+above after pulling changes to `packages/cuboid`.
 
 Create a new project (an alternative to `tool/bootstrap.dart` for starting a
 brand-new project directory, rather than renaming this checkout in place):
@@ -101,6 +114,30 @@ app.locator.dart`, `app.router.dart`, `app.bottomsheets.dart`, and
 per-command contracts (generated files, registration behavior, safety
 guarantees) live in
 [ARCHITECTURE.md §9](ARCHITECTURE.md#9-cuboid-cli-command-contract).
+
+Reverse most of the above with `cuboid delete <artifact>`:
+
+```text
+cuboid delete service <name>
+cuboid delete feature <name>           # also removes its route(s) and repository
+cuboid delete bottomsheet <name>       # removes app.bottomsheets.dart too if it was the last bottom sheet
+cuboid delete dialog <name>            # removes app.dialogs.dart too if it was the last dialog
+cuboid delete storage
+cuboid delete database supabase
+cuboid delete view <name> <feature>    # also removes the view's route
+cuboid delete widget <name>            # shared
+cuboid delete widget <name> <feature>  # feature-scoped
+cuboid delete route <name>             # router entry only; does not touch View files
+```
+
+`cuboid delete` never removes `lib/app/app.locator.dart` or `lib/app/
+app.router.dart` themselves -- only the entries a matching `create` command
+added. Deleting the last dialog or bottom sheet also tears down its owning
+service (`DialogService` / `BottomSheetService`); deleting any earlier one
+leaves that shared infrastructure in place. There is no `cuboid delete model`
+or `cuboid delete app`. Deleting something that was never created is an
+error, not a silent no-op -- matching how every `create` command treats
+unexpected state.
 
 ## Local development
 

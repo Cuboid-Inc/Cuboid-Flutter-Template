@@ -1,3 +1,5 @@
+import 'package:cuboid/src/edit/generated_edits.dart';
+
 /// Internal route-registration helpers.
 ///
 /// There is no longer a standalone `cuboid create route` (or legacy
@@ -7,6 +9,11 @@
 /// implementation both `create_feature.dart` and `create_view.dart` patch
 /// `lib/app/app.router.dart` with; it performs no file I/O itself so callers
 /// can compose it into their own validate/write/rollback sequence.
+///
+/// The reverse direction -- removing a route registration -- is shared the
+/// same way: `delete_view.dart`, `delete_route.dart`, and `delete_feature.dart`
+/// all call [removeRouteRegistration] instead of duplicating the marker
+/// text-surgery three times.
 class RouteRegistrationException implements Exception {
   const RouteRegistrationException(this.message);
 
@@ -63,19 +70,104 @@ RouteRegistration _planRouteRegistration({
   required String viewName,
   required String importLine,
 }) {
+  final identity = routeIdentityFor(viewName);
+  final routePath = '/${viewName.replaceAll('_', '-')}-view';
+
+  return RouteRegistration(
+    viewClassName: identity.viewClassName,
+    routeConstantName: identity.routeConstantName,
+    routePath: routePath,
+    importLine: importLine,
+    routeConstLine: identity.routeConstLine,
+    routeMapLine: identity.routeMapLine,
+  );
+}
+
+/// The four pieces of a route registration that are fully deterministic
+/// from [viewName] alone (i.e. everything except the import line, which
+/// differs between a feature-scoped and a shared View).
+class RouteIdentity {
+  const RouteIdentity({
+    required this.viewClassName,
+    required this.routeConstantName,
+    required this.routeConstLine,
+    required this.routeMapLine,
+  });
+
+  final String viewClassName;
+  final String routeConstantName;
+  final String routeConstLine;
+  final String routeMapLine;
+}
+
+RouteIdentity routeIdentityFor(String viewName) {
   final words = viewName.split('_');
   final viewClassName = '${_pascalCase(words)}View';
   final routeConstantName = '${_camelCase(words)}View';
   final routePath = '/${viewName.replaceAll('_', '-')}-view';
 
-  return RouteRegistration(
+  return RouteIdentity(
     viewClassName: viewClassName,
     routeConstantName: routeConstantName,
-    routePath: routePath,
-    importLine: importLine,
     routeConstLine: "static const $routeConstantName = '$routePath';",
     routeMapLine: 'Routes.$routeConstantName: (_) => const $viewClassName(),',
   );
+}
+
+/// Finds the single import line in [routerContents] that ends in
+/// `<viewName>_view.dart` (single- or double-quoted), regardless of path
+/// prefix. Throws [RouteRegistrationException] if there is no match, or if
+/// there is more than one -- an ambiguous situation `cuboid delete` refuses
+/// to guess through.
+String findRouteImportLine(String routerContents, String viewName) {
+  final pattern = RegExp(
+    r'''^[ \t]*import\s+(['"])([^'"]*)\1\s*;[ \t]*$''',
+    multiLine: true,
+  );
+  final suffixPattern = RegExp('(^|/)${RegExp.escape(viewName)}_view\\.dart\$');
+  final matches = pattern
+      .allMatches(routerContents)
+      .where((match) => suffixPattern.hasMatch(match.group(2)!))
+      .toList();
+
+  if (matches.isEmpty) {
+    throw RouteRegistrationException('No route registered for "$viewName".');
+  }
+  if (matches.length > 1) {
+    throw RouteRegistrationException(
+      'Multiple route imports match "$viewName"; refusing to remove an '
+      'ambiguous route.',
+    );
+  }
+  return matches.first.group(0)!.trim();
+}
+
+/// Returns [routerContents] with the route identified by [viewName] removed:
+/// [importLine], the route constant line, and the route map line, in that
+/// order. Throws [RouteRegistrationException] if any of the three is not
+/// found -- covering both "never registered" and a corrupted/partially
+/// hand-edited router file. `cuboid delete` refuses to guess further in
+/// either case rather than leaving the router file half-patched.
+String removeRouteRegistration(
+  String routerContents, {
+  required String viewName,
+  required String importLine,
+}) {
+  final identity = routeIdentityFor(viewName);
+
+  final afterImport = removeExactLine(routerContents, importLine);
+  if (afterImport == null) {
+    throw RouteRegistrationException('No route registered for "$viewName".');
+  }
+  final afterConst = removeExactLine(afterImport, identity.routeConstLine);
+  if (afterConst == null) {
+    throw RouteRegistrationException('No route registered for "$viewName".');
+  }
+  final afterMap = removeExactLine(afterConst, identity.routeMapLine);
+  if (afterMap == null) {
+    throw RouteRegistrationException('No route registered for "$viewName".');
+  }
+  return afterMap;
 }
 
 /// Marker comments patched in `lib/app/app.router.dart`. `route` is

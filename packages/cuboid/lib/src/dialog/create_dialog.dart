@@ -561,10 +561,13 @@ String _humanize(List<String> words) {
 }
 
 String _dialogContents(CreateDialogPlan plan) {
+  final imports = <String>[
+    "import 'package:cuboid_flutter/cuboid_flutter.dart';",
+    "import 'package:${plan.packageName}/shared/dialogs/${plan.name}/${plan.name}_dialog_model.dart';",
+    "import 'package:flutter/material.dart';",
+  ]..sort();
   return '''
-import 'package:${plan.packageName}/core/mvvm/cuboid_view.dart';
-import 'package:${plan.packageName}/shared/dialogs/${plan.name}/${plan.name}_dialog_model.dart';
-import 'package:flutter/material.dart';
+${imports.join('\n')}
 
 class ${plan.dialogClassName} extends CuboidView<${plan.modelClassName}> {
   const ${plan.dialogClassName}({super.key});
@@ -579,7 +582,22 @@ class ${plan.dialogClassName} extends CuboidView<${plan.modelClassName}> {
     ${plan.modelClassName} vm,
     Widget? child,
   ) {
-    return const SizedBox.shrink();
+    return AlertDialog(
+      title: const Text('${plan.displayName}'),
+      content: const Text(
+        'Replace this placeholder with the content for ${plan.displayName}.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Confirm'),
+        ),
+      ],
+    );
   }
 }
 ''';
@@ -587,7 +605,7 @@ class ${plan.dialogClassName} extends CuboidView<${plan.modelClassName}> {
 
 String _modelContents(CreateDialogPlan plan) {
   return '''
-import 'package:${plan.packageName}/core/mvvm/cuboid_view_model.dart';
+import 'package:cuboid_flutter/cuboid_flutter.dart';
 
 class ${plan.modelClassName} extends CuboidViewModel {}
 ''';

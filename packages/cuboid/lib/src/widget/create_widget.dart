@@ -359,10 +359,13 @@ String _widgetContents(CreateWidgetPlan plan) {
       ? 'shared/widgets/${plan.name}/${plan.name}_view_model.dart'
       : 'features/${plan.feature}/ui/widgets/${plan.name}/'
             '${plan.name}_view_model.dart';
+  final imports = <String>[
+    "import 'package:cuboid_flutter/cuboid_flutter.dart';",
+    "import 'package:${plan.packageName}/$viewModelImportPath';",
+    "import 'package:flutter/material.dart';",
+  ]..sort();
   return '''
-import 'package:${plan.packageName}/core/mvvm/cuboid_view.dart';
-import 'package:${plan.packageName}/$viewModelImportPath';
-import 'package:flutter/material.dart';
+${imports.join('\n')}
 
 class ${plan.className} extends CuboidView<${plan.viewModelClassName}> {
   const ${plan.className}({super.key});
@@ -385,7 +388,7 @@ class ${plan.className} extends CuboidView<${plan.viewModelClassName}> {
 
 String _viewModelContents(CreateWidgetPlan plan) {
   return '''
-import 'package:${plan.packageName}/core/mvvm/cuboid_view_model.dart';
+import 'package:cuboid_flutter/cuboid_flutter.dart';
 
 class ${plan.viewModelClassName} extends CuboidViewModel {}
 ''';

@@ -16,22 +16,27 @@ void main() {
     expect(result.plan.name, 'confirm_delete');
     expect(result.plan.dialogClassName, 'ConfirmDeleteDialog');
     expect(result.plan.modelClassName, 'ConfirmDeleteDialogModel');
+    final dialogContents = File(
+      '${root.path}/lib/shared/dialogs/confirm_delete/'
+      'confirm_delete_dialog.dart',
+    ).readAsStringSync();
     expect(
-      File(
-        '${root.path}/lib/shared/dialogs/confirm_delete/'
-        'confirm_delete_dialog.dart',
-      ).readAsStringSync(),
+      dialogContents,
       contains(
         'class ConfirmDeleteDialog extends '
         'CuboidView<ConfirmDeleteDialogModel>',
       ),
     );
+    expect(dialogContents, isNot(contains('SizedBox.shrink()')));
+    expect(dialogContents, contains("Text('Confirm Delete'"));
+    expect(dialogContents, contains('AlertDialog('));
+    expect(dialogContents, contains('Navigator.of(context).pop()'));
     expect(
       File(
         '${root.path}/lib/shared/dialogs/confirm_delete/'
         'confirm_delete_dialog_model.dart',
       ).readAsStringSync(),
-      "import 'package:test_app/core/mvvm/cuboid_view_model.dart';\n\n"
+      "import 'package:cuboid_flutter/cuboid_flutter.dart';\n\n"
       'class ConfirmDeleteDialogModel extends CuboidViewModel {}\n',
     );
 

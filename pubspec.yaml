@@ -12,6 +12,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  cuboid_flutter:
+    path: packages/cuboid_flutter
+
   cupertino_icons: ^1.0.9
   get_it: ^8.2.0
   logger: ^2.6.1

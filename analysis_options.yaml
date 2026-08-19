@@ -16,6 +16,14 @@ analyzer:
   exclude:
     - lib/app/app.*.dart
     - packages/cuboid/**
+    - packages/cuboid_flutter/**
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 linter:
   # The lint rules applied to this project can be customized in the

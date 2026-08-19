@@ -1,4 +1,4 @@
-import 'package:cuboid_flutter_template/core/mvvm/cuboid_view.dart';
+import 'package:cuboid_flutter/cuboid_flutter.dart';
 import 'package:cuboid_flutter_template/features/home/ui/home_viewmodel.dart';
 import 'package:flutter/material.dart';
 

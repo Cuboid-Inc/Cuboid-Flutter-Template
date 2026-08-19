@@ -1,0 +1,20 @@
+name: cuboid_flutter
+description: "Cuboid's in-house MVVM runtime for generated Flutter applications."
+publish_to: 'none' # Private framework package; vendored via a path dependency.
+version: 0.1.0
+
+environment:
+  sdk: ^3.11.5
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:

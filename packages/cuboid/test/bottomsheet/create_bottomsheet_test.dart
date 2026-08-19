@@ -16,22 +16,30 @@ void main() {
     expect(result.plan.name, 'confirm_delete');
     expect(result.plan.sheetClassName, 'ConfirmDeleteSheet');
     expect(result.plan.modelClassName, 'ConfirmDeleteSheetModel');
+    final sheetContents = File(
+      '${root.path}/lib/shared/bottom_sheets/confirm_delete/'
+      'confirm_delete_sheet.dart',
+    ).readAsStringSync();
     expect(
-      File(
-        '${root.path}/lib/shared/bottom_sheets/confirm_delete/'
-        'confirm_delete_sheet.dart',
-      ).readAsStringSync(),
+      sheetContents,
       contains(
         'class ConfirmDeleteSheet extends '
         'CuboidView<ConfirmDeleteSheetModel>',
       ),
     );
     expect(
+      sheetContents,
+      contains("import 'package:cuboid_flutter/cuboid_flutter.dart';"),
+    );
+    expect(sheetContents, isNot(contains('SizedBox.shrink()')));
+    expect(sheetContents, contains("Text('Confirm Delete'"));
+    expect(sheetContents, contains('Navigator.of(context).pop()'));
+    expect(
       File(
         '${root.path}/lib/shared/bottom_sheets/confirm_delete/'
         'confirm_delete_sheet_model.dart',
       ).readAsStringSync(),
-      "import 'package:test_app/core/mvvm/cuboid_view_model.dart';\n\n"
+      "import 'package:cuboid_flutter/cuboid_flutter.dart';\n\n"
       'class ConfirmDeleteSheetModel extends CuboidViewModel {}\n',
     );
 

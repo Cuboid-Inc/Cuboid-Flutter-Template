@@ -33,7 +33,7 @@ void main() {
       ).readAsStringSync();
       expect(
         contents,
-        contains("import 'package:test_app/core/mvvm/cuboid_view.dart';"),
+        contains("import 'package:cuboid_flutter/cuboid_flutter.dart';"),
       );
       expect(
         contents,
@@ -56,7 +56,7 @@ void main() {
       ).readAsStringSync();
       expect(
         viewModelContents,
-        contains("import 'package:test_app/core/mvvm/cuboid_view_model.dart';"),
+        contains("import 'package:cuboid_flutter/cuboid_flutter.dart';"),
       );
       expect(
         viewModelContents,
