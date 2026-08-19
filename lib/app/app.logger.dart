@@ -1,9 +1,7 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-// dart format width=80
-
-// **************************************************************************
-// StackedLoggerGenerator
-// **************************************************************************
+// Cuboid application logger.
+//
+// A thin wrapper around package:logger with class-scoped, colorized output.
+// This file is not code-generated; it's a normal hand-maintained source file.
 
 // ignore_for_file: avoid_print, depend_on_referenced_packages
 

@@ -44,6 +44,9 @@ void main() {
   test('creates a bootstrapped project through the real template path', () async {
     final temp = Directory.systemTemp.createTempSync('cuboid_create_test_');
     addTearDown(() => temp.deleteSync(recursive: true));
+    final runtimeCacheDirectory = Directory(
+      '${temp.path}/.cuboid-home/packages/cuboid_flutter',
+    );
     final calls = <String>[];
     final service = CreateProjectService(
       processRunner:
@@ -52,6 +55,7 @@ void main() {
             expect(Directory(workingDirectory).existsSync(), isTrue);
             return ProcessResult(0, 0, '', '');
           },
+      runtimePackageCacheDirectory: runtimeCacheDirectory,
     );
 
     final result = await service.create(
@@ -85,11 +89,75 @@ void main() {
       isTrue,
     );
     expect(result.bootstrapResult!.modifiedFiles, contains('pubspec.yaml'));
-    expect(calls, [
-      'flutter pub get',
-      'dart run build_runner build --delete-conflicting-outputs',
-      'dart format .',
-    ]);
+    expect(calls, ['flutter pub get', 'dart format .']);
+
+    expect(
+      Directory('${destination.path}/lib/core/mvvm').existsSync(),
+      isFalse,
+    );
+    // The cuboid_flutter runtime package is a Cuboid implementation detail;
+    // it must never be copied into a generated project's visible tree.
+    expect(Directory('${destination.path}/packages').existsSync(), isFalse);
+    expect(
+      Directory('${destination.path}/lib/core/storage').existsSync(),
+      isFalse,
+    );
+
+    expect(
+      File(
+        '${runtimeCacheDirectory.path}/pubspec.yaml',
+      ).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(
+        '${runtimeCacheDirectory.path}/lib/cuboid_flutter.dart',
+      ).existsSync(),
+      isTrue,
+    );
+    final destinationPubspec = File(
+      '${destination.path}/pubspec.yaml',
+    ).readAsStringSync();
+    expect(destinationPubspec, isNot(contains('path: packages/cuboid_flutter')));
+    expect(
+      destinationPubspec,
+      contains(
+        'path: ${runtimeCacheDirectory.path.replaceAll(Platform.pathSeparator, '/')}',
+      ),
+    );
+
+    for (final shellFile in [
+      'lib/app/shell_view.dart',
+      'lib/app/shell_viewmodel.dart',
+      'lib/core/services/shell_service.dart',
+      'test/app/shell_viewmodel_test.dart',
+      'test/core/services/shell_service_test.dart',
+    ]) {
+      expect(
+        File('${destination.path}/$shellFile').existsSync(),
+        isFalse,
+        reason: shellFile,
+      );
+    }
+    final dartFiles = destination
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'));
+    for (final file in dartFiles) {
+      final contents = file.readAsStringSync();
+      for (final shellSymbol in [
+        'ShellView',
+        'ShellViewModel',
+        'ShellService',
+        'Routes.shellView',
+      ]) {
+        expect(
+          contents,
+          isNot(contains(shellSymbol)),
+          reason: '${file.path} should not reference $shellSymbol',
+        );
+      }
+    }
   });
 
   test('refuses to overwrite an existing destination', () async {
@@ -206,6 +274,9 @@ void main() {
           (executable, arguments, {required workingDirectory}) async {
             return ProcessResult(0, 70, '', 'tool failed');
           },
+      runtimePackageCacheDirectory: Directory(
+        '${temp.path}/.cuboid-home/packages/cuboid_flutter',
+      ),
     );
 
     await expectLater(
@@ -241,6 +312,9 @@ void main() {
             }
             return ProcessResult(0, 0, '', '');
           },
+      runtimePackageCacheDirectory: Directory(
+        '${temp.path}/.cuboid-home/packages/cuboid_flutter',
+      ),
     );
 
     await expectLater(
@@ -259,11 +333,7 @@ void main() {
         ),
       ),
     );
-    expect(calls, [
-      'flutter pub get',
-      'dart run build_runner build --delete-conflicting-outputs',
-      'dart format .',
-    ]);
+    expect(calls, ['flutter pub get', 'dart format .']);
     expect(Directory('${temp.path}/my_app').existsSync(), isFalse);
   });
 
@@ -275,6 +345,9 @@ void main() {
           (executable, arguments, {required workingDirectory}) async {
             throw const ProcessException('flutter', ['pub', 'get'], 'missing');
           },
+      runtimePackageCacheDirectory: Directory(
+        '${temp.path}/.cuboid-home/packages/cuboid_flutter',
+      ),
     );
 
     await expectLater(
@@ -304,6 +377,9 @@ void main() {
           (executable, arguments, {required workingDirectory}) async {
             fail('post-steps should not run when disabled');
           },
+      runtimePackageCacheDirectory: Directory(
+        '${temp.path}/.cuboid-home/packages/cuboid_flutter',
+      ),
     );
 
     await service.create(

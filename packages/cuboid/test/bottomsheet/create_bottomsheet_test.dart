@@ -4,7 +4,7 @@ import 'package:cuboid/src/bottomsheet/create_bottomsheet.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('creates files and first-use Stacked registration', () async {
+  test('creates files and first-use registration', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final service = CreateBottomSheetService();
@@ -16,77 +16,102 @@ void main() {
     expect(result.plan.name, 'confirm_delete');
     expect(result.plan.sheetClassName, 'ConfirmDeleteSheet');
     expect(result.plan.modelClassName, 'ConfirmDeleteSheetModel');
+    final sheetContents = File(
+      '${root.path}/lib/shared/bottom_sheets/confirm_delete/'
+      'confirm_delete_sheet.dart',
+    ).readAsStringSync();
     expect(
-      File(
-        '${root.path}/lib/shared/bottom_sheets/confirm_delete/'
-        'confirm_delete_sheet.dart',
-      ).readAsStringSync(),
+      sheetContents,
       contains(
         'class ConfirmDeleteSheet extends '
-        'StackedView<ConfirmDeleteSheetModel>',
+        'CuboidView<ConfirmDeleteSheetModel>',
       ),
     );
+    expect(
+      sheetContents,
+      contains("import 'package:cuboid_flutter/cuboid_flutter.dart';"),
+    );
+    expect(sheetContents, isNot(contains('SizedBox.shrink()')));
+    expect(sheetContents, contains("Text('Confirm Delete'"));
+    expect(sheetContents, contains('Navigator.of(context).pop()'));
     expect(
       File(
         '${root.path}/lib/shared/bottom_sheets/confirm_delete/'
         'confirm_delete_sheet_model.dart',
       ).readAsStringSync(),
-      'import \'package:stacked/stacked.dart\';\n\n'
-      'class ConfirmDeleteSheetModel extends BaseViewModel {}\n',
+      "import 'package:cuboid_flutter/cuboid_flutter.dart';\n\n"
+      'class ConfirmDeleteSheetModel extends CuboidViewModel {}\n',
     );
-    final app = _appFile(root).readAsStringSync();
+
+    final bottomSheets = _bottomSheetsFile(root).readAsStringSync();
     expect(
-      app,
+      bottomSheets,
       contains(
         "import 'package:test_app/shared/bottom_sheets/confirm_delete/"
         "confirm_delete_sheet.dart';",
       ),
     );
-    expect(app, contains('  bottomsheets: ['));
     expect(
-      app,
-      contains('    StackedBottomsheet(classType: ConfirmDeleteSheet),'),
+      bottomSheets,
+      contains(
+        "import 'package:test_app/shared/bottom_sheets/confirm_delete/"
+        "confirm_delete_sheet_model.dart';",
+      ),
     );
-    expect(app, contains('    // @stacked-bottom-sheet'));
-    expect(app, contains('    LazySingleton(classType: BottomSheetService),'));
-
-    final main = _mainFile(root).readAsStringSync();
     expect(
-      main,
+      bottomSheets,
+      contains('ConfirmDeleteSheetModel: (_) => const ConfirmDeleteSheet(),'),
+    );
+    expect(bottomSheets, contains('// @cuboid-bottom-sheet'));
+
+    final serviceFile = _bottomSheetServiceFile(root).readAsStringSync();
+    expect(serviceFile, contains('class BottomSheetService {'));
+    expect(
+      serviceFile,
       contains("import 'package:test_app/app/app.bottomsheets.dart';"),
     );
-    expect(main, contains('  await setupLocator();\n  setupBottomSheetUi();'));
+
+    final locator = _locatorFile(root).readAsStringSync();
+    expect(
+      locator,
+      contains(
+        "import 'package:test_app/core/services/bottom_sheet_service.dart';",
+      ),
+    );
+    expect(
+      locator,
+      contains(
+        '  locator.registerLazySingleton<BottomSheetService>(() => BottomSheetService());',
+      ),
+    );
   });
 
   test(
-    'adds to existing bottomsheets and avoids duplicate runtime setup',
+    'adds to existing bottomsheets and does not re-register the service',
     () async {
-      final root = _projectRoot(existingBottomSheets: true);
+      final root = _projectRoot(
+        existingBottomSheets: true,
+        existingService: true,
+      );
       addTearDown(() => root.deleteSync(recursive: true));
-      _mainFile(root).writeAsStringSync('''
-import 'package:test_app/app/app.bottomsheets.dart';
-import 'package:test_app/app/app.locator.dart';
-
-Future<void> main() async {
-  await setupLocator();
-  setupBottomSheetUi();
-}
-''');
       final service = CreateBottomSheetService();
 
       await service.create(
         CreateBottomSheetInput(name: 'confirm-delete', projectRoot: root),
       );
 
-      final app = _appFile(root).readAsStringSync();
+      final bottomSheets = _bottomSheetsFile(root).readAsStringSync();
       expect(
-        app,
-        contains('    StackedBottomsheet(classType: ConfirmDeleteSheet),'),
+        bottomSheets,
+        contains('ConfirmDeleteSheetModel: (_) => const ConfirmDeleteSheet(),'),
       );
-      expect('// @stacked-bottom-sheet'.allMatches(app), hasLength(1));
-      final main = _mainFile(root).readAsStringSync();
-      expect("app/app.bottomsheets.dart';".allMatches(main), hasLength(1));
-      expect('setupBottomSheetUi();'.allMatches(main), hasLength(1));
+      expect('// @cuboid-bottom-sheet'.allMatches(bottomSheets), hasLength(1));
+
+      final locator = _locatorFile(root).readAsStringSync();
+      expect(
+        'registerLazySingleton<BottomSheetService>'.allMatches(locator),
+        hasLength(1),
+      );
     },
   );
 
@@ -94,8 +119,7 @@ Future<void> main() async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final beforeFiles = _relativeFiles(root);
-    final beforeApp = _appFile(root).readAsStringSync();
-    final beforeMain = _mainFile(root).readAsStringSync();
+    final beforeLocator = _locatorFile(root).readAsStringSync();
     final service = CreateBottomSheetService();
 
     final result = await service.create(
@@ -109,8 +133,8 @@ Future<void> main() async {
     expect(result.plan.name, 'confirm_delete');
     expect(result.plan.dryRun, isTrue);
     expect(_relativeFiles(root), beforeFiles);
-    expect(_appFile(root).readAsStringSync(), beforeApp);
-    expect(_mainFile(root).readAsStringSync(), beforeMain);
+    expect(_locatorFile(root).readAsStringSync(), beforeLocator);
+    expect(_bottomSheetsFile(root).existsSync(), isFalse);
   });
 
   test('rejects invalid names', () async {
@@ -146,8 +170,7 @@ Future<void> main() async {
       '${root.path}/lib/shared/bottom_sheets/confirm_delete',
     ).createSync(recursive: true);
     final beforeFiles = _relativeFiles(root);
-    final beforeApp = _appFile(root).readAsStringSync();
-    final beforeMain = _mainFile(root).readAsStringSync();
+    final beforeLocator = _locatorFile(root).readAsStringSync();
     final service = CreateBottomSheetService();
 
     await expectLater(
@@ -165,8 +188,7 @@ Future<void> main() async {
     );
 
     expect(_relativeFiles(root), beforeFiles);
-    expect(_appFile(root).readAsStringSync(), beforeApp);
-    expect(_mainFile(root).readAsStringSync(), beforeMain);
+    expect(_locatorFile(root).readAsStringSync(), beforeLocator);
   });
 
   test('rejects symlink ancestors', () async {
@@ -186,14 +208,45 @@ Future<void> main() async {
     );
   });
 
-  test('rejects conflicting app and main registrations', () async {
+  test(
+    'rejects a duplicate bottom sheet import in app.bottomsheets.dart',
+    () async {
+      final root = _projectRoot(
+        existingBottomSheets: true,
+        existingService: true,
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      _bottomSheetsFile(root).writeAsStringSync(
+        _bottomSheetsContents(
+          extraImport:
+              "import 'package:test_app/shared/bottom_sheets/confirm/"
+              "confirm_sheet.dart';\n",
+        ),
+      );
+      final service = CreateBottomSheetService();
+
+      await expectLater(
+        service.create(
+          CreateBottomSheetInput(name: 'confirm', projectRoot: root),
+        ),
+        throwsA(
+          isA<CreateBottomSheetException>().having(
+            (error) => error.message,
+            'message',
+            contains('Bottom sheet import already exists'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test('rejects a duplicate BottomSheetService registration', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    _appFile(root).writeAsStringSync(
-      _appContents(
-        extraImport:
-            "import 'package:other/shared/bottom_sheets/confirm/"
-            "confirm_sheet.dart';\n",
+    _locatorFile(root).writeAsStringSync(
+      _locatorContents(
+        extraService:
+            '  locator.registerLazySingleton<BottomSheetService>(() => BottomSheetService());\n',
       ),
     );
     final service = CreateBottomSheetService();
@@ -206,91 +259,103 @@ Future<void> main() async {
         isA<CreateBottomSheetException>().having(
           (error) => error.message,
           'message',
-          contains('Conflicting bottom sheet import'),
+          'Duplicate BottomSheetService registration.',
         ),
       ),
     );
   });
 
-  test('restores app.dart when main.dart update fails', () async {
-    final root = _projectRoot();
-    addTearDown(() {
-      Process.runSync('chmod', ['755', '${root.path}/lib']);
-      root.deleteSync(recursive: true);
-    });
-    final beforeFiles = _relativeFiles(root);
-    final beforeApp = _appFile(root).readAsStringSync();
-    final beforeMain = _mainFile(root).readAsStringSync();
-    Directory(
-      '${root.path}/lib/shared/bottom_sheets',
-    ).createSync(recursive: true);
-    Process.runSync('chmod', ['555', '${root.path}/lib']);
-    final service = CreateBottomSheetService();
+  test(
+    'restores locator.dart when the bottomsheets file update fails',
+    () async {
+      final root = _projectRoot(
+        existingBottomSheets: true,
+        existingService: true,
+      );
+      addTearDown(() {
+        Process.runSync('chmod', ['755', '${root.path}/lib/app']);
+        root.deleteSync(recursive: true);
+      });
+      final beforeFiles = _relativeFiles(root);
+      final beforeLocator = _locatorFile(root).readAsStringSync();
+      final beforeBottomSheets = _bottomSheetsFile(root).readAsStringSync();
+      Process.runSync('chmod', ['555', '${root.path}/lib/app']);
+      final service = CreateBottomSheetService();
 
-    await expectLater(
-      service.create(
-        CreateBottomSheetInput(name: 'confirm', projectRoot: root),
-      ),
-      throwsA(isA<CreateBottomSheetException>()),
-    );
+      await expectLater(
+        service.create(
+          CreateBottomSheetInput(name: 'confirm', projectRoot: root),
+        ),
+        throwsA(isA<CreateBottomSheetException>()),
+      );
 
-    Process.runSync('chmod', ['755', '${root.path}/lib']);
-    expect(_relativeFiles(root), beforeFiles);
-    expect(_appFile(root).readAsStringSync(), beforeApp);
-    expect(_mainFile(root).readAsStringSync(), beforeMain);
-  }, skip: Platform.isWindows);
+      Process.runSync('chmod', ['755', '${root.path}/lib/app']);
+      expect(_relativeFiles(root), beforeFiles);
+      expect(_locatorFile(root).readAsStringSync(), beforeLocator);
+      expect(_bottomSheetsFile(root).readAsStringSync(), beforeBottomSheets);
+    },
+    skip: Platform.isWindows,
+  );
 }
 
-Directory _projectRoot({bool existingBottomSheets = false}) {
+Directory _projectRoot({
+  bool existingBottomSheets = false,
+  bool existingService = false,
+}) {
   final root = Directory.systemTemp.createTempSync('cuboid_bottomsheet_test_');
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: test_app\n');
-  _appFile(root)
+  _locatorFile(root)
     ..parent.createSync(recursive: true)
     ..writeAsStringSync(
-      _appContents(existingBottomSheets: existingBottomSheets),
+      _locatorContents(
+        extraService: existingService
+            ? '  locator.registerLazySingleton<BottomSheetService>(() => BottomSheetService());\n'
+            : '',
+      ),
     );
-  _mainFile(root).writeAsStringSync('''
-import 'package:test_app/app/app.locator.dart';
-
-Future<void> main() async {
-  await setupLocator();
-}
-''');
+  if (existingBottomSheets) {
+    _bottomSheetsFile(root).writeAsStringSync(_bottomSheetsContents());
+  }
+  if (existingService) {
+    _bottomSheetServiceFile(root)
+      ..parent.createSync(recursive: true)
+      ..writeAsStringSync('class BottomSheetService {}\n');
+  }
   return root;
 }
 
-String _appContents({
-  bool existingBottomSheets = false,
-  String extraImport = '',
-}) {
-  final bottomSheets = existingBottomSheets
-      ? '''
-  bottomsheets: [
-    // @stacked-bottom-sheet
-  ],
-'''
-      : '';
+String _locatorContents({String extraService = ''}) {
   return '''
-${extraImport}import 'package:stacked/stacked_annotations.dart';
-import 'package:stacked_services/stacked_services.dart';
-// @stacked-import
+import 'package:get_it/get_it.dart';
+// @cuboid-import
 
-@StackedApp(
-  routes: [
-    // @stacked-route
-  ],
-$bottomSheets  dependencies: [
-    LazySingleton(classType: NavigationService),
-    // @stacked-service
-  ],
-)
-class App {}
+final locator = GetIt.instance;
+
+Future<void> setupLocator() async {
+$extraService  // @cuboid-service
+}
 ''';
 }
 
-File _appFile(Directory root) => File('${root.path}/lib/app/app.dart');
+String _bottomSheetsContents({String extraImport = ''}) {
+  return '''
+import 'package:flutter/material.dart';
+$extraImport// @cuboid-import
 
-File _mainFile(Directory root) => File('${root.path}/lib/main.dart');
+final Map<Type, WidgetBuilder> cuboidBottomSheetBuilders = {
+  // @cuboid-bottom-sheet
+};
+''';
+}
+
+File _locatorFile(Directory root) =>
+    File('${root.path}/lib/app/app.locator.dart');
+
+File _bottomSheetsFile(Directory root) =>
+    File('${root.path}/lib/app/app.bottomsheets.dart');
+
+File _bottomSheetServiceFile(Directory root) =>
+    File('${root.path}/lib/core/services/bottom_sheet_service.dart');
 
 List<String> _relativeFiles(Directory root) {
   final files =

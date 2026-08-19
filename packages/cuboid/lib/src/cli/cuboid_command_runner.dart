@@ -2,18 +2,25 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:cuboid/src/bottomsheet/create_bottomsheet.dart';
+import 'package:cuboid/src/bottomsheet/delete_bottomsheet.dart';
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
 import 'package:cuboid/src/create/create_project.dart';
 import 'package:cuboid/src/database/create_database.dart';
+import 'package:cuboid/src/database/delete_database.dart';
 import 'package:cuboid/src/dialog/create_dialog.dart';
+import 'package:cuboid/src/dialog/delete_dialog.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
+import 'package:cuboid/src/feature/delete_feature.dart';
 import 'package:cuboid/src/model/create_model.dart';
-import 'package:cuboid/src/repository/create_repository.dart';
-import 'package:cuboid/src/route/register_route.dart';
+import 'package:cuboid/src/route/delete_route.dart';
+import 'package:cuboid/src/service/delete_service.dart';
 import 'package:cuboid/src/service/register_service.dart';
 import 'package:cuboid/src/storage/create_storage.dart';
+import 'package:cuboid/src/storage/delete_storage.dart';
 import 'package:cuboid/src/view/create_view.dart';
+import 'package:cuboid/src/view/delete_view.dart';
 import 'package:cuboid/src/widget/create_widget.dart';
+import 'package:cuboid/src/widget/delete_widget.dart';
 
 const cuboidVersion = '0.1.0';
 const _knownCreateArtifacts = <String>[
@@ -24,11 +31,26 @@ const _knownCreateArtifacts = <String>[
   'dialog',
   'storage',
   'database',
-  'route',
   'view',
-  'repository',
   'model',
   'widget',
+];
+
+/// Artifacts `cuboid delete` supports. Deliberately excludes `model` and
+/// `app`: there is no per-artifact ownership state to reverse for a model
+/// (it is a single bare file with no registration), and deleting a whole
+/// generated app is just deleting its directory -- outside this command's
+/// scope.
+const _knownDeleteArtifacts = <String>[
+  'service',
+  'feature',
+  'bottomsheet',
+  'dialog',
+  'storage',
+  'database',
+  'view',
+  'widget',
+  'route',
 ];
 
 class CuboidCommandRunner extends CommandRunner<int> {
@@ -41,12 +63,19 @@ class CuboidCommandRunner extends CommandRunner<int> {
     CreateDialogService? createDialogService,
     CreateStorageService? createStorageService,
     CreateDatabaseService? createDatabaseService,
-    RegisterRouteService? registerRouteService,
     RegisterServiceService? registerServiceService,
     CreateViewService? createViewService,
-    CreateRepositoryService? createRepositoryService,
     CreateModelService? createModelService,
     CreateWidgetService? createWidgetService,
+    DeleteServiceService? deleteServiceService,
+    DeleteFeatureService? deleteFeatureService,
+    DeleteBottomSheetService? deleteBottomSheetService,
+    DeleteDialogService? deleteDialogService,
+    DeleteStorageService? deleteStorageService,
+    DeleteDatabaseService? deleteDatabaseService,
+    DeleteViewService? deleteViewService,
+    DeleteWidgetService? deleteWidgetService,
+    DeleteRouteService? deleteRouteService,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -57,14 +86,22 @@ class CuboidCommandRunner extends CommandRunner<int> {
        _createStorageService = createStorageService ?? CreateStorageService(),
        _createDatabaseService =
            createDatabaseService ?? CreateDatabaseService(),
-       _registerRouteService = registerRouteService ?? RegisterRouteService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
        _createViewService = createViewService ?? CreateViewService(),
-       _createRepositoryService =
-           createRepositoryService ?? CreateRepositoryService(),
        _createModelService = createModelService ?? CreateModelService(),
        _createWidgetService = createWidgetService ?? CreateWidgetService(),
+       _deleteServiceService = deleteServiceService ?? DeleteServiceService(),
+       _deleteFeatureService = deleteFeatureService ?? DeleteFeatureService(),
+       _deleteBottomSheetService =
+           deleteBottomSheetService ?? DeleteBottomSheetService(),
+       _deleteDialogService = deleteDialogService ?? DeleteDialogService(),
+       _deleteStorageService = deleteStorageService ?? DeleteStorageService(),
+       _deleteDatabaseService =
+           deleteDatabaseService ?? DeleteDatabaseService(),
+       _deleteViewService = deleteViewService ?? DeleteViewService(),
+       _deleteWidgetService = deleteWidgetService ?? DeleteWidgetService(),
+       _deleteRouteService = deleteRouteService ?? DeleteRouteService(),
        super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
     argParser.addFlag(
       'version',
@@ -82,11 +119,24 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createStorageService: _createStorageService,
         createDatabaseService: _createDatabaseService,
         registerServiceService: _registerServiceService,
-        registerRouteService: _registerRouteService,
         createViewService: _createViewService,
-        createRepositoryService: _createRepositoryService,
         createModelService: _createModelService,
         createWidgetService: _createWidgetService,
+      ),
+    );
+    addCommand(
+      DeleteCommand(
+        stdout: _stdout,
+        stderr: _stderr,
+        deleteServiceService: _deleteServiceService,
+        deleteFeatureService: _deleteFeatureService,
+        deleteBottomSheetService: _deleteBottomSheetService,
+        deleteDialogService: _deleteDialogService,
+        deleteStorageService: _deleteStorageService,
+        deleteDatabaseService: _deleteDatabaseService,
+        deleteViewService: _deleteViewService,
+        deleteWidgetService: _deleteWidgetService,
+        deleteRouteService: _deleteRouteService,
       ),
     );
     addCommand(
@@ -94,13 +144,6 @@ class CuboidCommandRunner extends CommandRunner<int> {
         stdout: _stdout,
         stderr: _stderr,
         createFeatureService: _createFeatureService,
-      ),
-    );
-    addCommand(
-      RouteCommand(
-        stdout: _stdout,
-        stderr: _stderr,
-        registerRouteService: _registerRouteService,
       ),
     );
     addCommand(
@@ -127,12 +170,19 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final CreateDialogService _createDialogService;
   final CreateStorageService _createStorageService;
   final CreateDatabaseService _createDatabaseService;
-  final RegisterRouteService _registerRouteService;
   final RegisterServiceService _registerServiceService;
   final CreateViewService _createViewService;
-  final CreateRepositoryService _createRepositoryService;
   final CreateModelService _createModelService;
   final CreateWidgetService _createWidgetService;
+  final DeleteServiceService _deleteServiceService;
+  final DeleteFeatureService _deleteFeatureService;
+  final DeleteBottomSheetService _deleteBottomSheetService;
+  final DeleteDialogService _deleteDialogService;
+  final DeleteStorageService _deleteStorageService;
+  final DeleteDatabaseService _deleteDatabaseService;
+  final DeleteViewService _deleteViewService;
+  final DeleteWidgetService _deleteWidgetService;
+  final DeleteRouteService _deleteRouteService;
 
   @override
   Future<int?> run(Iterable<String> args) async {
@@ -160,9 +210,7 @@ class CreateCommand extends Command<int> {
     CreateStorageService? createStorageService,
     CreateDatabaseService? createDatabaseService,
     RegisterServiceService? registerServiceService,
-    RegisterRouteService? registerRouteService,
     CreateViewService? createViewService,
-    CreateRepositoryService? createRepositoryService,
     CreateModelService? createModelService,
     CreateWidgetService? createWidgetService,
   }) : _stdout = stdout ?? ioStdout,
@@ -177,10 +225,7 @@ class CreateCommand extends Command<int> {
            createDatabaseService ?? CreateDatabaseService(),
        _registerServiceService =
            registerServiceService ?? RegisterServiceService(),
-       _registerRouteService = registerRouteService ?? RegisterRouteService(),
        _createViewService = createViewService ?? CreateViewService(),
-       _createRepositoryService =
-           createRepositoryService ?? CreateRepositoryService(),
        _createModelService = createModelService ?? CreateModelService(),
        _createWidgetService = createWidgetService ?? CreateWidgetService() {
     argParser
@@ -201,7 +246,7 @@ class CreateCommand extends Command<int> {
       ..addFlag(
         'post-steps',
         defaultsTo: true,
-        help: 'Run flutter pub get, build_runner, and dart format.',
+        help: 'Run flutter pub get and dart format.',
       );
   }
 
@@ -214,9 +259,7 @@ class CreateCommand extends Command<int> {
   final CreateStorageService _createStorageService;
   final CreateDatabaseService _createDatabaseService;
   final RegisterServiceService _registerServiceService;
-  final RegisterRouteService _registerRouteService;
   final CreateViewService _createViewService;
-  final CreateRepositoryService _createRepositoryService;
   final CreateModelService _createModelService;
   final CreateWidgetService _createWidgetService;
 
@@ -239,17 +282,21 @@ class CreateCommand extends Command<int> {
       'cuboid create service <name>, '
       'cuboid create bottomsheet <name>, '
       'cuboid create dialog <name>, '
-      'cuboid create storage <name>, '
+      'cuboid create storage, '
       'cuboid create database <provider>, '
-      'cuboid create route <feature>, '
-      'cuboid create view <feature> <name>, '
-      'cuboid create repository <name>, '
+      'cuboid create view <view-name> (shared) or '
+      'cuboid create view <view-name> <feature> (feature-scoped), '
       'cuboid create model <name>, '
       'cuboid create widget <name> (shared) or '
-      'cuboid create widget <feature> <name> (feature-scoped).\n'
+      'cuboid create widget <name> <feature> (feature-scoped).\n'
+      'cuboid create feature <name> also creates the feature\'s repository '
+      'and registers its route; there is no separate route or repository '
+      'command.\n'
       'Known artifact categories: '
       '${_knownCreateArtifacts.join(', ')}.\n'
-      'other artifact commands are not yet implemented.';
+      'other artifact commands are not yet implemented.\n'
+      'cuboid delete <artifact> <name> reverses most of the above -- see '
+      'cuboid delete --help.';
 
   @override
   void printUsage() {
@@ -283,14 +330,8 @@ class CreateCommand extends Command<int> {
         if (artifact == 'database') {
           return _runCreateDatabase(rest.skip(1).toList());
         }
-        if (artifact == 'route') {
-          return _runCreateRoute(rest.skip(1).toList());
-        }
         if (artifact == 'view') {
           return _runCreateView(rest.skip(1).toList());
-        }
-        if (artifact == 'repository') {
-          return _runCreateRepository(rest.skip(1).toList());
         }
         if (artifact == 'model') {
           return _runCreateModel(rest.skip(1).toList());
@@ -456,14 +497,14 @@ class CreateCommand extends Command<int> {
         usage,
       );
     }
-    if (rest.length != 1) {
-      throw UsageException('Expected a storage name.', usage);
+    if (rest.isNotEmpty) {
+      throw UsageException(
+        'cuboid create storage does not take a storage name.',
+        usage,
+      );
     }
 
-    final input = CreateStorageInput(
-      name: rest[0],
-      dryRun: argResults!['dry-run'] as bool,
-    );
+    final input = CreateStorageInput(dryRun: argResults!['dry-run'] as bool);
 
     try {
       final result = await _createStorageService.create(input);
@@ -503,34 +544,6 @@ class CreateCommand extends Command<int> {
     }
   }
 
-  Future<int> _runCreateRoute(List<String> rest) async {
-    if (argResults!.wasParsed('output-dir') ||
-        argResults!.wasParsed('directory') ||
-        argResults!.wasParsed('post-steps')) {
-      throw UsageException(
-        'Only --dry-run is supported for cuboid create route.',
-        usage,
-      );
-    }
-    if (rest.length != 1) {
-      throw UsageException('Expected a feature name.', usage);
-    }
-
-    final input = RegisterRouteInput(
-      feature: rest[0],
-      dryRun: argResults!['dry-run'] as bool,
-    );
-
-    try {
-      final result = await _registerRouteService.register(input);
-      writeRouteResult(_stdout, result);
-      return 0;
-    } on RegisterRouteException catch (error) {
-      _stderr.writeln(error.message);
-      return 1;
-    }
-  }
-
   Future<int> _runCreateView(List<String> rest) async {
     if (argResults!.wasParsed('output-dir') ||
         argResults!.wasParsed('directory') ||
@@ -540,49 +553,26 @@ class CreateCommand extends Command<int> {
         usage,
       );
     }
-    if (rest.length != 2) {
-      throw UsageException('Expected a feature name and view name.', usage);
+    if (rest.length != 1 && rest.length != 2) {
+      throw UsageException(
+        'Expected a view name, or a view name and feature name.',
+        usage,
+      );
     }
 
-    final input = CreateViewInput(
-      feature: rest[0],
-      name: rest[1],
-      dryRun: argResults!['dry-run'] as bool,
-    );
+    final input = rest.length == 1
+        ? CreateViewInput(name: rest[0], dryRun: argResults!['dry-run'] as bool)
+        : CreateViewInput(
+            name: rest[0],
+            feature: rest[1],
+            dryRun: argResults!['dry-run'] as bool,
+          );
 
     try {
       final result = await _createViewService.create(input);
       writeViewResult(_stdout, result);
       return 0;
     } on CreateViewException catch (error) {
-      _stderr.writeln(error.message);
-      return 1;
-    }
-  }
-
-  Future<int> _runCreateRepository(List<String> rest) async {
-    if (argResults!.wasParsed('output-dir') ||
-        argResults!.wasParsed('directory') ||
-        argResults!.wasParsed('post-steps')) {
-      throw UsageException(
-        'Only --dry-run is supported for cuboid create repository.',
-        usage,
-      );
-    }
-    if (rest.length != 1) {
-      throw UsageException('Expected a repository name.', usage);
-    }
-
-    final input = CreateRepositoryInput(
-      name: rest[0],
-      dryRun: argResults!['dry-run'] as bool,
-    );
-
-    try {
-      final result = await _createRepositoryService.create(input);
-      writeRepositoryResult(_stdout, result);
-      return 0;
-    } on CreateRepositoryException catch (error) {
       _stderr.writeln(error.message);
       return 1;
     }
@@ -627,7 +617,7 @@ class CreateCommand extends Command<int> {
     }
     if (rest.length != 1 && rest.length != 2) {
       throw UsageException(
-        'Expected a widget name, or a feature name and widget name.',
+        'Expected a widget name, or a widget name and feature name.',
         usage,
       );
     }
@@ -638,8 +628,8 @@ class CreateCommand extends Command<int> {
             dryRun: argResults!['dry-run'] as bool,
           )
         : CreateWidgetInput(
-            feature: rest[0],
-            name: rest[1],
+            name: rest[0],
+            feature: rest[1],
             dryRun: argResults!['dry-run'] as bool,
           );
 
@@ -683,6 +673,459 @@ class CreateCommand extends Command<int> {
 
 bool _looksLikeCreateArtifact(String value) {
   return RegExp(r'^[a-z][a-z0-9_-]*$').hasMatch(value);
+}
+
+class DeleteCommand extends Command<int> {
+  DeleteCommand({
+    IOSink? stdout,
+    IOSink? stderr,
+    DeleteServiceService? deleteServiceService,
+    DeleteFeatureService? deleteFeatureService,
+    DeleteBottomSheetService? deleteBottomSheetService,
+    DeleteDialogService? deleteDialogService,
+    DeleteStorageService? deleteStorageService,
+    DeleteDatabaseService? deleteDatabaseService,
+    DeleteViewService? deleteViewService,
+    DeleteWidgetService? deleteWidgetService,
+    DeleteRouteService? deleteRouteService,
+  }) : _stdout = stdout ?? ioStdout,
+       _stderr = stderr ?? ioStderr,
+       _deleteServiceService = deleteServiceService ?? DeleteServiceService(),
+       _deleteFeatureService = deleteFeatureService ?? DeleteFeatureService(),
+       _deleteBottomSheetService =
+           deleteBottomSheetService ?? DeleteBottomSheetService(),
+       _deleteDialogService = deleteDialogService ?? DeleteDialogService(),
+       _deleteStorageService = deleteStorageService ?? DeleteStorageService(),
+       _deleteDatabaseService =
+           deleteDatabaseService ?? DeleteDatabaseService(),
+       _deleteViewService = deleteViewService ?? DeleteViewService(),
+       _deleteWidgetService = deleteWidgetService ?? DeleteWidgetService(),
+       _deleteRouteService = deleteRouteService ?? DeleteRouteService() {
+    argParser.addFlag(
+      'dry-run',
+      negatable: false,
+      help: 'Print the deletion plan without deleting or modifying files.',
+    );
+  }
+
+  final IOSink _stdout;
+  final IOSink _stderr;
+  final DeleteServiceService _deleteServiceService;
+  final DeleteFeatureService _deleteFeatureService;
+  final DeleteBottomSheetService _deleteBottomSheetService;
+  final DeleteDialogService _deleteDialogService;
+  final DeleteStorageService _deleteStorageService;
+  final DeleteDatabaseService _deleteDatabaseService;
+  final DeleteViewService _deleteViewService;
+  final DeleteWidgetService _deleteWidgetService;
+  final DeleteRouteService _deleteRouteService;
+
+  @override
+  String get name => 'delete';
+
+  @override
+  String get description =>
+      'Delete a Cuboid-generated resource and any infrastructure it '
+      'solely required.';
+
+  @override
+  String get invocation => 'cuboid delete <artifact> [arguments] [options]';
+
+  @override
+  void printUsage() {
+    _stdout.writeln(usage);
+  }
+
+  @override
+  Future<int> run() async {
+    final rest = argResults!.rest;
+    if (rest.isEmpty) {
+      throw UsageException('Expected an artifact and a name.', usage);
+    }
+
+    final artifact = rest.first;
+    if (!_knownDeleteArtifacts.contains(artifact)) {
+      _stderr.writeln('Unknown delete artifact "$artifact".');
+      _stderr.writeln('Known artifacts: ${_knownDeleteArtifacts.join(', ')}.');
+      return 64;
+    }
+
+    final args = rest.skip(1).toList();
+    switch (artifact) {
+      case 'service':
+        return _runDeleteService(args);
+      case 'feature':
+        return _runDeleteFeature(args);
+      case 'bottomsheet':
+        return _runDeleteBottomSheet(args);
+      case 'dialog':
+        return _runDeleteDialog(args);
+      case 'storage':
+        return _runDeleteStorage(args);
+      case 'database':
+        return _runDeleteDatabase(args);
+      case 'view':
+        return _runDeleteView(args);
+      case 'widget':
+        return _runDeleteWidget(args);
+      case 'route':
+        return _runDeleteRoute(args);
+    }
+    _stderr.writeln('cuboid delete $artifact is not implemented yet.');
+    return 64;
+  }
+
+  Future<int> _runDeleteService(List<String> rest) async {
+    if (rest.length != 1) {
+      throw UsageException('Expected a service name.', usage);
+    }
+
+    final input = DeleteServiceInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _deleteServiceService.delete(input);
+      writeServiceDeleteResult(_stdout, result);
+      return 0;
+    } on DeleteServiceException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runDeleteFeature(List<String> rest) async {
+    if (rest.length != 1) {
+      throw UsageException('Expected a feature name.', usage);
+    }
+
+    final input = DeleteFeatureInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _deleteFeatureService.delete(input);
+      writeFeatureDeleteResult(_stdout, result);
+      return 0;
+    } on DeleteFeatureException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runDeleteBottomSheet(List<String> rest) async {
+    if (rest.length != 1) {
+      throw UsageException('Expected a bottom sheet name.', usage);
+    }
+
+    final input = DeleteBottomSheetInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _deleteBottomSheetService.delete(input);
+      writeBottomSheetDeleteResult(_stdout, result);
+      return 0;
+    } on DeleteBottomSheetException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runDeleteDialog(List<String> rest) async {
+    if (rest.length != 1) {
+      throw UsageException('Expected a dialog name.', usage);
+    }
+
+    final input = DeleteDialogInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _deleteDialogService.delete(input);
+      writeDialogDeleteResult(_stdout, result);
+      return 0;
+    } on DeleteDialogException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runDeleteStorage(List<String> rest) async {
+    if (rest.isNotEmpty) {
+      throw UsageException(
+        'cuboid delete storage does not take a storage name.',
+        usage,
+      );
+    }
+
+    final input = DeleteStorageInput(dryRun: argResults!['dry-run'] as bool);
+
+    try {
+      final result = await _deleteStorageService.delete(input);
+      writeStorageDeleteResult(_stdout, result);
+      return 0;
+    } on DeleteStorageException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runDeleteDatabase(List<String> rest) async {
+    if (rest.length != 1) {
+      throw UsageException('Expected a database provider.', usage);
+    }
+
+    final input = DeleteDatabaseInput(
+      provider: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _deleteDatabaseService.delete(input);
+      writeDatabaseDeleteResult(_stdout, result);
+      return 0;
+    } on DeleteDatabaseException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runDeleteView(List<String> rest) async {
+    if (rest.length != 1 && rest.length != 2) {
+      throw UsageException(
+        'Expected a view name, or a view name and feature name.',
+        usage,
+      );
+    }
+
+    final input = rest.length == 1
+        ? DeleteViewInput(name: rest[0], dryRun: argResults!['dry-run'] as bool)
+        : DeleteViewInput(
+            name: rest[0],
+            feature: rest[1],
+            dryRun: argResults!['dry-run'] as bool,
+          );
+
+    try {
+      final result = await _deleteViewService.delete(input);
+      writeViewDeleteResult(_stdout, result);
+      return 0;
+    } on DeleteViewException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runDeleteWidget(List<String> rest) async {
+    if (rest.length != 1 && rest.length != 2) {
+      throw UsageException(
+        'Expected a widget name, or a widget name and feature name.',
+        usage,
+      );
+    }
+
+    final input = rest.length == 1
+        ? DeleteWidgetInput(
+            name: rest[0],
+            dryRun: argResults!['dry-run'] as bool,
+          )
+        : DeleteWidgetInput(
+            name: rest[0],
+            feature: rest[1],
+            dryRun: argResults!['dry-run'] as bool,
+          );
+
+    try {
+      final result = await _deleteWidgetService.delete(input);
+      writeWidgetDeleteResult(_stdout, result);
+      return 0;
+    } on DeleteWidgetException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+
+  Future<int> _runDeleteRoute(List<String> rest) async {
+    if (rest.length != 1) {
+      throw UsageException('Expected a view name.', usage);
+    }
+
+    final input = DeleteRouteInput(
+      name: rest[0],
+      dryRun: argResults!['dry-run'] as bool,
+    );
+
+    try {
+      final result = await _deleteRouteService.delete(input);
+      writeRouteDeleteResult(_stdout, result);
+      return 0;
+    } on DeleteRouteException catch (error) {
+      _stderr.writeln(error.message);
+      return 1;
+    }
+  }
+}
+
+void writeServiceDeleteResult(IOSink stdout, DeleteServiceResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: nothing was deleted.');
+    stdout.writeln('Service: ${plan.serviceClassName}');
+  } else {
+    stdout.writeln('Deleted service ${plan.serviceClassName}.');
+  }
+  stdout.writeln('Removed:');
+  stdout.writeln('- ${plan.servicePath}');
+  stdout.writeln('- ${plan.importLine}');
+  stdout.writeln('- ${plan.serviceLine.trim()}');
+}
+
+void writeFeatureDeleteResult(IOSink stdout, DeleteFeatureResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: nothing was deleted.');
+    stdout.writeln('Feature: ${plan.displayName}');
+  } else {
+    stdout.writeln('Deleted feature ${plan.displayName}.');
+  }
+  stdout.writeln('Removed:');
+  stdout.writeln('- ${plan.featureDirectoryPath}');
+  stdout.writeln(
+    '- route registrations for every View under '
+    '${plan.featureDirectoryPath}/ui',
+  );
+  stdout.writeln(
+    '- ${plan.repositoryClassName} registration in ${plan.locatorPath} '
+    '(if present)',
+  );
+}
+
+void writeBottomSheetDeleteResult(
+  IOSink stdout,
+  DeleteBottomSheetResult result,
+) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: nothing was deleted.');
+    stdout.writeln('Bottom sheet: ${plan.sheetClassName}');
+  } else {
+    stdout.writeln('Deleted bottom sheet ${plan.sheetClassName}.');
+  }
+  stdout.writeln('Removed:');
+  stdout.writeln('- ${plan.sheetPath}');
+  stdout.writeln('- ${plan.modelPath}');
+  if (plan.removesInfrastructure) {
+    stdout.writeln('- ${plan.bottomSheetsPath} (no bottom sheets remain)');
+    stdout.writeln(
+      '- ${plan.bottomSheetServicePath} and its ${plan.locatorPath} '
+      'registration (no bottom sheets remain)',
+    );
+  }
+}
+
+void writeDialogDeleteResult(IOSink stdout, DeleteDialogResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: nothing was deleted.');
+    stdout.writeln('Dialog: ${plan.dialogClassName}');
+  } else {
+    stdout.writeln('Deleted dialog ${plan.dialogClassName}.');
+  }
+  stdout.writeln('Removed:');
+  stdout.writeln('- ${plan.dialogPath}');
+  stdout.writeln('- ${plan.modelPath}');
+  if (plan.removesInfrastructure) {
+    stdout.writeln('- ${plan.dialogsPath} (no dialogs remain)');
+    stdout.writeln(
+      '- ${plan.dialogServicePath} and its ${plan.locatorPath} '
+      'registration (no dialogs remain)',
+    );
+  }
+}
+
+void writeStorageDeleteResult(IOSink stdout, DeleteStorageResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: nothing was deleted.');
+    stdout.writeln('Storage: ${plan.className}');
+  } else {
+    stdout.writeln('Deleted storage ${plan.className}.');
+  }
+  stdout.writeln('Removed:');
+  stdout.writeln('- ${plan.path}');
+  stdout.writeln('- ${plan.cacheEntryPath}');
+}
+
+void writeDatabaseDeleteResult(IOSink stdout, DeleteDatabaseResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: nothing was deleted.');
+    stdout.writeln('Database: ${plan.provider}');
+  } else {
+    stdout.writeln('Deleted ${plan.provider} database example.');
+  }
+  stdout.writeln('Removed:');
+  stdout.writeln('- ${plan.modelPath}');
+  stdout.writeln('- ${plan.repositoryPath}');
+  stdout.writeln('- supabase/migrations/*_create_examples.sql');
+  stdout.writeln('- lib/core/network/supabase_guard.dart (if present)');
+  stdout.writeln('- ${plan.repositoryImportLine}');
+  stdout.writeln('- ${plan.repositoryLine.trim()}');
+  stdout.writeln('- supabase_flutter dependency in pubspec.yaml (if present)');
+}
+
+void writeViewDeleteResult(IOSink stdout, DeleteViewResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: nothing was deleted.');
+    stdout.writeln('View: ${plan.displayName}');
+  } else {
+    stdout.writeln('Deleted view ${plan.displayName}.');
+  }
+  if (!plan.isShared) {
+    stdout.writeln('Feature: ${plan.featureName}');
+  }
+  stdout.writeln('Removed:');
+  for (final file in plan.files) {
+    stdout.writeln('- $file');
+  }
+  stdout.writeln('- ${plan.routeRegistration.importLine}');
+  stdout.writeln('- ${plan.routeRegistration.routeConstLine}');
+  stdout.writeln('- ${plan.routeRegistration.routeMapLine}');
+}
+
+void writeWidgetDeleteResult(IOSink stdout, DeleteWidgetResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: nothing was deleted.');
+    stdout.writeln('Widget: ${plan.className}');
+  } else {
+    stdout.writeln('Deleted widget ${plan.className}.');
+  }
+  if (!plan.isShared) {
+    stdout.writeln('Feature: ${plan.feature}');
+  }
+  stdout.writeln('Removed:');
+  stdout.writeln('- ${plan.path}');
+  stdout.writeln('- ${plan.viewModelPath}');
+}
+
+void writeRouteDeleteResult(IOSink stdout, DeleteRouteResult result) {
+  final plan = result.plan;
+  if (plan.dryRun) {
+    stdout.writeln('Dry run: nothing was deleted.');
+  } else {
+    stdout.writeln('Deleted route for ${plan.name}.');
+  }
+  stdout.writeln(
+    'Removed the route registration from ${plan.routerPath} only; View '
+    'files were not touched.',
+  );
 }
 
 class FeatureCommand extends Command<int> {
@@ -748,6 +1191,16 @@ void writeFeatureResult(IOSink stdout, CreateFeatureResult result) {
   for (final file in plan.files) {
     stdout.writeln('- $file');
   }
+  stdout.writeln('- ${plan.routerPath}');
+  stdout.writeln('- ${plan.locatorPath}');
+  if (plan.dryRun) {
+    stdout.writeln('Planned changes:');
+    stdout.writeln('- ${plan.routeRegistration.importLine}');
+    stdout.writeln('- ${plan.routeRegistration.routeConstLine}');
+    stdout.writeln('- ${plan.routeRegistration.routeMapLine}');
+    stdout.writeln('- ${plan.repositoryImportLine}');
+    stdout.writeln('- ${plan.repositoryLine.trim()}');
+  }
 }
 
 void writeCreatedServiceResult(IOSink stdout, RegisterServiceResult result) {
@@ -766,8 +1219,6 @@ void writeCreatedServiceResult(IOSink stdout, RegisterServiceResult result) {
     stdout.writeln('- class ${plan.serviceClassName} {}');
     stdout.writeln('- ${plan.importLine}');
     stdout.writeln('- ${plan.serviceLine.trim()}');
-  } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 
@@ -782,17 +1233,16 @@ void writeBottomSheetResult(IOSink stdout, CreateBottomSheetResult result) {
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.sheetPath}');
   stdout.writeln('- ${plan.modelPath}');
-  stdout.writeln('- ${plan.appPath}');
-  stdout.writeln('- ${plan.mainPath}');
+  stdout.writeln('- ${plan.bottomSheetsPath}');
+  stdout.writeln('- ${plan.bottomSheetServicePath} (first use only)');
+  stdout.writeln('- ${plan.locatorPath} (first use only)');
   if (plan.dryRun) {
     stdout.writeln('Planned changes:');
     stdout.writeln('- ${plan.sheetImportLine}');
-    stdout.writeln('- ${plan.bottomSheetLine.trim()}');
+    stdout.writeln('- ${plan.modelImportLine}');
+    stdout.writeln('- ${plan.bottomSheetEntryLine}');
+    stdout.writeln('- ${plan.serviceImportLine}');
     stdout.writeln('- ${plan.serviceLine.trim()}');
-    stdout.writeln('- ${plan.bottomSheetsImportLine}');
-    stdout.writeln('- ${plan.setupLine.trim()}');
-  } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 
@@ -807,17 +1257,16 @@ void writeDialogResult(IOSink stdout, CreateDialogResult result) {
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.dialogPath}');
   stdout.writeln('- ${plan.modelPath}');
-  stdout.writeln('- ${plan.appPath}');
-  stdout.writeln('- ${plan.mainPath}');
+  stdout.writeln('- ${plan.dialogsPath}');
+  stdout.writeln('- ${plan.dialogServicePath} (first use only)');
+  stdout.writeln('- ${plan.locatorPath} (first use only)');
   if (plan.dryRun) {
     stdout.writeln('Planned changes:');
     stdout.writeln('- ${plan.dialogImportLine}');
-    stdout.writeln('- ${plan.dialogLine.trim()}');
+    stdout.writeln('- ${plan.modelImportLine}');
+    stdout.writeln('- ${plan.dialogEntryLine}');
+    stdout.writeln('- ${plan.serviceImportLine}');
     stdout.writeln('- ${plan.serviceLine.trim()}');
-    stdout.writeln('- ${plan.dialogsImportLine}');
-    stdout.writeln('- ${plan.setupLine.trim()}');
-  } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 
@@ -831,6 +1280,7 @@ void writeStorageResult(IOSink stdout, CreateStorageResult result) {
   }
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.path}');
+  stdout.writeln('- ${plan.cacheEntryPath}');
 }
 
 void writeDatabaseResult(IOSink stdout, CreateDatabaseResult result) {
@@ -852,29 +1302,10 @@ void writeDatabaseResult(IOSink stdout, CreateDatabaseResult result) {
     stdout.writeln('- ${plan.repositoryLine.trim()}');
   } else {
     stdout.writeln('Next steps:');
-    stdout.writeln('- dart run build_runner build -d');
+    stdout.writeln('- flutter pub get');
     stdout.writeln(
       '- supabase db push (or `supabase migration up` for local dev)',
     );
-  }
-}
-
-void writeRouteResult(IOSink stdout, RegisterRouteResult result) {
-  final plan = result.plan;
-  if (plan.dryRun) {
-    stdout.writeln('Dry run: no files were written.');
-    stdout.writeln('Route: ${plan.viewClassName}');
-  } else {
-    stdout.writeln('Registered route ${plan.viewClassName}.');
-  }
-  stdout.writeln('Files:');
-  stdout.writeln('- ${plan.appPath}');
-  if (plan.dryRun) {
-    stdout.writeln('Planned changes:');
-    stdout.writeln('- ${plan.importLine}');
-    stdout.writeln('- ${plan.routeLine.trim()}');
-  } else {
-    stdout.writeln('Next step: dart run build_runner build -d');
   }
 }
 
@@ -886,37 +1317,19 @@ void writeViewResult(IOSink stdout, CreateViewResult result) {
   } else {
     stdout.writeln('Created view ${plan.displayName}.');
   }
-  stdout.writeln('Feature: ${plan.featureName}');
+  if (!plan.isShared) {
+    stdout.writeln('Feature: ${plan.featureName}');
+  }
   stdout.writeln('Files:');
   for (final file in plan.files) {
     stdout.writeln('- $file');
   }
-}
-
-void writeRepositoryResult(IOSink stdout, CreateRepositoryResult result) {
-  final plan = result.plan;
-  if (plan.dryRun) {
-    stdout.writeln('Dry run: no files were written.');
-    stdout.writeln('Repository: ${plan.repositoryClassName}');
-  } else {
-    stdout.writeln('Created repository ${plan.repositoryClassName}.');
-  }
-  stdout.writeln('Table: ${plan.tableName}');
-  stdout.writeln('Files:');
-  for (final file in plan.files) {
-    stdout.writeln('- $file');
-  }
-  stdout.writeln('- ${plan.appPath}');
+  stdout.writeln('- ${plan.routerPath}');
   if (plan.dryRun) {
     stdout.writeln('Planned changes:');
-    stdout.writeln('- ${plan.repositoryImportLine}');
-    stdout.writeln('- ${plan.repositoryLine.trim()}');
-  } else {
-    stdout.writeln('Next steps:');
-    stdout.writeln('- dart run build_runner build -d');
-    stdout.writeln(
-      '- supabase db push (or `supabase migration up` for local dev)',
-    );
+    stdout.writeln('- ${plan.routeRegistration.importLine}');
+    stdout.writeln('- ${plan.routeRegistration.routeConstLine}');
+    stdout.writeln('- ${plan.routeRegistration.routeMapLine}');
   }
 }
 
@@ -945,76 +1358,7 @@ void writeWidgetResult(IOSink stdout, CreateWidgetResult result) {
   }
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.path}');
-}
-
-class RouteCommand extends Command<int> {
-  RouteCommand({
-    IOSink? stdout,
-    IOSink? stderr,
-    RegisterRouteService? registerRouteService,
-  }) : _stdout = stdout ?? ioStdout,
-       _stderr = stderr ?? ioStderr,
-       _registerRouteService = registerRouteService ?? RegisterRouteService() {
-    argParser.addFlag(
-      'dry-run',
-      negatable: false,
-      help: 'Print the route registration plan without writing files.',
-    );
-  }
-
-  final IOSink _stdout;
-  final IOSink _stderr;
-  final RegisterRouteService _registerRouteService;
-
-  @override
-  String get name => 'route';
-
-  @override
-  String get description => 'Register an existing feature View as a route.';
-
-  @override
-  String get invocation => 'cuboid route [options] <feature>';
-
-  @override
-  Future<int> run() async {
-    final rest = argResults!.rest;
-    if (rest.length != 1) {
-      throw UsageException('Expected a feature name.', usage);
-    }
-
-    final input = RegisterRouteInput(
-      feature: rest[0],
-      dryRun: argResults!['dry-run'] as bool,
-    );
-
-    try {
-      final result = await _registerRouteService.register(input);
-      _writeResult(result);
-      return 0;
-    } on RegisterRouteException catch (error) {
-      _stderr.writeln(error.message);
-      return 1;
-    }
-  }
-
-  void _writeResult(RegisterRouteResult result) {
-    final plan = result.plan;
-    if (plan.dryRun) {
-      _stdout.writeln('Dry run: no files were written.');
-      _stdout.writeln('Route: ${plan.viewClassName}');
-    } else {
-      _stdout.writeln('Registered route ${plan.viewClassName}.');
-    }
-    _stdout.writeln('Files:');
-    _stdout.writeln('- ${plan.appPath}');
-    if (plan.dryRun) {
-      _stdout.writeln('Planned changes:');
-      _stdout.writeln('- ${plan.importLine}');
-      _stdout.writeln('- ${plan.routeLine.trim()}');
-    } else {
-      _stdout.writeln('Next step: dart run build_runner build -d');
-    }
-  }
+  stdout.writeln('- ${plan.viewModelPath}');
 }
 
 class ViewCommand extends Command<int> {
@@ -1041,21 +1385,21 @@ class ViewCommand extends Command<int> {
 
   @override
   String get description =>
-      'Create an additional Stacked View inside an existing feature.';
+      'Create an additional Cuboid View inside an existing feature.';
 
   @override
-  String get invocation => 'cuboid view [options] <feature> <name>';
+  String get invocation => 'cuboid view [options] <name> <feature>';
 
   @override
   Future<int> run() async {
     final rest = argResults!.rest;
     if (rest.length != 2) {
-      throw UsageException('Expected a feature name and view name.', usage);
+      throw UsageException('Expected a view name and feature name.', usage);
     }
 
     final input = CreateViewInput(
-      feature: rest[0],
-      name: rest[1],
+      name: rest[0],
+      feature: rest[1],
       dryRun: argResults!['dry-run'] as bool,
     );
 
@@ -1081,6 +1425,13 @@ class ViewCommand extends Command<int> {
     _stdout.writeln('Files:');
     for (final file in plan.files) {
       _stdout.writeln('- $file');
+    }
+    _stdout.writeln('- ${plan.routerPath}');
+    if (plan.dryRun) {
+      _stdout.writeln('Planned changes:');
+      _stdout.writeln('- ${plan.routeRegistration.importLine}');
+      _stdout.writeln('- ${plan.routeRegistration.routeConstLine}');
+      _stdout.writeln('- ${plan.routeRegistration.routeMapLine}');
     }
   }
 }
@@ -1150,8 +1501,6 @@ class ServiceCommand extends Command<int> {
       _stdout.writeln('Planned changes:');
       _stdout.writeln('- ${plan.importLine}');
       _stdout.writeln('- ${plan.serviceLine.trim()}');
-    } else {
-      _stdout.writeln('Next step: dart run build_runner build -d');
     }
   }
 }

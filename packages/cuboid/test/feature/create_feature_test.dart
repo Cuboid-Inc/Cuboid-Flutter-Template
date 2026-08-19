@@ -4,7 +4,7 @@ import 'package:cuboid/src/feature/create_feature.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('creates an auth feature with Stacked view and viewmodel', () async {
+  test('creates an auth feature with a Cuboid view and viewmodel', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final service = CreateFeatureService();
@@ -15,32 +15,89 @@ void main() {
 
     expect(result.plan.displayName, 'Auth');
     expect(result.plan.files, [
-      'lib/features/auth/ui/views/auth_view.dart',
-      'lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
+      'lib/features/auth/ui/auth_view.dart',
+      'lib/features/auth/ui/auth_viewmodel.dart',
+      'lib/features/auth/data/auth_repository.dart',
     ]);
 
     final view = File(
-      '${root.path}/lib/features/auth/ui/views/auth_view.dart',
+      '${root.path}/lib/features/auth/ui/auth_view.dart',
     ).readAsStringSync();
     final viewModel = File(
-      '${root.path}/lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
+      '${root.path}/lib/features/auth/ui/auth_viewmodel.dart',
     ).readAsStringSync();
 
     expect(
       view,
       contains(
-        "import 'package:test_app/features/auth/ui/viewmodels/auth_viewmodel.dart';",
+        "import 'package:test_app/features/auth/ui/auth_viewmodel.dart';",
       ),
     );
-    expect(view, contains('class AuthView extends StackedView<AuthViewModel>'));
+    expect(view, contains('class AuthView extends CuboidView<AuthViewModel>'));
     expect(
       view,
       contains('AuthViewModel viewModelBuilder(BuildContext context)'),
     );
     expect(view, contains("AppBar(title: const Text('Auth'))"));
     expect(view, contains("body: const Center(child: Text('Auth'))"));
-    expect(viewModel, contains('class AuthViewModel extends BaseViewModel {}'));
+    expect(
+      viewModel,
+      contains('class AuthViewModel extends CuboidViewModel {}'),
+    );
   });
+
+  test(
+    'creates the feature repository under data/ and registers it for DI',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateFeatureService();
+
+      final result = await service.create(
+        CreateFeatureInput(name: 'auth', projectRoot: root),
+      );
+
+      expect(result.plan.repositoryClassName, 'AuthRepository');
+      final repository = File(
+        '${root.path}/lib/features/auth/data/auth_repository.dart',
+      ).readAsStringSync();
+      expect(repository, contains('class AuthRepository {'));
+      expect(repository, contains('const AuthRepository();'));
+
+      final locator = _locatorFile(root).readAsStringSync();
+      expect(
+        locator,
+        contains(
+          "import 'package:test_app/features/auth/data/auth_repository.dart';",
+        ),
+      );
+      expect(
+        locator,
+        contains(
+          '  locator.registerLazySingleton<AuthRepository>(() => const AuthRepository());',
+        ),
+      );
+    },
+  );
+
+  test(
+    'registers the feature view as a route in lib/app/app.router.dart',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateFeatureService();
+
+      await service.create(CreateFeatureInput(name: 'auth', projectRoot: root));
+
+      final router = _routerFile(root).readAsStringSync();
+      expect(
+        router,
+        contains("import 'package:test_app/features/auth/ui/auth_view.dart';"),
+      );
+      expect(router, contains("static const authView = '/auth-view';"));
+      expect(router, contains('Routes.authView: (_) => const AuthView(),'));
+    },
+  );
 
   test('creates a user_profile feature with PascalCase class names', () async {
     final root = _projectRoot();
@@ -52,22 +109,32 @@ void main() {
     );
 
     final view = File(
-      '${root.path}/lib/features/user_profile/ui/views/user_profile_view.dart',
+      '${root.path}/lib/features/user_profile/ui/user_profile_view.dart',
     ).readAsStringSync();
     final viewModel = File(
-      '${root.path}/lib/features/user_profile/ui/viewmodels/user_profile_viewmodel.dart',
+      '${root.path}/lib/features/user_profile/ui/user_profile_viewmodel.dart',
+    ).readAsStringSync();
+    final repository = File(
+      '${root.path}/lib/features/user_profile/data/user_profile_repository.dart',
     ).readAsStringSync();
 
     expect(
       view,
       contains(
-        'class UserProfileView extends StackedView<UserProfileViewModel>',
+        'class UserProfileView extends CuboidView<UserProfileViewModel>',
       ),
     );
     expect(view, contains("AppBar(title: const Text('User Profile'))"));
     expect(
       viewModel,
-      contains('class UserProfileViewModel extends BaseViewModel {}'),
+      contains('class UserProfileViewModel extends CuboidViewModel {}'),
+    );
+    expect(repository, contains('class UserProfileRepository {'));
+
+    final router = _routerFile(root).readAsStringSync();
+    expect(
+      router,
+      contains("static const userProfileView = '/user-profile-view';"),
     );
   });
 
@@ -83,13 +150,19 @@ void main() {
     expect(result.plan.name, 'user_profile');
     expect(
       File(
-        '${root.path}/lib/features/user_profile/ui/views/user_profile_view.dart',
+        '${root.path}/lib/features/user_profile/ui/user_profile_view.dart',
       ).existsSync(),
       isTrue,
     );
     expect(
       File(
-        '${root.path}/lib/features/user_profile/ui/viewmodels/user_profile_viewmodel.dart',
+        '${root.path}/lib/features/user_profile/ui/user_profile_viewmodel.dart',
+      ).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(
+        '${root.path}/lib/features/user_profile/data/user_profile_repository.dart',
       ).existsSync(),
       isTrue,
     );
@@ -107,13 +180,13 @@ void main() {
       );
 
       final view = File(
-        '${root.path}/lib/features/billing/ui/views/billing_view.dart',
+        '${root.path}/lib/features/billing/ui/billing_view.dart',
       ).readAsStringSync();
 
       expect(
         view,
         contains(
-          "import 'package:custom_app/features/billing/ui/viewmodels/billing_viewmodel.dart';",
+          "import 'package:custom_app/features/billing/ui/billing_viewmodel.dart';",
         ),
       );
     },
@@ -132,10 +205,13 @@ void main() {
 
       expect(result.plan.dryRun, isTrue);
       expect(result.plan.files, [
-        'lib/features/auth/ui/views/auth_view.dart',
-        'lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
+        'lib/features/auth/ui/auth_view.dart',
+        'lib/features/auth/ui/auth_viewmodel.dart',
+        'lib/features/auth/data/auth_repository.dart',
       ]);
       expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
+      expect(_routerFile(root).readAsStringSync(), _routerContents());
+      expect(_locatorFile(root).readAsStringSync(), _locatorContents());
     },
   );
 
@@ -250,10 +326,9 @@ void main() {
   test('does not overwrite an existing target file', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    final target =
-        File('${root.path}/lib/features/auth/ui/views/auth_view.dart')
-          ..parent.createSync(recursive: true)
-          ..writeAsStringSync('keep\n');
+    final target = File('${root.path}/lib/features/auth/ui/auth_view.dart')
+      ..parent.createSync(recursive: true)
+      ..writeAsStringSync('keep\n');
     final service = CreateFeatureService();
 
     await expectLater(
@@ -263,31 +338,48 @@ void main() {
     expect(target.readAsStringSync(), 'keep\n');
   });
 
-  test(
-    'leaves app registration untouched and creates no unrelated files',
-    () async {
-      final root = _projectRoot();
-      addTearDown(() => root.deleteSync(recursive: true));
-      final appFile = File('${root.path}/lib/app/app.dart')
-        ..parent.createSync(recursive: true)
-        ..writeAsStringSync('app registration\n');
-      final service = CreateFeatureService();
-
-      await service.create(CreateFeatureInput(name: 'auth', projectRoot: root));
-
-      expect(appFile.readAsStringSync(), 'app registration\n');
-      expect(_relativeFiles(root), [
-        'lib/app/app.dart',
-        'lib/features/auth/ui/viewmodels/auth_viewmodel.dart',
-        'lib/features/auth/ui/views/auth_view.dart',
-        'pubspec.yaml',
-      ]);
-    },
-  );
-
-  test('rolls back generated files when a later write fails', () async {
+  test('rejects when lib/app/app.router.dart is missing', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
+    _routerFile(root).deleteSync();
+    final service = CreateFeatureService();
+
+    await expectLater(
+      service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
+      throwsA(
+        isA<CreateFeatureException>().having(
+          (error) => error.message,
+          'message',
+          'lib/app/app.router.dart was not found.',
+        ),
+      ),
+    );
+  });
+
+  test('rejects when lib/app/app.locator.dart is missing', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    _locatorFile(root).deleteSync();
+    final service = CreateFeatureService();
+
+    await expectLater(
+      service.create(CreateFeatureInput(name: 'auth', projectRoot: root)),
+      throwsA(
+        isA<CreateFeatureException>().having(
+          (error) => error.message,
+          'message',
+          'lib/app/app.locator.dart was not found.',
+        ),
+      ),
+    );
+  });
+
+  test('creates no files and leaves the router and locator untouched when a '
+      'later write fails', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final beforeRouter = _routerFile(root).readAsStringSync();
+    final beforeLocator = _locatorFile(root).readAsStringSync();
     var writes = 0;
     final service = CreateFeatureService(
       fileWriter: (file, contents) {
@@ -311,23 +403,50 @@ void main() {
     );
 
     expect(Directory('${root.path}/lib/features/auth').existsSync(), isFalse);
-    expect(_relativeFiles(root), ['pubspec.yaml']);
+    expect(_routerFile(root).readAsStringSync(), beforeRouter);
+    expect(_locatorFile(root).readAsStringSync(), beforeLocator);
   });
 }
+
+String _routerContents() {
+  return '''
+// @cuboid-import
+
+class Routes {
+  // @cuboid-route-const
+}
+
+final Map<String, WidgetBuilder> appRoutes = {
+  // @cuboid-route
+};
+''';
+}
+
+String _locatorContents() {
+  return '''
+// @cuboid-import
+
+final locator = GetIt.instance;
+
+Future<void> setupLocator() async {
+  // @cuboid-service
+}
+''';
+}
+
+File _routerFile(Directory root) =>
+    File('${root.path}/lib/app/app.router.dart');
+
+File _locatorFile(Directory root) =>
+    File('${root.path}/lib/app/app.locator.dart');
 
 Directory _projectRoot({String pubspec = 'name: test_app\n'}) {
   final root = Directory.systemTemp.createTempSync('cuboid_feature_test_');
   File('${root.path}/pubspec.yaml').writeAsStringSync(pubspec);
   Directory('${root.path}/lib/features').createSync(recursive: true);
+  _routerFile(root)
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync(_routerContents());
+  _locatorFile(root).writeAsStringSync(_locatorContents());
   return root;
-}
-
-List<String> _relativeFiles(Directory root) {
-  return root
-      .listSync(recursive: true)
-      .whereType<File>()
-      .map((file) => file.path.substring(root.path.length + 1))
-      .map((path) => path.replaceAll(Platform.pathSeparator, '/'))
-      .toList()
-    ..sort();
 }

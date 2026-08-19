@@ -4,20 +4,14 @@ const oldDartProjectName = 'cuboid_flutter_template';
 const oldDisplayName = 'Cuboid Flutter Template';
 const oldProductName = 'Cuboid Flutter Template';
 const oldPackageIdentifier = 'com.cuboidllc.cuboid_flutter_template';
-const oldStorageNamespace = 'cuboid_flutter_template';
 const oldKotlinPackagePath = 'com/cuboidllc/cuboid_flutter_template';
-
-const bootstrapGeneratedFiles = {
-  'lib/app/app.locator.dart',
-  'lib/app/app.logger.dart',
-  'lib/app/app.router.dart',
-};
+const oldAppClassName = 'MyApp';
 
 const bootstrapManualConfiguration = [
-  'Supabase project_id in supabase/config.toml.',
-  'Supabase hosted project URL, anon key, and publishable keys in env files.',
   'Launcher icon and splash image artwork, if the new app needs different branding.',
   'Apple development team, signing, and provisioning settings.',
+  'Optional backend/storage technology, if the app needs one -- e.g. '
+      '`cuboid create database supabase` or `cuboid create storage <name>`.',
 ];
 
 final dartKeywords = {
@@ -103,12 +97,14 @@ class BootstrapValues {
   const BootstrapValues({
     required this.displayName,
     required this.dartProjectName,
+    required this.appClassName,
     required this.packageIdentifier,
     required this.storageNamespace,
   });
 
   final String displayName;
   final String dartProjectName;
+  final String appClassName;
   final String packageIdentifier;
   final String storageNamespace;
 }
@@ -149,13 +145,11 @@ class BootstrapPlan {
   const BootstrapPlan({
     required this.replacements,
     required this.moves,
-    required this.generatedFiles,
     required this.manualConfiguration,
   });
 
   final List<BootstrapReplacement> replacements;
   final List<BootstrapMoveOperation> moves;
-  final List<String> generatedFiles;
   final List<String> manualConfiguration;
 
   List<String> get modifiedFiles {
@@ -168,7 +162,6 @@ class BootstrapPlan {
         ..add(move.from)
         ..add(move.to);
     }
-    files.addAll(generatedFiles);
     return files.toList()..sort();
   }
 }
@@ -190,12 +183,10 @@ class BootstrapApplyResult {
   const BootstrapApplyResult({
     required this.modifiedFiles,
     required this.movedDirectories,
-    required this.generatedFiles,
   });
 
   final List<String> modifiedFiles;
   final List<BootstrapMoveOperation> movedDirectories;
-  final List<String> generatedFiles;
 }
 
 class BootstrapException implements Exception {
@@ -287,6 +278,7 @@ BootstrapValues deriveBootstrapValues(BootstrapInput input) {
   return BootstrapValues(
     displayName: input.displayName.trim(),
     dartProjectName: dartProjectName,
+    appClassName: deriveAppClassName(input.displayName),
     packageIdentifier: input.packageIdentifier.trim(),
     storageNamespace: dartProjectName,
   );
@@ -312,6 +304,31 @@ String deriveProjectName(String displayName) {
   }
 
   return projectName;
+}
+
+/// Derives a valid, PascalCase Dart class name for the generated app's root
+/// widget from its display name, e.g. "Nemara Homes" -> "NemaraHomes".
+String deriveAppClassName(String displayName) {
+  final words = RegExp(
+    r'[A-Za-z0-9]+',
+  ).allMatches(displayName).map((match) => match.group(0)!.toLowerCase());
+  var className = words
+      .map((word) => word[0].toUpperCase() + word.substring(1))
+      .join();
+
+  if (className.isEmpty) {
+    throw const BootstrapException(
+      'Could not derive an app class name from --name.',
+    );
+  }
+  if (RegExp(r'^[0-9]').hasMatch(className)) {
+    className = 'App$className';
+  }
+  if (dartKeywords.contains(className)) {
+    className = '${className}App';
+  }
+
+  return className;
 }
 
 BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
@@ -340,37 +357,11 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
       category: 'Project identity',
     ),
     BootstrapReplacement(
-      path: 'lib/features/home/ui/views/home_view.dart',
+      path: 'lib/features/home/ui/home_view.dart',
       oldValue: "AppBar(title: const Text('$oldDisplayName'))",
       newValue:
           "AppBar(title: const Text('${escapeDartString(values.displayName)}'))",
       label: 'home view title',
-      category: 'Project identity',
-    ),
-    BootstrapReplacement(
-      path: 'lib/main.dart',
-      oldValue: "'$oldDisplayName release build without Supabase config. '",
-      newValue:
-          "'${escapeDartString(values.displayName)} release build without Supabase config. '",
-      label: 'release configuration error app name',
-      category: 'Project identity',
-    ),
-    BootstrapReplacement(
-      path: 'lib/core/constants/storage_keys.dart',
-      oldValue:
-          "static const supabaseSession = '${oldStorageNamespace}_supabase_session';",
-      newValue:
-          "static const supabaseSession = '${values.storageNamespace}_supabase_session';",
-      label: 'Supabase session storage key',
-      category: 'Project identity',
-    ),
-    BootstrapReplacement(
-      path: 'lib/core/constants/storage_keys.dart',
-      oldValue:
-          "static const authStorageNamespace = '${oldStorageNamespace}_auth';",
-      newValue:
-          "static const authStorageNamespace = '${values.storageNamespace}_auth';",
-      label: 'auth storage namespace',
       category: 'Project identity',
     ),
     BootstrapReplacement(
@@ -395,24 +386,10 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
       category: 'Android',
     ),
     BootstrapReplacement(
-      path: 'android/app/src/main/AndroidManifest.xml',
-      oldValue: 'android:scheme="$oldPackageIdentifier"',
-      newValue: 'android:scheme="${values.packageIdentifier}"',
-      label: 'Android auth callback scheme',
-      category: 'Android',
-    ),
-    BootstrapReplacement(
       path: 'ios/Runner/Info.plist',
       oldValue: '<string>$oldDisplayName</string>',
       newValue: '<string>${escapeXmlText(values.displayName)}</string>',
       label: 'iOS display name',
-      category: 'iOS',
-    ),
-    BootstrapReplacement(
-      path: 'ios/Runner/Info.plist',
-      oldValue: '<string>$oldPackageIdentifier</string>',
-      newValue: '<string>${values.packageIdentifier}</string>',
-      label: 'iOS URL scheme',
       category: 'iOS',
     ),
     BootstrapReplacement(
@@ -441,15 +418,6 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
       category: 'iOS',
     ),
     BootstrapReplacement(
-      path: 'supabase/config.toml',
-      oldValue:
-          'additional_redirect_urls = ["$oldPackageIdentifier://auth-callback"]',
-      newValue:
-          'additional_redirect_urls = ["${values.packageIdentifier}://auth-callback"]',
-      label: 'Supabase auth redirect URL',
-      category: 'Supabase',
-    ),
-    BootstrapReplacement(
       path: 'README.md',
       oldValue: '# $oldProductName',
       newValue: '# ${values.displayName}',
@@ -459,7 +427,8 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
     BootstrapReplacement(
       path: 'README.md',
       oldValue:
-          'Reusable Flutter + Stacked starter template for Cuboid applications.',
+          "Reusable Flutter starter template for Cuboid applications, built on Cuboid's\n"
+          'own MVVM, dependency injection, and routing.',
       newValue: 'This project was created from the Cuboid Flutter Template.',
       label: 'README app summary',
       category: 'Documentation',
@@ -471,7 +440,9 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
           'domain application and does not contain application-specific business workflows,\n'
           'database schema, or repository/data layers.',
       newValue:
-          'It is a Flutter application built with Stacked MVVM and Supabase. Replace this section with product-specific documentation when the generated application is ready.',
+          "It is a Flutter application built with Cuboid's own MVVM architecture. "
+          'Replace this section with product-specific documentation when the '
+          'generated application is ready.',
       label: 'README app description',
       category: 'Documentation',
     ),
@@ -493,12 +464,32 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
       path: 'RULES.md',
       oldValue:
           'NAME-11. Use package:$oldDartProjectName imports in handwritten Dart until a\n'
-          'generated app is bootstrapped to a new package name. Generated files are exempt.',
+          'generated app is bootstrapped to a new package name.',
       newValue:
-          'NAME-11. Use package:${values.dartProjectName} imports in handwritten Dart. Generated files\n'
-          'are exempt.',
+          'NAME-11. Use package:${values.dartProjectName} imports in handwritten Dart.',
       label: 'rules package import guidance',
       category: 'Documentation',
+    ),
+    BootstrapReplacement(
+      path: 'lib/app/app_root.dart',
+      oldValue: 'class $oldAppClassName extends StatelessWidget {',
+      newValue: 'class ${values.appClassName} extends StatelessWidget {',
+      label: 'app root class name',
+      category: 'Project identity',
+    ),
+    BootstrapReplacement(
+      path: 'lib/app/app_root.dart',
+      oldValue: 'const $oldAppClassName({super.key});',
+      newValue: 'const ${values.appClassName}({super.key});',
+      label: 'app root constructor',
+      category: 'Project identity',
+    ),
+    BootstrapReplacement(
+      path: 'lib/main.dart',
+      oldValue: 'runApp(const $oldAppClassName());',
+      newValue: 'runApp(const ${values.appClassName}());',
+      label: 'app entry point',
+      category: 'Project identity',
     ),
   ];
 
@@ -529,7 +520,6 @@ BootstrapPlan planBootstrap(Directory root, BootstrapValues values) {
   return BootstrapPlan(
     replacements: replacements,
     moves: moves,
-    generatedFiles: _existingGeneratedFiles(root),
     manualConfiguration: bootstrapManualConfiguration,
   );
 }
@@ -552,9 +542,6 @@ List<BootstrapReplacement> _dartImportReplacements(
         continue;
       }
       final relativePath = relativeTo(root, entity);
-      if (bootstrapGeneratedFiles.contains(relativePath)) {
-        continue;
-      }
       final content = entity.readAsStringSync();
       if (containsDartPackageImport(content, oldDartProjectName)) {
         replacements.add(
@@ -651,13 +638,6 @@ List<BootstrapReplacement> _kotlinReplacements(
       category: 'Android',
     ),
   ];
-}
-
-List<String> _existingGeneratedFiles(Directory root) {
-  return bootstrapGeneratedFiles
-      .where((path) => pathFor(root, path).existsSync())
-      .toList()
-    ..sort();
 }
 
 BootstrapValidationResult validateBootstrapPlan(
@@ -760,7 +740,6 @@ BootstrapApplyResult applyBootstrapPlan(Directory root, BootstrapPlan plan) {
   return BootstrapApplyResult(
     modifiedFiles: changedFiles..sort(),
     movedDirectories: plan.moves,
-    generatedFiles: plan.generatedFiles,
   );
 }
 

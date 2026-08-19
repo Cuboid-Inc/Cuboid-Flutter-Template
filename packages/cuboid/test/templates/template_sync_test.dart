@@ -174,7 +174,6 @@ void main() {
     expect(paths, contains('assets/icon/app_icon.png'));
     expect(paths, contains('ios/Runner/Info.plist'));
     expect(paths, contains('lib/main.dart'));
-    expect(paths, contains('supabase/config.toml'));
     expect(paths, contains('test/widget_test.dart'));
     expect(paths, isNot(contains('packages/cuboid/pubspec.yaml')));
     expect(paths, isNot(contains('tool/bootstrap.dart')));
@@ -205,7 +204,6 @@ Future<Directory> createTemplateRepo() async {
   writeFixture(root, 'assets/icon/app_icon.png', 'png\n');
   writeFixture(root, 'ios/Runner/Info.plist', '<plist />\n');
   writeFixture(root, 'lib/main.dart', 'void main() {}\n');
-  writeFixture(root, 'supabase/config.toml', 'project_id = "test"\n');
   writeFixture(root, 'test/widget_test.dart', 'void main() {}\n');
 
   for (final directory in templateAllowedDirectories) {

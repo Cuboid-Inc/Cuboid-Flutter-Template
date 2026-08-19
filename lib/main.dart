@@ -3,42 +3,14 @@ import 'dart:async';
 import 'package:cuboid_flutter_template/app/app.locator.dart';
 import 'package:cuboid_flutter_template/app/app.logger.dart';
 import 'package:cuboid_flutter_template/app/app_root.dart';
-import 'package:cuboid_flutter_template/core/config/env.dart';
 import 'package:cuboid_flutter_template/core/constants/asset_paths.dart';
-import 'package:cuboid_flutter_template/core/storage/secure_local_storage.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 final _logger = AppLogger('AppStartup');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final startupLogoReady = _precacheStartupLogo();
-
-  if (Env.isConfigured) {
-    await Supabase.initialize(
-      url: Env.supabaseUrl,
-      publishableKey: Env.publishableKey,
-      authOptions: const FlutterAuthClientOptions(
-        localStorage: SecureLocalStorage(),
-      ),
-    );
-    _logger.i('Supabase initialized');
-  } else if (kReleaseMode) {
-    // Fail fast: a release build must never silently run in demo mode.
-    final error = StateError(
-      'Cuboid Flutter Template release build without Supabase config. '
-      'Build with --dart-define-from-file=env/prod.json.',
-    );
-    _logger.e(
-      'Startup failed because Supabase configuration is missing',
-      error: error,
-    );
-    throw error;
-  } else {
-    _logger.w('Starting in unconfigured development mode');
-  }
 
   await setupLocator();
 

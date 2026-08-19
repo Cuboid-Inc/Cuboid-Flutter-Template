@@ -4,7 +4,7 @@ import 'package:cuboid/src/dialog/create_dialog.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('creates files and first-use Stacked registration', () async {
+  test('creates files and first-use registration', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final service = CreateDialogService();
@@ -16,99 +16,104 @@ void main() {
     expect(result.plan.name, 'confirm_delete');
     expect(result.plan.dialogClassName, 'ConfirmDeleteDialog');
     expect(result.plan.modelClassName, 'ConfirmDeleteDialogModel');
-    expect(
-      File(
-        '${root.path}/lib/shared/dialogs/confirm_delete/'
-        'confirm_delete_dialog.dart',
-      ).readAsStringSync(),
-      contains(
-        'class ConfirmDeleteDialog extends '
-        'StackedView<ConfirmDeleteDialogModel>',
-      ),
-    );
-    final dialog = File(
+    final dialogContents = File(
       '${root.path}/lib/shared/dialogs/confirm_delete/'
       'confirm_delete_dialog.dart',
     ).readAsStringSync();
-    expect(dialog, contains('final DialogRequest<dynamic> request;'));
     expect(
-      dialog,
+      dialogContents,
       contains(
-        'final void Function(DialogResponse<dynamic> response) completer;',
+        'class ConfirmDeleteDialog extends '
+        'CuboidView<ConfirmDeleteDialogModel>',
       ),
     );
+    expect(dialogContents, isNot(contains('SizedBox.shrink()')));
+    expect(dialogContents, contains("Text('Confirm Delete'"));
+    expect(dialogContents, contains('AlertDialog('));
+    expect(dialogContents, contains('Navigator.of(context).pop()'));
     expect(
       File(
         '${root.path}/lib/shared/dialogs/confirm_delete/'
         'confirm_delete_dialog_model.dart',
       ).readAsStringSync(),
-      'import \'package:stacked/stacked.dart\';\n\n'
-      'class ConfirmDeleteDialogModel extends BaseViewModel {}\n',
+      "import 'package:cuboid_flutter/cuboid_flutter.dart';\n\n"
+      'class ConfirmDeleteDialogModel extends CuboidViewModel {}\n',
     );
-    final app = _appFile(root).readAsStringSync();
+
+    final dialogs = _dialogsFile(root).readAsStringSync();
     expect(
-      app,
+      dialogs,
       contains(
         "import 'package:test_app/shared/dialogs/confirm_delete/"
         "confirm_delete_dialog.dart';",
       ),
     );
-    expect(app, contains('  dialogs: ['));
     expect(
-      app,
+      dialogs,
       contains(
-        '    StackedDialog(\n'
-        '      classType: ConfirmDeleteDialog,\n'
-        '    ),',
+        "import 'package:test_app/shared/dialogs/confirm_delete/"
+        "confirm_delete_dialog_model.dart';",
       ),
     );
-    expect(app, contains('    // @stacked-dialog'));
-    expect(app, contains('    LazySingleton(classType: DialogService),'));
+    expect(
+      dialogs,
+      contains('ConfirmDeleteDialogModel: (_) => const ConfirmDeleteDialog(),'),
+    );
+    expect(dialogs, contains('// @cuboid-dialog'));
 
-    final main = _mainFile(root).readAsStringSync();
-    expect(main, contains("import 'package:test_app/app/app.dialogs.dart';"));
-    expect(main, contains('  await setupLocator();\n  setupDialogUi();'));
-  });
-
-  test('adds to existing dialogs and avoids duplicate runtime setup', () async {
-    final root = _projectRoot(existingDialogs: true);
-    addTearDown(() => root.deleteSync(recursive: true));
-    _mainFile(root).writeAsStringSync('''
-import 'package:test_app/app/app.dialogs.dart';
-import 'package:test_app/app/app.locator.dart';
-
-Future<void> main() async {
-  await setupLocator();
-  setupDialogUi();
-}
-''');
-    final service = CreateDialogService();
-
-    await service.create(
-      CreateDialogInput(name: 'confirm-delete', projectRoot: root),
+    final serviceFile = _dialogServiceFile(root).readAsStringSync();
+    expect(serviceFile, contains('class DialogService {'));
+    expect(
+      serviceFile,
+      contains("import 'package:test_app/app/app.dialogs.dart';"),
     );
 
-    final app = _appFile(root).readAsStringSync();
+    final locator = _locatorFile(root).readAsStringSync();
     expect(
-      app,
+      locator,
+      contains("import 'package:test_app/core/services/dialog_service.dart';"),
+    );
+    expect(
+      locator,
       contains(
-        '    StackedDialog(\n'
-        '      classType: ConfirmDeleteDialog,\n'
-        '    ),',
+        '  locator.registerLazySingleton<DialogService>(() => DialogService());',
       ),
     );
-    expect('// @stacked-dialog'.allMatches(app), hasLength(1));
-    final main = _mainFile(root).readAsStringSync();
-    expect("app/app.dialogs.dart';".allMatches(main), hasLength(1));
-    expect('setupDialogUi();'.allMatches(main), hasLength(1));
   });
+
+  test(
+    'adds to existing dialogs and does not re-register the service',
+    () async {
+      final root = _projectRoot(existingDialogs: true, existingService: true);
+      addTearDown(() => root.deleteSync(recursive: true));
+      final service = CreateDialogService();
+
+      await service.create(
+        CreateDialogInput(name: 'confirm-delete', projectRoot: root),
+      );
+
+      final dialogs = _dialogsFile(root).readAsStringSync();
+      expect(
+        dialogs,
+        contains(
+          'ConfirmDeleteDialogModel: (_) => const ConfirmDeleteDialog(),',
+        ),
+      );
+      expect('// @cuboid-dialog'.allMatches(dialogs), hasLength(1));
+
+      final locator = _locatorFile(root).readAsStringSync();
+      expect(
+        'registerLazySingleton<DialogService>'.allMatches(locator),
+        hasLength(1),
+      );
+    },
+  );
 
   test('dry-run validates and writes nothing', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final beforeFiles = _relativeFiles(root);
-    final beforeApp = _appFile(root).readAsStringSync();
-    final beforeMain = _mainFile(root).readAsStringSync();
+    final beforeLocator = _locatorFile(root).readAsStringSync();
     final service = CreateDialogService();
 
     final result = await service.create(
@@ -122,8 +127,8 @@ Future<void> main() async {
     expect(result.plan.name, 'confirm_delete');
     expect(result.plan.dryRun, isTrue);
     expect(_relativeFiles(root), beforeFiles);
-    expect(_appFile(root).readAsStringSync(), beforeApp);
-    expect(_mainFile(root).readAsStringSync(), beforeMain);
+    expect(_locatorFile(root).readAsStringSync(), beforeLocator);
+    expect(_dialogsFile(root).existsSync(), isFalse);
   });
 
   test('rejects invalid names', () async {
@@ -159,8 +164,7 @@ Future<void> main() async {
       '${root.path}/lib/shared/dialogs/confirm_delete',
     ).createSync(recursive: true);
     final beforeFiles = _relativeFiles(root);
-    final beforeApp = _appFile(root).readAsStringSync();
-    final beforeMain = _mainFile(root).readAsStringSync();
+    final beforeLocator = _locatorFile(root).readAsStringSync();
     final service = CreateDialogService();
 
     await expectLater(
@@ -171,15 +175,13 @@ Future<void> main() async {
         isA<CreateDialogException>().having(
           (error) => error.message,
           'message',
-          'Dialog already exists: '
-              'lib/shared/dialogs/confirm_delete',
+          'Dialog already exists: lib/shared/dialogs/confirm_delete',
         ),
       ),
     );
 
     expect(_relativeFiles(root), beforeFiles);
-    expect(_appFile(root).readAsStringSync(), beforeApp);
-    expect(_mainFile(root).readAsStringSync(), beforeMain);
+    expect(_locatorFile(root).readAsStringSync(), beforeLocator);
   });
 
   test('rejects symlink ancestors', () async {
@@ -197,13 +199,13 @@ Future<void> main() async {
     );
   });
 
-  test('rejects conflicting app and main registrations', () async {
-    final root = _projectRoot();
+  test('rejects a duplicate dialog import in app.dialogs.dart', () async {
+    final root = _projectRoot(existingDialogs: true, existingService: true);
     addTearDown(() => root.deleteSync(recursive: true));
-    _appFile(root).writeAsStringSync(
-      _appContents(
+    _dialogsFile(root).writeAsStringSync(
+      _dialogsContents(
         extraImport:
-            "import 'package:other/shared/dialogs/confirm/"
+            "import 'package:test_app/shared/dialogs/confirm/"
             "confirm_dialog.dart';\n",
       ),
     );
@@ -215,39 +217,34 @@ Future<void> main() async {
         isA<CreateDialogException>().having(
           (error) => error.message,
           'message',
-          contains('Conflicting dialog import'),
+          contains('Dialog import already exists'),
         ),
       ),
     );
   });
 
-  test(
-    'restores app.dart and removes dialog files when main.dart update fails',
-    () async {
-      final root = _projectRoot();
-      addTearDown(() {
-        Process.runSync('chmod', ['755', '${root.path}/lib']);
-        root.deleteSync(recursive: true);
-      });
-      final beforeFiles = _relativeFiles(root);
-      final beforeApp = _appFile(root).readAsStringSync();
-      final beforeMain = _mainFile(root).readAsStringSync();
-      Directory('${root.path}/lib/shared/dialogs').createSync(recursive: true);
-      Process.runSync('chmod', ['555', '${root.path}/lib']);
-      final service = CreateDialogService();
+  test('rejects a duplicate DialogService registration', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    _locatorFile(root).writeAsStringSync(
+      _locatorContents(
+        extraService:
+            '  locator.registerLazySingleton<DialogService>(() => DialogService());\n',
+      ),
+    );
+    final service = CreateDialogService();
 
-      await expectLater(
-        service.create(CreateDialogInput(name: 'confirm', projectRoot: root)),
-        throwsA(isA<CreateDialogException>()),
-      );
-
-      Process.runSync('chmod', ['755', '${root.path}/lib']);
-      expect(_relativeFiles(root), beforeFiles);
-      expect(_appFile(root).readAsStringSync(), beforeApp);
-      expect(_mainFile(root).readAsStringSync(), beforeMain);
-    },
-    skip: Platform.isWindows,
-  );
+    await expectLater(
+      service.create(CreateDialogInput(name: 'confirm', projectRoot: root)),
+      throwsA(
+        isA<CreateDialogException>().having(
+          (error) => error.message,
+          'message',
+          'Duplicate DialogService registration.',
+        ),
+      ),
+    );
+  });
 
   test(
     'rolls back and creates no directory when the dialog file write fails',
@@ -255,8 +252,7 @@ Future<void> main() async {
       final root = _projectRoot();
       addTearDown(() => root.deleteSync(recursive: true));
       final beforeFiles = _relativeFiles(root);
-      final beforeApp = _appFile(root).readAsStringSync();
-      final beforeMain = _mainFile(root).readAsStringSync();
+      final beforeLocator = _locatorFile(root).readAsStringSync();
       final service = CreateDialogService(
         fileWriter: (file, contents) {
           throw const FileSystemException('simulated write failure');
@@ -269,8 +265,7 @@ Future<void> main() async {
       );
 
       expect(_relativeFiles(root), beforeFiles);
-      expect(_appFile(root).readAsStringSync(), beforeApp);
-      expect(_mainFile(root).readAsStringSync(), beforeMain);
+      expect(_locatorFile(root).readAsStringSync(), beforeLocator);
       expect(
         Directory('${root.path}/lib/shared/dialogs/confirm').existsSync(),
         isFalse,
@@ -283,8 +278,7 @@ Future<void> main() async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final beforeFiles = _relativeFiles(root);
-    final beforeApp = _appFile(root).readAsStringSync();
-    final beforeMain = _mainFile(root).readAsStringSync();
+    final beforeLocator = _locatorFile(root).readAsStringSync();
     var writeCount = 0;
     final service = CreateDialogService(
       fileWriter: (file, contents) {
@@ -303,88 +297,99 @@ Future<void> main() async {
     );
 
     expect(_relativeFiles(root), beforeFiles);
-    expect(_appFile(root).readAsStringSync(), beforeApp);
-    expect(_mainFile(root).readAsStringSync(), beforeMain);
+    expect(_locatorFile(root).readAsStringSync(), beforeLocator);
     expect(
       Directory('${root.path}/lib/shared/dialogs/confirm').existsSync(),
       isFalse,
     );
   });
 
-  test('removes dialog files and leaves main.dart untouched when the '
-      'app.dart update fails', () async {
-    final root = _projectRoot();
-    addTearDown(() {
+  test(
+    'restores locator.dart when the dialogs file update fails',
+    () async {
+      final root = _projectRoot(existingDialogs: true, existingService: true);
+      addTearDown(() {
+        Process.runSync('chmod', ['755', '${root.path}/lib/app']);
+        root.deleteSync(recursive: true);
+      });
+      final beforeFiles = _relativeFiles(root);
+      final beforeLocator = _locatorFile(root).readAsStringSync();
+      final beforeDialogs = _dialogsFile(root).readAsStringSync();
+      Process.runSync('chmod', ['555', '${root.path}/lib/app']);
+      final service = CreateDialogService();
+
+      await expectLater(
+        service.create(CreateDialogInput(name: 'confirm', projectRoot: root)),
+        throwsA(isA<CreateDialogException>()),
+      );
+
       Process.runSync('chmod', ['755', '${root.path}/lib/app']);
-      root.deleteSync(recursive: true);
-    });
-    final beforeFiles = _relativeFiles(root);
-    final beforeApp = _appFile(root).readAsStringSync();
-    final beforeMain = _mainFile(root).readAsStringSync();
-    Process.runSync('chmod', ['555', '${root.path}/lib/app']);
-    final service = CreateDialogService();
-
-    await expectLater(
-      service.create(CreateDialogInput(name: 'confirm', projectRoot: root)),
-      throwsA(isA<CreateDialogException>()),
-    );
-
-    Process.runSync('chmod', ['755', '${root.path}/lib/app']);
-    expect(_relativeFiles(root), beforeFiles);
-    expect(_appFile(root).readAsStringSync(), beforeApp);
-    expect(_mainFile(root).readAsStringSync(), beforeMain);
-    expect(
-      Directory('${root.path}/lib/shared/dialogs/confirm').existsSync(),
-      isFalse,
-    );
-  }, skip: Platform.isWindows);
+      expect(_relativeFiles(root), beforeFiles);
+      expect(_locatorFile(root).readAsStringSync(), beforeLocator);
+      expect(_dialogsFile(root).readAsStringSync(), beforeDialogs);
+    },
+    skip: Platform.isWindows,
+  );
 }
 
-Directory _projectRoot({bool existingDialogs = false}) {
+Directory _projectRoot({
+  bool existingDialogs = false,
+  bool existingService = false,
+}) {
   final root = Directory.systemTemp.createTempSync('cuboid_dialog_test_');
   File('${root.path}/pubspec.yaml').writeAsStringSync('name: test_app\n');
-  _appFile(root)
+  _locatorFile(root)
     ..parent.createSync(recursive: true)
-    ..writeAsStringSync(_appContents(existingDialogs: existingDialogs));
-  _mainFile(root).writeAsStringSync('''
-import 'package:test_app/app/app.locator.dart';
-
-Future<void> main() async {
-  await setupLocator();
-}
-''');
+    ..writeAsStringSync(
+      _locatorContents(
+        extraService: existingService
+            ? '  locator.registerLazySingleton<DialogService>(() => DialogService());\n'
+            : '',
+      ),
+    );
+  if (existingDialogs) {
+    _dialogsFile(root).writeAsStringSync(_dialogsContents());
+  }
+  if (existingService) {
+    _dialogServiceFile(root)
+      ..parent.createSync(recursive: true)
+      ..writeAsStringSync('class DialogService {}\n');
+  }
   return root;
 }
 
-String _appContents({bool existingDialogs = false, String extraImport = ''}) {
-  final dialogs = existingDialogs
-      ? '''
-  dialogs: [
-    // @stacked-dialog
-  ],
-'''
-      : '';
+String _locatorContents({String extraService = ''}) {
   return '''
-${extraImport}import 'package:stacked/stacked_annotations.dart';
-import 'package:stacked_services/stacked_services.dart';
-// @stacked-import
+import 'package:get_it/get_it.dart';
+// @cuboid-import
 
-@StackedApp(
-  routes: [
-    // @stacked-route
-  ],
-$dialogs  dependencies: [
-    LazySingleton(classType: NavigationService),
-    // @stacked-service
-  ],
-)
-class App {}
+final locator = GetIt.instance;
+
+Future<void> setupLocator() async {
+$extraService  // @cuboid-service
+}
 ''';
 }
 
-File _appFile(Directory root) => File('${root.path}/lib/app/app.dart');
+String _dialogsContents({String extraImport = ''}) {
+  return '''
+import 'package:flutter/material.dart';
+$extraImport// @cuboid-import
 
-File _mainFile(Directory root) => File('${root.path}/lib/main.dart');
+final Map<Type, WidgetBuilder> cuboidDialogBuilders = {
+  // @cuboid-dialog
+};
+''';
+}
+
+File _locatorFile(Directory root) =>
+    File('${root.path}/lib/app/app.locator.dart');
+
+File _dialogsFile(Directory root) =>
+    File('${root.path}/lib/app/app.dialogs.dart');
+
+File _dialogServiceFile(Directory root) =>
+    File('${root.path}/lib/core/services/dialog_service.dart');
 
 List<String> _relativeFiles(Directory root) {
   final files =

@@ -1,18 +1,22 @@
 import 'dart:io';
 
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
+import 'package:cuboid/src/route/register_route.dart';
 
 typedef ViewFileWriter = void Function(File file, String contents);
 
 class CreateViewInput {
   const CreateViewInput({
-    required this.feature,
+    this.feature,
     required this.name,
     this.projectRoot,
     this.dryRun = false,
   });
 
-  final String feature;
+  /// The feature this view belongs to. When null, the view is shared
+  /// (`lib/shared/views/`) instead of feature-scoped
+  /// (`lib/features/<feature>/ui/`).
+  final String? feature;
   final String name;
   final Directory? projectRoot;
   final bool dryRun;
@@ -28,18 +32,27 @@ class CreateViewPlan {
     required this.viewModelClassName,
     required this.featureDirectory,
     required this.files,
+    required this.routerPath,
+    required this.routeRegistration,
     required this.dryRun,
   });
 
-  final String featureName;
+  /// Null when the view is shared rather than feature-scoped.
+  final String? featureName;
   final String name;
   final String displayName;
   final String packageName;
   final String viewClassName;
   final String viewModelClassName;
-  final Directory featureDirectory;
+
+  /// Null when the view is shared rather than feature-scoped.
+  final Directory? featureDirectory;
   final List<String> files;
+  final String routerPath;
+  final RouteRegistration routeRegistration;
   final bool dryRun;
+
+  bool get isShared => featureName == null;
 }
 
 class CreateViewResult {
@@ -64,28 +77,60 @@ class CreateViewService {
   final ViewFileWriter _fileWriter;
 
   Future<CreateViewPlan> plan(CreateViewInput input) async {
-    final featureName = _normalizeName(input.feature, label: 'Feature');
     final viewName = _normalizeName(input.name, label: 'View');
     final words = viewName.split('_');
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     final packageName = _readPackageName(projectRoot);
+
+    if (input.feature == null) {
+      final routeRegistration = planSharedRouteRegistration(
+        packageName: packageName,
+        viewName: viewName,
+      );
+
+      return CreateViewPlan(
+        featureName: null,
+        name: viewName,
+        displayName: _humanize(words),
+        packageName: packageName,
+        viewClassName: routeRegistration.viewClassName,
+        viewModelClassName: '${_pascalCase(words)}ViewModel',
+        featureDirectory: null,
+        files: [
+          'lib/shared/views/${viewName}_view.dart',
+          'lib/shared/views/${viewName}_viewmodel.dart',
+        ],
+        routerPath: 'lib/app/app.router.dart',
+        routeRegistration: routeRegistration,
+        dryRun: input.dryRun,
+      );
+    }
+
+    final featureName = _normalizeName(input.feature!, label: 'Feature');
     final featureDirectory = Directory(
       '${projectRoot.path}${Platform.pathSeparator}lib'
       '${Platform.pathSeparator}features${Platform.pathSeparator}$featureName',
     );
-    final viewPath = 'lib/features/$featureName/ui/views/${viewName}_view.dart';
+    final viewPath = 'lib/features/$featureName/ui/${viewName}_view.dart';
     final viewModelPath =
-        'lib/features/$featureName/ui/viewmodels/${viewName}_viewmodel.dart';
+        'lib/features/$featureName/ui/${viewName}_viewmodel.dart';
+    final routeRegistration = planRouteRegistration(
+      packageName: packageName,
+      featureName: featureName,
+      viewName: viewName,
+    );
 
     return CreateViewPlan(
       featureName: featureName,
       name: viewName,
       displayName: _humanize(words),
       packageName: packageName,
-      viewClassName: '${_pascalCase(words)}View',
+      viewClassName: routeRegistration.viewClassName,
       viewModelClassName: '${_pascalCase(words)}ViewModel',
       featureDirectory: featureDirectory,
       files: [viewPath, viewModelPath],
+      routerPath: 'lib/app/app.router.dart',
+      routeRegistration: routeRegistration,
       dryRun: input.dryRun,
     );
   }
@@ -94,6 +139,13 @@ class CreateViewService {
     final createPlan = await plan(input);
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     _validateTargets(projectRoot, createPlan);
+
+    final routerFile = _targetFile(projectRoot, createPlan.routerPath);
+    final routerContents = _validateRouter(createPlan, routerFile);
+    final nextRouterContents = applyRouteRegistration(
+      routerContents,
+      createPlan.routeRegistration,
+    );
 
     final viewContents = _viewContents(createPlan);
     final viewModelContents = _viewModelContents(createPlan);
@@ -119,10 +171,16 @@ class CreateViewService {
       );
       _fileWriter(viewFile, viewContents);
       _fileWriter(viewModelFile, viewModelContents);
+      _replaceFileContents(
+        routerFile,
+        nextRouterContents,
+        label: createPlan.routerPath,
+      );
     } on FileSystemException catch (error) {
       _deleteCreatedFile(viewFile);
       _deleteCreatedFile(viewModelFile);
       _pruneCreatedDirectories(createdDirectories);
+      _restoreFileContents(routerFile, routerContents);
       throw CreateViewException(
         'Unable to create view ${createPlan.displayName}: ${error.message}',
       );
@@ -133,10 +191,12 @@ class CreateViewService {
 }
 
 void _validateTargets(Directory projectRoot, CreateViewPlan plan) {
-  _ensureRegularDirectory(
-    plan.featureDirectory.path,
-    'lib/features/${plan.featureName}',
-  );
+  if (!plan.isShared) {
+    _ensureRegularDirectory(
+      plan.featureDirectory!.path,
+      'lib/features/${plan.featureName}',
+    );
+  }
 
   for (final path in plan.files) {
     final target = _targetFile(projectRoot, path);
@@ -147,6 +207,19 @@ void _validateTargets(Directory projectRoot, CreateViewPlan plan) {
       throw CreateViewException('Target already exists: $path');
     }
   }
+}
+
+String _validateRouter(CreateViewPlan plan, File routerFile) {
+  _ensureRegularFile(routerFile.path, plan.routerPath);
+  final contents = _readFile(routerFile, plan.routerPath);
+
+  try {
+    validateRouteRegistration(contents, plan.routeRegistration);
+  } on RouteRegistrationException catch (error) {
+    throw CreateViewException(error.message);
+  }
+
+  return contents;
 }
 
 void _ensureRegularDirectory(String path, String label) {
@@ -172,6 +245,14 @@ void _ensureRegularFile(String path, String label) {
   }
   if (type != FileSystemEntityType.file) {
     throw CreateViewException('$label must be a regular file.');
+  }
+}
+
+String _readFile(File file, String label) {
+  try {
+    return file.readAsStringSync();
+  } on FileSystemException catch (error) {
+    throw CreateViewException('Unable to read $label: ${error.message}');
   }
 }
 
@@ -299,14 +380,19 @@ String _humanize(List<String> words) {
 }
 
 String _viewContents(CreateViewPlan plan) {
-  final featureName = plan.featureName;
   final viewName = plan.name;
+  final viewModelImportPath = plan.isShared
+      ? 'shared/views/${viewName}_viewmodel.dart'
+      : 'features/${plan.featureName}/ui/${viewName}_viewmodel.dart';
+  final imports = <String>[
+    "import 'package:cuboid_flutter/cuboid_flutter.dart';",
+    "import 'package:${plan.packageName}/$viewModelImportPath';",
+    "import 'package:flutter/material.dart';",
+  ]..sort();
   return '''
-import 'package:${plan.packageName}/features/$featureName/ui/viewmodels/${viewName}_viewmodel.dart';
-import 'package:flutter/material.dart';
-import 'package:stacked/stacked.dart';
+${imports.join('\n')}
 
-class ${plan.viewClassName} extends StackedView<${plan.viewModelClassName}> {
+class ${plan.viewClassName} extends CuboidView<${plan.viewModelClassName}> {
   const ${plan.viewClassName}({super.key});
 
   @override
@@ -330,9 +416,9 @@ class ${plan.viewClassName} extends StackedView<${plan.viewModelClassName}> {
 
 String _viewModelContents(CreateViewPlan plan) {
   return '''
-import 'package:stacked/stacked.dart';
+import 'package:cuboid_flutter/cuboid_flutter.dart';
 
-class ${plan.viewModelClassName} extends BaseViewModel {}
+class ${plan.viewModelClassName} extends CuboidViewModel {}
 ''';
 }
 
@@ -348,6 +434,40 @@ void _deleteCreatedFile(File file) {
     }
   } on FileSystemException {
     // Best-effort cleanup; preserve the original publish failure.
+  }
+}
+
+void _restoreFileContents(File file, String contents) {
+  try {
+    file.writeAsStringSync(contents);
+  } on FileSystemException {
+    // Best-effort cleanup; preserve the original publish failure.
+  }
+}
+
+void _replaceFileContents(File file, String contents, {required String label}) {
+  final Directory temp;
+  try {
+    temp = file.parent.createTempSync('.cuboid-view-');
+  } on FileSystemException catch (error) {
+    throw CreateViewException('Unable to update $label: ${error.message}');
+  }
+  final tempFile = File(
+    '${temp.path}${Platform.pathSeparator}${file.uri.pathSegments.last}',
+  );
+  try {
+    tempFile.writeAsStringSync(contents);
+    tempFile.renameSync(file.path);
+  } on FileSystemException catch (error) {
+    throw CreateViewException('Unable to update $label: ${error.message}');
+  } finally {
+    try {
+      if (temp.existsSync()) {
+        temp.deleteSync(recursive: true);
+      }
+    } on FileSystemException {
+      // Best-effort cleanup; preserve the actual write or publish result.
+    }
   }
 }
 

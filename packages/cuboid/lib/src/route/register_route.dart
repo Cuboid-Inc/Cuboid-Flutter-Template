@@ -1,51 +1,21 @@
-import 'dart:io';
+import 'package:cuboid/src/edit/generated_edits.dart';
 
-import 'package:cuboid/src/bootstrap/bootstrap.dart';
-
-class RegisterRouteInput {
-  const RegisterRouteInput({
-    required this.feature,
-    this.projectRoot,
-    this.dryRun = false,
-  });
-
-  final String feature;
-  final Directory? projectRoot;
-  final bool dryRun;
-}
-
-class RegisterRoutePlan {
-  const RegisterRoutePlan({
-    required this.featureName,
-    required this.displayName,
-    required this.packageName,
-    required this.viewClassName,
-    required this.viewPath,
-    required this.appPath,
-    required this.importLine,
-    required this.routeLine,
-    required this.dryRun,
-  });
-
-  final String featureName;
-  final String displayName;
-  final String packageName;
-  final String viewClassName;
-  final String viewPath;
-  final String appPath;
-  final String importLine;
-  final String routeLine;
-  final bool dryRun;
-}
-
-class RegisterRouteResult {
-  const RegisterRouteResult({required this.plan});
-
-  final RegisterRoutePlan plan;
-}
-
-class RegisterRouteException implements Exception {
-  const RegisterRouteException(this.message);
+/// Internal route-registration helpers.
+///
+/// There is no longer a standalone `cuboid create route` (or legacy
+/// `cuboid route`) command: creating a feature or an additional view
+/// registers its route automatically, matching the intended architecture
+/// where a View always has a corresponding route. This module is the shared
+/// implementation both `create_feature.dart` and `create_view.dart` patch
+/// `lib/app/app.router.dart` with; it performs no file I/O itself so callers
+/// can compose it into their own validate/write/rollback sequence.
+///
+/// The reverse direction -- removing a route registration -- is shared the
+/// same way: `delete_view.dart`, `delete_route.dart`, and `delete_feature.dart`
+/// all call [removeRouteRegistration] instead of duplicating the marker
+/// text-surgery three times.
+class RouteRegistrationException implements Exception {
+  const RouteRegistrationException(this.message);
 
   final String message;
 
@@ -53,226 +23,255 @@ class RegisterRouteException implements Exception {
   String toString() => message;
 }
 
-class RegisterRouteService {
-  Future<RegisterRoutePlan> plan(RegisterRouteInput input) async {
-    final featureName = _normalizeFeatureName(input.feature);
-    final words = featureName.split('_');
-    final projectRoot = (input.projectRoot ?? Directory.current).absolute;
-    final packageName = _readPackageName(projectRoot);
-    final viewClassName = '${_pascalCase(words)}View';
-    final viewPath =
-        'lib/features/$featureName/ui/views/${featureName}_view.dart';
+class RouteRegistration {
+  const RouteRegistration({
+    required this.viewClassName,
+    required this.routeConstantName,
+    required this.routePath,
+    required this.importLine,
+    required this.routeConstLine,
+    required this.routeMapLine,
+  });
 
-    return RegisterRoutePlan(
-      featureName: featureName,
-      displayName: _humanize(words),
-      packageName: packageName,
-      viewClassName: viewClassName,
-      viewPath: viewPath,
-      appPath: 'lib/app/app.dart',
-      importLine:
-          "import 'package:$packageName/features/$featureName/ui/views/${featureName}_view.dart';",
-      routeLine: '    MaterialRoute(page: $viewClassName),',
-      dryRun: input.dryRun,
+  final String viewClassName;
+  final String routeConstantName;
+  final String routePath;
+  final String importLine;
+  final String routeConstLine;
+  final String routeMapLine;
+}
+
+RouteRegistration planRouteRegistration({
+  required String packageName,
+  required String featureName,
+  required String viewName,
+}) {
+  return _planRouteRegistration(
+    viewName: viewName,
+    importLine:
+        "import 'package:$packageName/features/$featureName/ui/${viewName}_view.dart';",
+  );
+}
+
+/// Same as [planRouteRegistration] but for a shared View that lives under
+/// `lib/shared/views/` instead of a feature directory.
+RouteRegistration planSharedRouteRegistration({
+  required String packageName,
+  required String viewName,
+}) {
+  return _planRouteRegistration(
+    viewName: viewName,
+    importLine:
+        "import 'package:$packageName/shared/views/${viewName}_view.dart';",
+  );
+}
+
+RouteRegistration _planRouteRegistration({
+  required String viewName,
+  required String importLine,
+}) {
+  final identity = routeIdentityFor(viewName);
+  final routePath = '/${viewName.replaceAll('_', '-')}-view';
+
+  return RouteRegistration(
+    viewClassName: identity.viewClassName,
+    routeConstantName: identity.routeConstantName,
+    routePath: routePath,
+    importLine: importLine,
+    routeConstLine: identity.routeConstLine,
+    routeMapLine: identity.routeMapLine,
+  );
+}
+
+/// The four pieces of a route registration that are fully deterministic
+/// from [viewName] alone (i.e. everything except the import line, which
+/// differs between a feature-scoped and a shared View).
+class RouteIdentity {
+  const RouteIdentity({
+    required this.viewClassName,
+    required this.routeConstantName,
+    required this.routeConstLine,
+    required this.routeMapLine,
+  });
+
+  final String viewClassName;
+  final String routeConstantName;
+  final String routeConstLine;
+  final String routeMapLine;
+}
+
+RouteIdentity routeIdentityFor(String viewName) {
+  final words = viewName.split('_');
+  final viewClassName = '${_pascalCase(words)}View';
+  final routeConstantName = '${_camelCase(words)}View';
+  final routePath = '/${viewName.replaceAll('_', '-')}-view';
+
+  return RouteIdentity(
+    viewClassName: viewClassName,
+    routeConstantName: routeConstantName,
+    routeConstLine: "static const $routeConstantName = '$routePath';",
+    routeMapLine: 'Routes.$routeConstantName: (_) => const $viewClassName(),',
+  );
+}
+
+/// Finds the single import line in [routerContents] that ends in
+/// `<viewName>_view.dart` (single- or double-quoted), regardless of path
+/// prefix. Throws [RouteRegistrationException] if there is no match, or if
+/// there is more than one -- an ambiguous situation `cuboid delete` refuses
+/// to guess through.
+String findRouteImportLine(String routerContents, String viewName) {
+  final pattern = RegExp(
+    r'''^[ \t]*import\s+(['"])([^'"]*)\1\s*;[ \t]*$''',
+    multiLine: true,
+  );
+  final suffixPattern = RegExp('(^|/)${RegExp.escape(viewName)}_view\\.dart\$');
+  final matches = pattern
+      .allMatches(routerContents)
+      .where((match) => suffixPattern.hasMatch(match.group(2)!))
+      .toList();
+
+  if (matches.isEmpty) {
+    throw RouteRegistrationException('No route registered for "$viewName".');
+  }
+  if (matches.length > 1) {
+    throw RouteRegistrationException(
+      'Multiple route imports match "$viewName"; refusing to remove an '
+      'ambiguous route.',
     );
   }
+  return matches.first.group(0)!.trim();
+}
 
-  Future<RegisterRouteResult> register(RegisterRouteInput input) async {
-    final routePlan = await plan(input);
-    final projectRoot = (input.projectRoot ?? Directory.current).absolute;
-    final appFile = File(
-      '${projectRoot.path}${Platform.pathSeparator}'
-      '${routePlan.appPath.replaceAll('/', Platform.pathSeparator)}',
+/// Returns [routerContents] with the route identified by [viewName] removed:
+/// [importLine], the route constant line, and the route map line, in that
+/// order. Throws [RouteRegistrationException] if any of the three is not
+/// found -- covering both "never registered" and a corrupted/partially
+/// hand-edited router file. `cuboid delete` refuses to guess further in
+/// either case rather than leaving the router file half-patched.
+String removeRouteRegistration(
+  String routerContents, {
+  required String viewName,
+  required String importLine,
+}) {
+  final identity = routeIdentityFor(viewName);
+
+  final afterImport = removeExactLine(routerContents, importLine);
+  if (afterImport == null) {
+    throw RouteRegistrationException('No route registered for "$viewName".');
+  }
+  final afterConst = removeExactLine(afterImport, identity.routeConstLine);
+  if (afterConst == null) {
+    throw RouteRegistrationException('No route registered for "$viewName".');
+  }
+  final afterMap = removeExactLine(afterConst, identity.routeMapLine);
+  if (afterMap == null) {
+    throw RouteRegistrationException('No route registered for "$viewName".');
+  }
+  return afterMap;
+}
+
+/// Marker comments patched in `lib/app/app.router.dart`. `route` is
+/// deliberately not a prefix of `routeConst` (or vice versa); [_markerPattern]
+/// also anchors each marker to its own line so a prefix relationship would
+/// not cause double-counting or a misplaced insertion regardless.
+const _importMarker = '// @cuboid-import';
+const _routeConstMarker = '// @cuboid-route-const';
+const _routeMapMarker = '// @cuboid-route';
+
+/// Validates that [routerContents] (the contents of `lib/app/app.router.dart`)
+/// can accept [registration] without conflict. Throws
+/// [RouteRegistrationException] otherwise.
+void validateRouteRegistration(
+  String routerContents,
+  RouteRegistration registration,
+) {
+  _requireSingleMarker(routerContents, _importMarker);
+  _requireSingleMarker(routerContents, _routeConstMarker);
+  _requireSingleMarker(routerContents, _routeMapMarker);
+  if (routerContents.contains(registration.importLine)) {
+    throw RouteRegistrationException(
+      'Route import already exists for ${registration.viewClassName}.',
     );
-
-    final appContents = _validateTargets(projectRoot, routePlan, appFile);
-    final nextContents = _applyPlan(appContents, routePlan);
-
-    if (routePlan.dryRun) {
-      return RegisterRouteResult(plan: routePlan);
-    }
-
-    _replaceFileContents(appFile, nextContents);
-    return RegisterRouteResult(plan: routePlan);
+  }
+  if (RegExp(
+    r'static\s+const\s+' +
+        RegExp.escape(registration.routeConstantName) +
+        r'\b',
+  ).hasMatch(routerContents)) {
+    throw RouteRegistrationException(
+      'Route already exists for ${registration.viewClassName}.',
+    );
+  }
+  if (routerContents.contains('const ${registration.viewClassName}()')) {
+    throw RouteRegistrationException(
+      'Route already exists for ${registration.viewClassName}.',
+    );
   }
 }
 
-String _validateTargets(
-  Directory projectRoot,
-  RegisterRoutePlan plan,
-  File appFile,
+/// Returns [routerContents] with [registration] applied. Callers must call
+/// [validateRouteRegistration] first.
+String applyRouteRegistration(
+  String routerContents,
+  RouteRegistration registration,
 ) {
-  _ensureRegularFile(appFile.path, 'lib/app/app.dart');
-  _ensureRegularFile(
-    '${projectRoot.path}${Platform.pathSeparator}'
-    '${plan.viewPath.replaceAll('/', Platform.pathSeparator)}',
-    plan.viewPath,
+  final lineEnding = routerContents.contains('\r\n') ? '\r\n' : '\n';
+  var contents = _insertBeforeMarker(
+    routerContents,
+    _importMarker,
+    registration.importLine,
+    lineEnding,
   );
-
-  final String contents;
-  try {
-    contents = appFile.readAsStringSync();
-  } on FileSystemException catch (error) {
-    throw RegisterRouteException(
-      'Unable to read lib/app/app.dart: ${error.message}',
-    );
-  }
-
-  _requireSingleMarker(contents, '// @stacked-import');
-  _requireSingleMarker(contents, '// @stacked-route');
-  if (contents.contains(plan.importLine)) {
-    throw RegisterRouteException(
-      'Route import already exists for ${plan.viewClassName}.',
-    );
-  }
-  if (contents.contains('MaterialRoute(page: ${plan.viewClassName})')) {
-    throw RegisterRouteException(
-      'Route already exists for ${plan.viewClassName}.',
-    );
-  }
+  contents = _insertBeforeMarker(
+    contents,
+    _routeConstMarker,
+    registration.routeConstLine,
+    lineEnding,
+  );
+  contents = _insertBeforeMarker(
+    contents,
+    _routeMapMarker,
+    registration.routeMapLine,
+    lineEnding,
+  );
   return contents;
 }
 
-void _ensureRegularFile(String path, String label) {
-  final type = FileSystemEntity.typeSync(path, followLinks: false);
-  if (type == FileSystemEntityType.notFound) {
-    throw RegisterRouteException('$label was not found.');
-  }
-  if (type == FileSystemEntityType.link) {
-    throw RegisterRouteException('$label must not be a symlink.');
-  }
-  if (type != FileSystemEntityType.file) {
-    throw RegisterRouteException('$label must be a regular file.');
-  }
+RegExp _markerPattern(String marker) {
+  return RegExp(
+    r'^([ \t]*)' + RegExp.escape(marker) + r'[ \t]*$',
+    multiLine: true,
+  );
 }
 
 void _requireSingleMarker(String contents, String marker) {
-  final count = marker.allMatches(contents).length;
+  final count = _markerPattern(marker).allMatches(contents).length;
   if (count == 0) {
-    throw RegisterRouteException('Missing marker: $marker');
+    throw RouteRegistrationException('Missing marker: $marker');
   }
   if (count > 1) {
-    throw RegisterRouteException('Duplicate marker: $marker');
+    throw RouteRegistrationException('Duplicate marker: $marker');
   }
 }
 
-String _applyPlan(String contents, RegisterRoutePlan plan) {
-  final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
-  return contents
-      .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-import', multiLine: true),
-        '${plan.importLine}$lineEnding// @stacked-import',
-      )
-      .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-route', multiLine: true),
-        '${plan.routeLine}$lineEnding    // @stacked-route',
-      );
-}
-
-void _replaceFileContents(File file, String contents) {
-  final Directory temp;
-  try {
-    temp = file.parent.createTempSync('.cuboid-route-');
-  } on FileSystemException catch (error) {
-    throw RegisterRouteException(
-      'Unable to update lib/app/app.dart: ${error.message}',
-    );
-  }
-  final tempFile = File(
-    '${temp.path}${Platform.pathSeparator}${file.uri.pathSegments.last}',
-  );
-  try {
-    tempFile.writeAsStringSync(contents);
-    tempFile.renameSync(file.path);
-  } on FileSystemException catch (error) {
-    throw RegisterRouteException(
-      'Unable to update lib/app/app.dart: ${error.message}',
-    );
-  } finally {
-    try {
-      if (temp.existsSync()) {
-        temp.deleteSync(recursive: true);
-      }
-    } on FileSystemException {
-      // Best-effort cleanup; preserve the actual write or publish result.
-    }
-  }
-}
-
-String _readPackageName(Directory projectRoot) {
-  final pubspecPath =
-      '${projectRoot.path}${Platform.pathSeparator}pubspec.yaml';
-  _ensureRegularFile(pubspecPath, 'pubspec.yaml');
-
-  final pubspec = File(pubspecPath);
-  final String contents;
-  try {
-    contents = pubspec.readAsStringSync();
-  } on FileSystemException catch (error) {
-    throw RegisterRouteException(
-      'Unable to read pubspec.yaml: ${error.message}',
-    );
-  }
-
-  final match = RegExp(
-    r'''^\s*name:\s*(?:"([A-Za-z_][A-Za-z0-9_]*)"|'([A-Za-z_][A-Za-z0-9_]*)'|([A-Za-z_][A-Za-z0-9_]*))\s*(?:#.*)?$''',
-    multiLine: true,
-  ).firstMatch(contents);
-  if (match == null) {
-    throw const RegisterRouteException(
-      'pubspec.yaml must contain a valid Dart package name.',
-    );
-  }
-
-  final packageName = match.group(1) ?? match.group(2) ?? match.group(3)!;
-  if (dartKeywords.contains(packageName)) {
-    throw const RegisterRouteException(
-      'pubspec.yaml package name must not be a Dart keyword.',
-    );
-  }
-  return packageName;
-}
-
-String _normalizeFeatureName(String input) {
-  final value = input.trim();
-  if (value.isEmpty) {
-    throw const RegisterRouteException('Feature name must not be empty.');
-  }
-  if (value == '.' || value == '..') {
-    throw const RegisterRouteException(
-      'Feature name must be a lower snake_case identifier.',
-    );
-  }
-  if (value.contains('/') ||
-      value.contains('\\') ||
-      value.split(RegExp(r'[/\\]')).contains('..')) {
-    throw const RegisterRouteException(
-      'Feature name must not contain path separators or traversal.',
-    );
-  }
-  if (!RegExp(
-    r'^[A-Za-z][A-Za-z0-9]*([_-][A-Za-z][A-Za-z0-9]*)*$',
-  ).hasMatch(value)) {
-    throw const RegisterRouteException(
-      'Feature name must use letters and numbers separated by _ or -.',
-    );
-  }
-
-  final normalized = value.replaceAll('-', '_').toLowerCase();
-  if (dartKeywords.contains(normalized)) {
-    throw const RegisterRouteException(
-      'Feature name must not be a Dart keyword.',
-    );
-  }
-  return normalized;
+String _insertBeforeMarker(
+  String contents,
+  String marker,
+  String newLine,
+  String lineEnding,
+) {
+  return contents.replaceFirstMapped(_markerPattern(marker), (match) {
+    final indent = match.group(1) ?? '';
+    return '$indent$newLine$lineEnding$indent$marker';
+  });
 }
 
 String _pascalCase(List<String> words) {
   return words.map((word) => word[0].toUpperCase() + word.substring(1)).join();
 }
 
-String _humanize(List<String> words) {
-  return words
-      .map((word) => word[0].toUpperCase() + word.substring(1))
-      .join(' ');
+String _camelCase(List<String> words) {
+  if (words.isEmpty) return '';
+  final pascal = _pascalCase(words);
+  return pascal[0].toLowerCase() + pascal.substring(1);
 }

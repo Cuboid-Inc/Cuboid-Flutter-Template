@@ -3,14 +3,6 @@ import 'dart:io';
 // ignore: avoid_relative_lib_imports
 import '../packages/cuboid/lib/src/bootstrap/bootstrap.dart';
 
-const buildRunnerCommand = [
-  'dart',
-  'run',
-  'build_runner',
-  'build',
-  '--delete-conflicting-outputs',
-];
-
 class BootstrapArguments {
   const BootstrapArguments({
     required this.displayName,
@@ -52,7 +44,6 @@ void main(List<String> args) {
     }
 
     applyBootstrapPlan(root, plan);
-    regenerateGeneratedFiles(root);
     printSummary(values, plan);
   } on BootstrapException catch (error) {
     stderr.writeln('Bootstrap failed: ${error.message}');
@@ -124,28 +115,6 @@ void validateArguments(BootstrapArguments args) {
   );
 }
 
-void regenerateGeneratedFiles(Directory root) {
-  final result = Process.runSync(
-    buildRunnerCommand.first,
-    buildRunnerCommand.skip(1).toList(),
-    workingDirectory: root.path,
-    runInShell: false,
-  );
-
-  if (result.exitCode != 0) {
-    throw BootstrapException(
-      [
-        'Generated file regeneration failed.',
-        'Command: ${buildRunnerCommand.join(' ')}',
-        if ((result.stdout as String).trim().isNotEmpty)
-          'stdout:\n${(result.stdout as String).trim()}',
-        if ((result.stderr as String).trim().isNotEmpty)
-          'stderr:\n${(result.stderr as String).trim()}',
-      ].join('\n'),
-    );
-  }
-}
-
 void printDryRun(BootstrapValues values, BootstrapPlan plan) {
   stdout.write(buildDryRunReport(values, plan));
 }
@@ -178,16 +147,12 @@ String buildDryRunReport(BootstrapValues values, BootstrapPlan plan) {
     'Dart',
     'Android',
     'iOS',
-    'Supabase',
     'Documentation',
-    'Generated files',
     'Manual configuration',
   ]) {
     output.writeln('');
     output.writeln('$category:');
-    if (category == 'Generated files') {
-      _writeGeneratedFiles(output, plan);
-    } else if (category == 'Manual configuration') {
+    if (category == 'Manual configuration') {
       _writeManualConfigurationItems(output, plan);
     } else {
       _writeCategoryChanges(output, plan, category);
@@ -211,11 +176,6 @@ void printSummary(BootstrapValues values, BootstrapPlan plan) {
   stdout.writeln('Modified files:');
   for (final file in plan.modifiedFiles) {
     stdout.writeln('- $file');
-  }
-  if (plan.generatedFiles.isNotEmpty) {
-    stdout.writeln('');
-    stdout.writeln('Regenerated generated files with:');
-    stdout.writeln(buildRunnerCommand.join(' '));
   }
   _printManualConfiguration(plan);
   _printNextCommands();
@@ -270,17 +230,6 @@ void _writeCategoryChanges(
   }
 }
 
-void _writeGeneratedFiles(StringSink output, BootstrapPlan plan) {
-  if (plan.generatedFiles.isEmpty) {
-    output.writeln('- No existing generated Stacked files found.');
-    return;
-  }
-  output.writeln('- Regenerate using: ${buildRunnerCommand.join(' ')}');
-  for (final file in plan.generatedFiles) {
-    output.writeln('- $file');
-  }
-}
-
 void _printNextCommands() {
   _writeNextCommands(stdout);
 }
@@ -289,7 +238,6 @@ void _writeNextCommands(StringSink output) {
   output.writeln('');
   output.writeln('Next commands:');
   output.writeln('flutter pub get');
-  output.writeln('dart run build_runner build --delete-conflicting-outputs');
   output.writeln('flutter clean');
   output.writeln('flutter run');
 }

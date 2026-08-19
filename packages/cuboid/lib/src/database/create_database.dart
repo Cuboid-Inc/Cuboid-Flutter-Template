@@ -5,6 +5,8 @@ import 'package:cuboid/src/bootstrap/bootstrap.dart';
 typedef DatabaseFileWriter = void Function(File file, String contents);
 
 const _supportedProviders = <String>['supabase'];
+const _supabaseFlutterVersionConstraint = '^2.17.1';
+const _supabaseGuardPath = 'lib/core/network/supabase_guard.dart';
 
 class CreateDatabaseInput {
   const CreateDatabaseInput({
@@ -90,10 +92,11 @@ class CreateDatabaseService {
       repositoryPath: 'lib/supabase/example_repository.dart',
       migrationPath:
           'supabase/migrations/${_migrationTimestamp(timestamp)}_create_examples.sql',
-      appPath: 'lib/app/app.dart',
+      appPath: 'lib/app/app.locator.dart',
       repositoryImportLine:
           "import 'package:$packageName/supabase/example_repository.dart';",
-      repositoryLine: '    LazySingleton(classType: ExampleRepository),',
+      repositoryLine:
+          '  locator.registerLazySingleton<ExampleRepository>(() => const ExampleRepository());',
       dryRun: input.dryRun,
     );
   }
@@ -107,7 +110,7 @@ class CreateDatabaseService {
     final migrationFile = _targetFile(projectRoot, createPlan.migrationPath);
 
     final appContents = _validateApp(createPlan, appFile);
-    _ensureSupabaseFoundation(projectRoot);
+    _ensureSupabaseFoundationFiles(projectRoot);
     _validateGeneratedTargets(
       projectRoot,
       createPlan,
@@ -122,9 +125,24 @@ class CreateDatabaseService {
       return CreateDatabaseResult(plan: createPlan);
     }
 
+    final pubspecFile = _targetFile(projectRoot, 'pubspec.yaml');
+    final pubspecContents = _readFile(pubspecFile, 'pubspec.yaml');
+    final nextPubspecContents = _ensureSupabaseDependency(pubspecContents);
+    final guardFile = _targetFile(projectRoot, _supabaseGuardPath);
+    final needsGuard = !guardFile.existsSync();
+
     final createdFiles = <File>[];
     final createdDirectories = <Directory>[];
     try {
+      if (needsGuard) {
+        _createParentDirectories(
+          projectRoot,
+          guardFile.parent,
+          createdDirectories,
+        );
+        _fileWriter(guardFile, _supabaseGuardContents(createPlan));
+        createdFiles.add(guardFile);
+      }
       _createParentDirectories(
         projectRoot,
         modelFile.parent,
@@ -141,12 +159,19 @@ class CreateDatabaseService {
       );
       _fileWriter(migrationFile, _migrationContents(createPlan));
       createdFiles.add(migrationFile);
+      if (nextPubspecContents != pubspecContents) {
+        _replaceFileContents(
+          pubspecFile,
+          nextPubspecContents,
+          label: 'pubspec.yaml',
+        );
+      }
       _replaceFileContents(appFile, nextAppContents, label: createPlan.appPath);
     } on FileSystemException catch (error) {
       _rollback(
         createdFiles,
         createdDirectories,
-        restoredFiles: {appFile: appContents},
+        restoredFiles: {appFile: appContents, pubspecFile: pubspecContents},
       );
       throw CreateDatabaseException(
         'Unable to create database ${createPlan.provider}: ${error.message}',
@@ -155,7 +180,7 @@ class CreateDatabaseService {
       _rollback(
         createdFiles,
         createdDirectories,
-        restoredFiles: {appFile: appContents},
+        restoredFiles: {appFile: appContents, pubspecFile: pubspecContents},
       );
       throw CreateDatabaseException(
         'Unable to create database ${createPlan.provider}: $error',
@@ -189,8 +214,8 @@ String _validateApp(CreateDatabasePlan plan, File appFile) {
   _ensureRegularFile(appFile.path, plan.appPath);
   final contents = _readFile(appFile, plan.appPath);
 
-  _requireSingleMarker(contents, '// @stacked-import');
-  _requireSingleMarker(contents, '// @stacked-service');
+  _requireSingleMarker(contents, '// @cuboid-import');
+  _requireSingleMarker(contents, '// @cuboid-service');
   if (_hasMatchingImport(contents, plan)) {
     throw CreateDatabaseException(
       'Repository import already exists for ${plan.repositoryClassName}.',
@@ -209,23 +234,14 @@ String _validateApp(CreateDatabasePlan plan, File appFile) {
   return contents;
 }
 
-void _ensureSupabaseFoundation(Directory projectRoot) {
-  final pubspecPath =
-      '${projectRoot.path}${Platform.pathSeparator}pubspec.yaml';
-  _ensureRegularFile(pubspecPath, 'pubspec.yaml');
-  final pubspecContents = _readFile(File(pubspecPath), 'pubspec.yaml');
-  if (!RegExp(
-    r'^\s*supabase_flutter\s*:',
-    multiLine: true,
-  ).hasMatch(pubspecContents)) {
-    throw const CreateDatabaseException(
-      'pubspec.yaml must declare a supabase_flutter dependency before '
-      'running cuboid create database supabase.',
-    );
-  }
-
+/// `cuboid create database supabase` provisions the `supabase_flutter`
+/// pubspec dependency and `lib/core/network/supabase_guard.dart` itself (see
+/// [_ensureSupabaseDependency] and [_supabaseGuardContents]) rather than
+/// requiring a developer to add them first. `Result<T>`/`AppFailure` are
+/// generic, technology-neutral primitives that ship with the base template,
+/// so their presence is only sanity-checked here.
+void _ensureSupabaseFoundationFiles(Directory projectRoot) {
   const requiredFiles = [
-    'lib/core/network/supabase_guard.dart',
     'lib/core/errors/result.dart',
     'lib/core/errors/failures.dart',
   ];
@@ -236,6 +252,36 @@ void _ensureSupabaseFoundation(Directory projectRoot) {
       path,
     );
   }
+}
+
+/// Returns [pubspecContents] with a `supabase_flutter` dependency inserted
+/// under the top-level `dependencies:` key, or unchanged if one is already
+/// declared.
+String _ensureSupabaseDependency(String pubspecContents) {
+  if (RegExp(
+    r'^\s*supabase_flutter\s*:',
+    multiLine: true,
+  ).hasMatch(pubspecContents)) {
+    return pubspecContents;
+  }
+
+  final dependenciesMatch = RegExp(
+    r'^dependencies:[ \t]*$',
+    multiLine: true,
+  ).firstMatch(pubspecContents);
+  if (dependenciesMatch == null) {
+    throw const CreateDatabaseException(
+      'pubspec.yaml must contain a top-level dependencies: section.',
+    );
+  }
+
+  final lineEnding = pubspecContents.contains('\r\n') ? '\r\n' : '\n';
+  final insertAt = dependenciesMatch.end;
+  return pubspecContents.replaceRange(
+    insertAt,
+    insertAt,
+    '$lineEnding  supabase_flutter: $_supabaseFlutterVersionConstraint',
+  );
 }
 
 void _ensureSafeParentDirectories(Directory projectRoot, Directory parent) {
@@ -321,7 +367,7 @@ List<String> _repositoryImports(String contents) {
 
 bool _hasRepositoryRegistration(String contents, CreateDatabasePlan plan) {
   final pattern = RegExp(
-    r'classType\s*:\s*' + RegExp.escape(plan.repositoryClassName) + r'\b',
+    r'register\w*\s*<\s*' + RegExp.escape(plan.repositoryClassName) + r'\s*>',
   );
   return pattern.hasMatch(contents);
 }
@@ -330,12 +376,12 @@ String _applyAppPlan(String contents, CreateDatabasePlan plan) {
   final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
   return contents
       .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-import', multiLine: true),
-        '${plan.repositoryImportLine}$lineEnding// @stacked-import',
+        RegExp(r'^[ \t]*// @cuboid-import', multiLine: true),
+        '${plan.repositoryImportLine}$lineEnding// @cuboid-import',
       )
       .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-service', multiLine: true),
-        '${plan.repositoryLine}$lineEnding    // @stacked-service',
+        RegExp(r'^[ \t]*// @cuboid-service', multiLine: true),
+        '${plan.repositoryLine}$lineEnding  // @cuboid-service',
       );
 }
 
@@ -482,6 +528,33 @@ String _migrationTimestamp(DateTime timestamp) {
       '${pad(timestamp.hour)}${pad(timestamp.minute)}${pad(timestamp.second)}';
 }
 
+String _supabaseGuardContents(CreateDatabasePlan plan) {
+  return '''
+import 'dart:io';
+
+import 'package:${plan.packageName}/core/errors/failures.dart';
+import 'package:${plan.packageName}/core/errors/result.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// Runs [body] against Supabase and maps thrown exceptions into a typed
+/// [Result], preventing backend exceptions from crossing the repository
+/// boundary (see ARCHITECTURE.md §12).
+Future<Result<T>> guard<T>(Future<T> Function() body) async {
+  try {
+    return Success(await body());
+  } on AuthException catch (error) {
+    return Failure(AuthFailure(error.message));
+  } on PostgrestException catch (error) {
+    return Failure(ServerFailure(error.message));
+  } on SocketException {
+    return const Failure(NetworkFailure());
+  } catch (error) {
+    return Failure(UnknownFailure(error.toString()));
+  }
+}
+''';
+}
+
 String _modelContents(CreateDatabasePlan plan) {
   return '''
 /// Example row model for the `examples` table.
@@ -527,7 +600,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///
 /// Replace this with your own domain repository once you introduce real
 /// persistent data; this exists as a working starting point wired to
-/// `Result<T>`, guard(), and the Stacked locator.
+/// `Result<T>`, guard(), and the Cuboid locator.
 class ${plan.repositoryClassName} {
   const ${plan.repositoryClassName}();
 

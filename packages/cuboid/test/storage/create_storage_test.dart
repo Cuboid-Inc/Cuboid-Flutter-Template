@@ -4,21 +4,19 @@ import 'package:cuboid/src/storage/create_storage.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('creates a secure key-value storage wrapper', () async {
+  test('creates a secure key-value local storage wrapper', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final service = CreateStorageService();
 
-    final result = await service.create(
-      CreateStorageInput(name: 'user_prefs', projectRoot: root),
-    );
+    final result = await service.create(CreateStorageInput(projectRoot: root));
 
-    expect(result.plan.name, 'user_prefs');
-    expect(result.plan.className, 'UserPrefsStorage');
-    expect(result.plan.path, 'lib/core/storage/user_prefs_storage.dart');
+    expect(result.plan.className, 'LocalStorage');
+    expect(result.plan.path, 'lib/core/storage/local_storage.dart');
+    expect(result.plan.cacheEntryPath, 'lib/core/storage/cache_entry.dart');
 
     final contents = File(
-      '${root.path}/lib/core/storage/user_prefs_storage.dart',
+      '${root.path}/lib/core/storage/local_storage.dart',
     ).readAsStringSync();
     expect(
       contents,
@@ -26,7 +24,7 @@ void main() {
         "import 'package:flutter_secure_storage/flutter_secure_storage.dart';",
       ),
     );
-    expect(contents, contains('class UserPrefsStorage {'));
+    expect(contents, contains('class LocalStorage {'));
     expect(
       contents,
       contains('static const _storage = FlutterSecureStorage();'),
@@ -36,25 +34,26 @@ void main() {
     expect(contents, contains('Future<void> delete(String key)'));
     expect(contents, contains('Future<bool> containsKey(String key)'));
     expect(contents, contains('Future<void> clear()'));
-    expect(contents, contains("_prefix = 'user_prefs.';"));
   });
 
-  test('normalizes hyphenated names to lower snake case', () async {
+  test('creates a cache entry helper alongside local storage', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final service = CreateStorageService();
 
-    final result = await service.create(
-      CreateStorageInput(name: 'user-prefs', projectRoot: root),
-    );
+    await service.create(CreateStorageInput(projectRoot: root));
 
-    expect(result.plan.name, 'user_prefs');
+    final contents = File(
+      '${root.path}/lib/core/storage/cache_entry.dart',
+    ).readAsStringSync();
     expect(
-      File(
-        '${root.path}/lib/core/storage/user_prefs_storage.dart',
-      ).existsSync(),
-      isTrue,
+      contents,
+      contains("import 'package:test_app/core/errors/result.dart';"),
     );
+    expect(contents, contains('class CacheEntry<T> {'));
+    expect(contents, contains('mixin RepositoryCacheMixin {'));
+    expect(contents, contains('factory CacheEntry.now(T value)'));
+    expect(contents, contains('bool isFresh([Duration? ttl])'));
   });
 
   test('dry-run validates and writes nothing', () async {
@@ -64,39 +63,12 @@ void main() {
     final service = CreateStorageService();
 
     final result = await service.create(
-      CreateStorageInput(name: 'Draft-Cache', projectRoot: root, dryRun: true),
+      CreateStorageInput(projectRoot: root, dryRun: true),
     );
 
-    expect(result.plan.name, 'draft_cache');
     expect(result.plan.dryRun, isTrue);
     expect(_relativeFiles(root), beforeFiles);
     expect(Directory('${root.path}/lib/core/storage').existsSync(), isFalse);
-  });
-
-  test('rejects invalid names', () async {
-    final root = _projectRoot();
-    addTearDown(() => root.deleteSync(recursive: true));
-    final service = CreateStorageService();
-
-    for (final name in [
-      '',
-      'two words',
-      '1cache',
-      '_cache',
-      'cache_',
-      'cache__store',
-      '.',
-      '..',
-      'auth/cache',
-      r'auth\cache',
-      'class',
-    ]) {
-      await expectLater(
-        service.create(CreateStorageInput(name: name, projectRoot: root)),
-        throwsA(isA<CreateStorageException>()),
-        reason: name,
-      );
-    }
   });
 
   test('rejects a project without pubspec.yaml', () async {
@@ -105,7 +77,7 @@ void main() {
     final service = CreateStorageService();
 
     await expectLater(
-      service.create(CreateStorageInput(name: 'cache', projectRoot: root)),
+      service.create(CreateStorageInput(projectRoot: root)),
       throwsA(isA<CreateStorageException>()),
     );
   });
@@ -113,22 +85,47 @@ void main() {
   test('does not overwrite an existing target file', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
-    final target = File('${root.path}/lib/core/storage/user_prefs_storage.dart')
+    final target = File('${root.path}/lib/core/storage/local_storage.dart')
       ..parent.createSync(recursive: true)
       ..writeAsStringSync('keep\n');
     final service = CreateStorageService();
 
     await expectLater(
-      service.create(CreateStorageInput(name: 'user_prefs', projectRoot: root)),
+      service.create(CreateStorageInput(projectRoot: root)),
       throwsA(
         isA<CreateStorageException>().having(
           (error) => error.message,
           'message',
-          'Target already exists: lib/core/storage/user_prefs_storage.dart',
+          'Target already exists: lib/core/storage/local_storage.dart',
         ),
       ),
     );
     expect(target.readAsStringSync(), 'keep\n');
+  });
+
+  test('does not overwrite an existing cache entry file', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final target = File('${root.path}/lib/core/storage/cache_entry.dart')
+      ..parent.createSync(recursive: true)
+      ..writeAsStringSync('keep\n');
+    final service = CreateStorageService();
+
+    await expectLater(
+      service.create(CreateStorageInput(projectRoot: root)),
+      throwsA(
+        isA<CreateStorageException>().having(
+          (error) => error.message,
+          'message',
+          'Target already exists: lib/core/storage/cache_entry.dart',
+        ),
+      ),
+    );
+    expect(target.readAsStringSync(), 'keep\n');
+    expect(
+      File('${root.path}/lib/core/storage/local_storage.dart').existsSync(),
+      isFalse,
+    );
   });
 
   test('rejects symlink ancestors', () async {
@@ -141,7 +138,7 @@ void main() {
     final service = CreateStorageService();
 
     await expectLater(
-      service.create(CreateStorageInput(name: 'cache', projectRoot: root)),
+      service.create(CreateStorageInput(projectRoot: root)),
       throwsA(isA<CreateStorageException>()),
     );
   });
@@ -154,19 +151,18 @@ void main() {
       ..writeAsStringSync('app registration\n');
     final service = CreateStorageService();
 
-    await service.create(
-      CreateStorageInput(name: 'user_prefs', projectRoot: root),
-    );
+    await service.create(CreateStorageInput(projectRoot: root));
 
     expect(appFile.readAsStringSync(), 'app registration\n');
     expect(_relativeFiles(root), [
       'lib/app/app.dart',
-      'lib/core/storage/user_prefs_storage.dart',
+      'lib/core/storage/cache_entry.dart',
+      'lib/core/storage/local_storage.dart',
       'pubspec.yaml',
     ]);
   });
 
-  test('rolls back and creates no directory when the write fails', () async {
+  test('rolls back and creates no directory when the first write fails', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final beforeFiles = _relativeFiles(root);
@@ -177,18 +173,59 @@ void main() {
     );
 
     await expectLater(
-      service.create(CreateStorageInput(name: 'user_prefs', projectRoot: root)),
+      service.create(CreateStorageInput(projectRoot: root)),
       throwsA(
         isA<CreateStorageException>().having(
           (error) => error.message,
           'message',
-          contains('Unable to create storage User Prefs'),
+          contains('Unable to create storage LocalStorage'),
         ),
       ),
     );
 
     expect(_relativeFiles(root), beforeFiles);
     expect(Directory('${root.path}/lib/core/storage').existsSync(), isFalse);
+  });
+
+  test('rolls back the first file when the second write fails', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final beforeFiles = _relativeFiles(root);
+    final service = CreateStorageService(
+      fileWriter: (file, contents) {
+        if (file.path.endsWith('cache_entry.dart')) {
+          throw const FileSystemException('simulated write failure');
+        }
+        file.writeAsStringSync(contents);
+      },
+    );
+
+    await expectLater(
+      service.create(CreateStorageInput(projectRoot: root)),
+      throwsA(
+        isA<CreateStorageException>().having(
+          (error) => error.message,
+          'message',
+          contains('Unable to create storage LocalStorage'),
+        ),
+      ),
+    );
+
+    expect(_relativeFiles(root), beforeFiles);
+    expect(Directory('${root.path}/lib/core/storage').existsSync(), isFalse);
+  });
+
+  test('running twice refuses to overwrite the existing storage', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = CreateStorageService();
+
+    await service.create(CreateStorageInput(projectRoot: root));
+
+    await expectLater(
+      service.create(CreateStorageInput(projectRoot: root)),
+      throwsA(isA<CreateStorageException>()),
+    );
   });
 }
 

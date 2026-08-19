@@ -28,12 +28,61 @@ void main() {
       app,
       contains("import 'package:test_app/core/services/auth_service.dart';"),
     );
-    expect(app, contains('    LazySingleton(classType: AuthService),'));
+    expect(
+      app,
+      contains(
+        '  locator.registerLazySingleton<AuthService>(() => AuthService());',
+      ),
+    );
     expect(_relativeFiles(root), [
-      'lib/app/app.dart',
+      'lib/app/app.locator.dart',
       'lib/core/services/auth_service.dart',
       'pubspec.yaml',
     ]);
+  });
+
+  test('creates and registers auth, payment, and notification services in '
+      'sequence without losing earlier registrations', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = RegisterServiceService();
+    const expected = {
+      'auth': 'AuthService',
+      'payment': 'PaymentService',
+      'notification': 'NotificationService',
+    };
+
+    for (final name in expected.keys) {
+      await service.create(RegisterServiceInput(name: name, projectRoot: root));
+    }
+
+    final app = _appFile(root).readAsStringSync();
+    for (final entry in expected.entries) {
+      expect(
+        File(
+          '${root.path}/lib/core/services/${entry.key}_service.dart',
+        ).existsSync(),
+        isTrue,
+        reason: entry.value,
+      );
+      expect(
+        app,
+        contains(
+          "import 'package:test_app/core/services/"
+          "${entry.key}_service.dart';",
+        ),
+        reason: entry.value,
+      );
+      expect(
+        app,
+        contains(
+          '  locator.registerLazySingleton<${entry.value}>(() => ${entry.value}());',
+        ),
+        reason: entry.value,
+      );
+    }
+    expect('// @cuboid-import'.allMatches(app), hasLength(1));
+    expect('// @cuboid-service'.allMatches(app), hasLength(1));
   });
 
   test('create normalizes service name variants consistently', () async {
@@ -127,7 +176,7 @@ void main() {
     );
   });
 
-  test('create rolls back service file when app update fails', () async {
+  test('create rolls back service file when locator update fails', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final service = RegisterServiceService(
@@ -149,7 +198,7 @@ void main() {
     );
 
     expect(Directory('${root.path}/lib/core').existsSync(), isFalse);
-    expect(_relativeFiles(root), ['lib/app/app.dart', 'pubspec.yaml']);
+    expect(_relativeFiles(root), ['lib/app/app.locator.dart', 'pubspec.yaml']);
   });
 
   test('registers an auth session service', () async {
@@ -176,14 +225,21 @@ void main() {
         "import 'package:test_app/core/services/auth_session_service.dart';",
       ),
     );
-    expect(app, contains('    LazySingleton(classType: AuthSessionService),'));
     expect(
-      app.indexOf("import 'package:test_app/core/services/auth_session"),
-      lessThan(app.indexOf('// @stacked-import')),
+      app,
+      contains(
+        '  locator.registerLazySingleton<AuthSessionService>(() => AuthSessionService());',
+      ),
     );
     expect(
-      app.indexOf('    LazySingleton(classType: AuthSessionService),'),
-      lessThan(app.indexOf('    // @stacked-service')),
+      app.indexOf("import 'package:test_app/core/services/auth_session"),
+      lessThan(app.indexOf('// @cuboid-import')),
+    );
+    expect(
+      app.indexOf(
+        '  locator.registerLazySingleton<AuthSessionService>(() => AuthSessionService());',
+      ),
+      lessThan(app.indexOf('  // @cuboid-service')),
     );
   });
 
@@ -202,7 +258,7 @@ void main() {
       expect(result.plan.serviceClassName, 'AuthSessionService');
       expect(
         _appFile(root).readAsStringSync(),
-        contains('LazySingleton(classType: AuthSessionService),'),
+        contains('registerLazySingleton<AuthSessionService>'),
       );
     }
   });
@@ -226,7 +282,7 @@ void main() {
   });
 
   test('multiple registrations preserve existing content', () async {
-    final root = _projectRoot(app: _appContents(extra: '  answer: 42,\n'));
+    final root = _projectRoot(app: _appContents(extra: '  // answer: 42\n'));
     addTearDown(() => root.deleteSync(recursive: true));
     _writeService(root, 'auth_session');
     _writeService(root, 'billing');
@@ -240,12 +296,12 @@ void main() {
     );
 
     final app = _appFile(root).readAsStringSync();
-    expect(app, contains('  answer: 42,\n'));
-    expect(app, contains('LazySingleton(classType: AuthSessionService),'));
-    expect(app, contains('LazySingleton(classType: BillingService),'));
+    expect(app, contains('  // answer: 42\n'));
+    expect(app, contains('registerLazySingleton<AuthSessionService>'));
+    expect(app, contains('registerLazySingleton<BillingService>'));
   });
 
-  test('dry-run validates and leaves app.dart byte-identical', () async {
+  test('dry-run validates and leaves app.locator.dart byte-identical', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     _writeService(root, 'auth_session');
@@ -264,7 +320,7 @@ void main() {
     expect(result.plan.importLine, contains('auth_session_service.dart'));
     expect(
       result.plan.serviceLine,
-      '    LazySingleton(classType: AuthSessionService),',
+      '  locator.registerLazySingleton<AuthSessionService>(() => AuthSessionService());',
     );
     expect(_appFile(root).readAsStringSync(), before);
   });
@@ -419,7 +475,7 @@ void main() {
     );
   });
 
-  test('rejects missing app.dart', () async {
+  test('rejects missing app.locator.dart', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     _writeService(root, 'auth_session');
@@ -434,12 +490,12 @@ void main() {
     );
   });
 
-  test('rejects app.dart directories and symlinks', () async {
+  test('rejects app.locator.dart directories and symlinks', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     _writeService(root, 'auth_session');
     _appFile(root).deleteSync();
-    Directory('${root.path}/lib/app/app.dart').createSync();
+    Directory('${root.path}/lib/app/app.locator.dart').createSync();
     final service = RegisterServiceService();
 
     await expectLater(
@@ -449,10 +505,10 @@ void main() {
       throwsA(isA<RegisterServiceException>()),
     );
 
-    Directory('${root.path}/lib/app/app.dart').deleteSync();
-    final target = File('${root.path}/target_app.dart')
+    Directory('${root.path}/lib/app/app.locator.dart').deleteSync();
+    final target = File('${root.path}/target_app_locator.dart')
       ..writeAsStringSync(_appContents());
-    Link('${root.path}/lib/app/app.dart').createSync(target.path);
+    Link('${root.path}/lib/app/app.locator.dart').createSync(target.path);
 
     await expectLater(
       service.register(
@@ -464,7 +520,7 @@ void main() {
 
   test('rejects missing import marker', () async {
     final root = _projectRoot(
-      app: _appContents().replaceAll('// @stacked-import', '// missing-import'),
+      app: _appContents().replaceAll('// @cuboid-import', '// missing-import'),
     );
     addTearDown(() => root.deleteSync(recursive: true));
     _writeService(root, 'auth_session');
@@ -481,7 +537,7 @@ void main() {
   test('rejects missing service marker', () async {
     final root = _projectRoot(
       app: _appContents().replaceAll(
-        '// @stacked-service',
+        '// @cuboid-service',
         '// missing-service',
       ),
     );
@@ -500,8 +556,8 @@ void main() {
   test('rejects duplicate import markers', () async {
     final root = _projectRoot(
       app: _appContents().replaceFirst(
-        '// @stacked-import',
-        '// @stacked-import\n// @stacked-import',
+        '// @cuboid-import',
+        '// @cuboid-import\n// @cuboid-import',
       ),
     );
     addTearDown(() => root.deleteSync(recursive: true));
@@ -519,8 +575,8 @@ void main() {
   test('rejects duplicate service markers', () async {
     final root = _projectRoot(
       app: _appContents().replaceFirst(
-        '// @stacked-service',
-        '// @stacked-service\n    // @stacked-service',
+        '// @cuboid-service',
+        '// @cuboid-service\n  // @cuboid-service',
       ),
     );
     addTearDown(() => root.deleteSync(recursive: true));
@@ -538,9 +594,9 @@ void main() {
   test('rejects existing matching import without mutation', () async {
     final root = _projectRoot(
       app: _appContents().replaceFirst(
-        '// @stacked-import',
+        '// @cuboid-import',
         "import 'package:test_app/core/services/auth_session_service.dart';\n"
-            '// @stacked-import',
+            '// @cuboid-import',
       ),
     );
     addTearDown(() => root.deleteSync(recursive: true));
@@ -560,9 +616,9 @@ void main() {
   test('rejects existing matching import with extra whitespace', () async {
     final root = _projectRoot(
       app: _appContents().replaceFirst(
-        '// @stacked-import',
+        '// @cuboid-import',
         "import 'package:test_app/core/services/auth_session_service.dart' ;\n"
-            '// @stacked-import',
+            '// @cuboid-import',
       ),
     );
     addTearDown(() => root.deleteSync(recursive: true));
@@ -582,9 +638,9 @@ void main() {
   test('rejects existing conflicting import without mutation', () async {
     final root = _projectRoot(
       app: _appContents().replaceFirst(
-        '// @stacked-import',
+        '// @cuboid-import',
         "import 'package:other_app/core/services/auth_session_service.dart';\n"
-            '// @stacked-import',
+            '// @cuboid-import',
       ),
     );
     addTearDown(() => root.deleteSync(recursive: true));
@@ -604,9 +660,9 @@ void main() {
   test('rejects existing conflicting import with extra whitespace', () async {
     final root = _projectRoot(
       app: _appContents().replaceFirst(
-        '// @stacked-import',
+        '// @cuboid-import',
         "import  'package:other_app/core/services/auth_session_service.dart' ;\n"
-            '// @stacked-import',
+            '// @cuboid-import',
       ),
     );
     addTearDown(() => root.deleteSync(recursive: true));
@@ -628,9 +684,9 @@ void main() {
     () async {
       final root = _projectRoot(
         app: _appContents().replaceFirst(
-          '    // @stacked-service',
-          '    LazySingleton(classType: AuthSessionService),\n'
-              '    // @stacked-service',
+          '  // @cuboid-service',
+          '  locator.registerLazySingleton<AuthSessionService>(() => AuthSessionService());\n'
+              '  // @cuboid-service',
         ),
       );
       addTearDown(() => root.deleteSync(recursive: true));
@@ -649,13 +705,13 @@ void main() {
   );
 
   test(
-    'rejects existing matching service registration without colon whitespace',
+    'rejects existing matching service registration with extra whitespace',
     () async {
       final root = _projectRoot(
         app: _appContents().replaceFirst(
-          '    // @stacked-service',
-          '    LazySingleton(classType:AuthSessionService),\n'
-              '    // @stacked-service',
+          '  // @cuboid-service',
+          '  locator.registerLazySingleton< AuthSessionService >(() => AuthSessionService());\n'
+              '  // @cuboid-service',
         ),
       );
       addTearDown(() => root.deleteSync(recursive: true));
@@ -673,55 +729,28 @@ void main() {
     },
   );
 
-  test(
-    'rejects existing conflicting service registration without mutation',
-    () async {
-      final root = _projectRoot(
-        app: _appContents().replaceFirst(
-          '    // @stacked-service',
-          '    Singleton(classType: AuthSessionService),\n'
-              '    // @stacked-service',
-        ),
-      );
-      addTearDown(() => root.deleteSync(recursive: true));
-      _writeService(root, 'auth_session');
-      final before = _appFile(root).readAsStringSync();
-      final service = RegisterServiceService();
+  test('rejects an existing registration for the same class under a '
+      'different lifecycle', () async {
+    final root = _projectRoot(
+      app: _appContents().replaceFirst(
+        '  // @cuboid-service',
+        '  locator.registerSingleton<AuthSessionService>(AuthSessionService());\n'
+            '  // @cuboid-service',
+      ),
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    _writeService(root, 'auth_session');
+    final before = _appFile(root).readAsStringSync();
+    final service = RegisterServiceService();
 
-      await expectLater(
-        service.register(
-          RegisterServiceInput(name: 'auth-session', projectRoot: root),
-        ),
-        throwsA(isA<RegisterServiceException>()),
-      );
-      expect(_appFile(root).readAsStringSync(), before);
-    },
-  );
-
-  test(
-    'rejects existing conflicting service registration with colon whitespace',
-    () async {
-      final root = _projectRoot(
-        app: _appContents().replaceFirst(
-          '    // @stacked-service',
-          '    Singleton(classType : AuthSessionService),\n'
-              '    // @stacked-service',
-        ),
-      );
-      addTearDown(() => root.deleteSync(recursive: true));
-      _writeService(root, 'auth_session');
-      final before = _appFile(root).readAsStringSync();
-      final service = RegisterServiceService();
-
-      await expectLater(
-        service.register(
-          RegisterServiceInput(name: 'auth-session', projectRoot: root),
-        ),
-        throwsA(isA<RegisterServiceException>()),
-      );
-      expect(_appFile(root).readAsStringSync(), before);
-    },
-  );
+    await expectLater(
+      service.register(
+        RegisterServiceInput(name: 'auth-session', projectRoot: root),
+      ),
+      throwsA(isA<RegisterServiceException>()),
+    );
+    expect(_appFile(root).readAsStringSync(), before);
+  });
 
   test('preserves CRLF line endings around inserted registrations', () async {
     final root = _projectRoot(app: _appContents().replaceAll('\n', '\r\n'));
@@ -738,14 +767,14 @@ void main() {
       app,
       contains(
         "import 'package:test_app/core/services/auth_session_service.dart';\r\n"
-        '// @stacked-import',
+        '// @cuboid-import',
       ),
     );
     expect(
       app,
       contains(
-        '    LazySingleton(classType: AuthSessionService),\r\n'
-        '    // @stacked-service',
+        '  locator.registerLazySingleton<AuthSessionService>(() => AuthSessionService());\r\n'
+        '  // @cuboid-service',
       ),
     );
   });
@@ -753,13 +782,11 @@ void main() {
   test('supports markers at file boundaries', () async {
     final root = _projectRoot(
       app: '''
-// @stacked-import
-@StackedApp(
-  dependencies: [
-    // @stacked-service
-  ],
-)
-class App {}
+// @cuboid-import
+
+Future<void> setupLocator() async {
+  // @cuboid-service
+}
 ''',
     );
     addTearDown(() => root.deleteSync(recursive: true));
@@ -772,20 +799,25 @@ class App {}
 
     final app = _appFile(root).readAsStringSync();
     expect(app, startsWith("import 'package:test_app/core/services/auth"));
-    expect(app, contains('    LazySingleton(classType: AuthSessionService),'));
+    expect(
+      app,
+      contains(
+        'registerLazySingleton<AuthSessionService>(() => AuthSessionService())',
+      ),
+    );
   });
 
-  test('only app.dart changes', () async {
+  test('only app.locator.dart changes', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     _writeService(root, 'auth_session');
     File(
-      '${root.path}/lib/app/app.locator.dart',
-    ).writeAsStringSync('// generated\n');
+      '${root.path}/lib/app/app.router.dart',
+    ).writeAsStringSync('// bystander\n');
     File('${root.path}/README.md').writeAsStringSync('keep\n');
     final beforeFiles = _relativeFiles(root);
-    final beforeLocator = File(
-      '${root.path}/lib/app/app.locator.dart',
+    final beforeRouter = File(
+      '${root.path}/lib/app/app.router.dart',
     ).readAsStringSync();
     final beforeReadme = File('${root.path}/README.md').readAsStringSync();
     final service = RegisterServiceService();
@@ -796,8 +828,8 @@ class App {}
 
     expect(_relativeFiles(root), beforeFiles);
     expect(
-      File('${root.path}/lib/app/app.locator.dart').readAsStringSync(),
-      beforeLocator,
+      File('${root.path}/lib/app/app.router.dart').readAsStringSync(),
+      beforeRouter,
     );
     expect(File('${root.path}/README.md').readAsStringSync(), beforeReadme);
   });
@@ -854,7 +886,7 @@ Directory _projectRoot({String pubspec = 'name: test_app\n', String? app}) {
   return root;
 }
 
-File _appFile(Directory root) => File('${root.path}/lib/app/app.dart');
+File _appFile(Directory root) => File('${root.path}/lib/app/app.locator.dart');
 
 void _writeService(Directory root, String serviceName) {
   final className = serviceName
@@ -868,17 +900,16 @@ void _writeService(Directory root, String serviceName) {
 
 String _appContents({String extra = ''}) {
   return '''
-import 'package:test_app/core/services/shell_service.dart';
-import 'package:stacked/stacked_annotations.dart';
-// @stacked-import
+import 'package:test_app/core/services/analytics_service.dart';
+import 'package:get_it/get_it.dart';
+// @cuboid-import
 
-@StackedApp(
-$extra  dependencies: [
-    LazySingleton(classType: ShellService),
-    // @stacked-service
-  ],
-)
-class App {}
+final locator = GetIt.instance;
+
+Future<void> setupLocator() async {
+$extra  locator.registerLazySingleton<AnalyticsService>(() => AnalyticsService());
+  // @cuboid-service
+}
 ''';
 }
 

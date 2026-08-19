@@ -102,6 +102,7 @@ void main() {
     final values = BootstrapValues(
       displayName: 'Nemara Homes',
       dartProjectName: deriveProjectName('Nemara Homes'),
+      appClassName: deriveAppClassName('Nemara Homes'),
       packageIdentifier: 'com.cuboidllc.nemarahomes',
       storageNamespace: deriveProjectName('Nemara Homes'),
     );
@@ -113,10 +114,14 @@ void main() {
     expect(printed, contains('Dart:'));
     expect(printed, contains('Android:'));
     expect(printed, contains('iOS:'));
-    expect(printed, contains('Supabase:'));
     expect(printed, contains('Documentation:'));
-    expect(printed, contains('Generated files:'));
     expect(printed, contains('Manual configuration:'));
+  });
+
+  test('derives the app root class name from the display name', () {
+    expect(deriveAppClassName('Nemara Homes'), 'NemaraHomes');
+    expect(deriveAppClassName('my app'), 'MyApp');
+    expect(deriveAppClassName('hello world'), 'HelloWorld');
   });
 }
 
@@ -136,20 +141,18 @@ description: "Template for Cuboid Flutter projects"
   _writeFixture(root, 'lib/main.dart', '''
 import 'package:cuboid_flutter_template/app/app_root.dart';
 
-final error = StateError(
-  'Cuboid Flutter Template release build without Supabase config. '
-  'Build with --dart-define-from-file=env/prod.json.',
-);
+void main() {
+  runApp(const MyApp());
+}
+''');
+  _writeFixture(root, 'lib/app/app_root.dart', '''
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+}
 ''');
   _writeFixture(root, 'lib/core/constants/app_constants.dart', '''
 abstract final class AppConfig {
   static const appName = 'Cuboid Flutter Template';
-}
-''');
-  _writeFixture(root, 'lib/core/constants/storage_keys.dart', '''
-abstract final class StorageKeys {
-  static const supabaseSession = 'cuboid_flutter_template_supabase_session';
-  static const authStorageNamespace = 'cuboid_flutter_template_auth';
 }
 ''');
   _writeFixture(root, 'android/app/build.gradle.kts', '''
@@ -184,7 +187,6 @@ class MainActivity
 <plist>
 <dict>
 <string>Cuboid Flutter Template</string>
-<string>com.cuboidllc.cuboid_flutter_template</string>
 <string>Cuboid Flutter Template</string>
 </dict>
 </plist>
@@ -194,13 +196,10 @@ INFOPLIST_KEY_CFBundleDisplayName = "Cuboid Flutter Template";
 PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template;
 PRODUCT_BUNDLE_IDENTIFIER = com.cuboidllc.cuboid_flutter_template.RunnerTests;
 ''');
-  _writeFixture(root, 'supabase/config.toml', '''
-project_id = "Cuboid Flutter Template"
-additional_redirect_urls = ["com.cuboidllc.cuboid_flutter_template://auth-callback"]
-''');
   _writeFixture(root, 'README.md', '''
 # Cuboid Flutter Template
-Reusable Flutter + Stacked starter template for Cuboid applications.
+Reusable Flutter starter template for Cuboid applications, built on Cuboid's
+own MVVM, dependency injection, and routing.
 This repository is infrastructure for starting a new app. It is not a production
 domain application and does not contain application-specific business workflows,
 database schema, or repository/data layers.
@@ -212,7 +211,7 @@ database schema, or repository/data layers.
 Cuboid Flutter Template DEVELOPMENT AND AI AGENT RULES
 
 NAME-11. Use package:cuboid_flutter_template imports in handwritten Dart until a
-generated app is bootstrapped to a new package name. Generated files are exempt.
+generated app is bootstrapped to a new package name.
 ''');
   _writeFixture(root, '.vscode/launch.json', '''
 {"name":"Cuboid Flutter Template - Debug"},{"name":"Cuboid Flutter Template - Release"},{"name":"Cuboid Flutter Template - Profile"}

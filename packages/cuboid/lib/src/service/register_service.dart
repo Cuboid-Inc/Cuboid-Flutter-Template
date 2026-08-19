@@ -76,10 +76,11 @@ class RegisterServiceService {
       packageName: packageName,
       serviceClassName: serviceClassName,
       servicePath: servicePath,
-      appPath: 'lib/app/app.dart',
+      appPath: 'lib/app/app.locator.dart',
       importLine:
           "import 'package:$packageName/core/services/${serviceName}_service.dart';",
-      serviceLine: '    LazySingleton(classType: $serviceClassName),',
+      serviceLine:
+          '  locator.registerLazySingleton<$serviceClassName>(() => $serviceClassName());',
       dryRun: input.dryRun,
     );
   }
@@ -154,7 +155,7 @@ String _validateTargets(
   RegisterServicePlan plan,
   File appFile,
 ) {
-  _ensureRegularFile(appFile.path, 'lib/app/app.dart');
+  _ensureRegularFile(appFile.path, 'lib/app/app.locator.dart');
   _ensureRegularFile(
     '${projectRoot.path}${Platform.pathSeparator}'
     '${plan.servicePath.replaceAll('/', Platform.pathSeparator)}',
@@ -170,7 +171,7 @@ String _validateCreateTargets(
   File appFile,
   File serviceFile,
 ) {
-  _ensureRegularFile(appFile.path, 'lib/app/app.dart');
+  _ensureRegularFile(appFile.path, 'lib/app/app.locator.dart');
   _validateNoAncestorSymlinks(projectRoot, serviceFile.parent);
   if (File(serviceFile.path).existsSync() ||
       Directory(serviceFile.path).existsSync() ||
@@ -189,12 +190,12 @@ String _validateAppRegistration(RegisterServicePlan plan, File appFile) {
     contents = appFile.readAsStringSync();
   } on FileSystemException catch (error) {
     throw RegisterServiceException(
-      'Unable to read lib/app/app.dart: ${error.message}',
+      'Unable to read lib/app/app.locator.dart: ${error.message}',
     );
   }
 
-  _requireSingleMarker(contents, '// @stacked-import');
-  _requireSingleMarker(contents, '// @stacked-service');
+  _requireSingleMarker(contents, '// @cuboid-import');
+  _requireSingleMarker(contents, '// @cuboid-service');
   if (_hasMatchingImport(contents, plan)) {
     throw RegisterServiceException(
       'Service import already exists for ${plan.serviceClassName}.',
@@ -279,8 +280,11 @@ List<String> _serviceImports(String contents, RegisterServicePlan plan) {
 }
 
 bool _hasServiceRegistration(String contents, RegisterServicePlan plan) {
+  // Matches any locator.register*<ClassName> call, not just
+  // registerLazySingleton, so an existing registration under a different
+  // lifecycle still counts as a conflict.
   final pattern = RegExp(
-    r'classType\s*:\s*' + RegExp.escape(plan.serviceClassName) + r'\b',
+    r'register\w*\s*<\s*' + RegExp.escape(plan.serviceClassName) + r'\s*>',
   );
   return pattern.hasMatch(contents);
 }
@@ -289,12 +293,12 @@ String _applyPlan(String contents, RegisterServicePlan plan) {
   final lineEnding = contents.contains('\r\n') ? '\r\n' : '\n';
   return contents
       .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-import', multiLine: true),
-        '${plan.importLine}$lineEnding// @stacked-import',
+        RegExp(r'^[ \t]*// @cuboid-import', multiLine: true),
+        '${plan.importLine}$lineEnding// @cuboid-import',
       )
       .replaceFirst(
-        RegExp(r'^[ \t]*// @stacked-service', multiLine: true),
-        '${plan.serviceLine}$lineEnding    // @stacked-service',
+        RegExp(r'^[ \t]*// @cuboid-service', multiLine: true),
+        '${plan.serviceLine}$lineEnding  // @cuboid-service',
       );
 }
 
@@ -304,7 +308,7 @@ void _replaceFileContents(File file, String contents) {
     temp = file.parent.createTempSync('.cuboid-service-');
   } on FileSystemException catch (error) {
     throw RegisterServiceException(
-      'Unable to update lib/app/app.dart: ${error.message}',
+      'Unable to update lib/app/app.locator.dart: ${error.message}',
     );
   }
   final tempFile = File(
@@ -315,7 +319,7 @@ void _replaceFileContents(File file, String contents) {
     tempFile.renameSync(file.path);
   } on FileSystemException catch (error) {
     throw RegisterServiceException(
-      'Unable to update lib/app/app.dart: ${error.message}',
+      'Unable to update lib/app/app.locator.dart: ${error.message}',
     );
   } finally {
     try {
