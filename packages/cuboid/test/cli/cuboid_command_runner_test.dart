@@ -1138,6 +1138,7 @@ void main() {
     expect(output.content, contains('Dry run: no files were written.'));
     expect(output.content, contains('Storage: LocalStorage'));
     expect(output.content, contains('- lib/core/storage/local_storage.dart'));
+    expect(output.content, contains('- lib/core/storage/cache_entry.dart'));
     expect(errorOutput.content, isEmpty);
     expect(_relativeFiles(temp), beforeFiles);
   });
@@ -1162,6 +1163,7 @@ void main() {
     expect(exitCode, 0);
     expect(output.content, contains('Created storage LocalStorage.'));
     expect(output.content, contains('- lib/core/storage/local_storage.dart'));
+    expect(output.content, contains('- lib/core/storage/cache_entry.dart'));
     expect(errorOutput.content, isEmpty);
     final storage = File(
       '${temp.path}/lib/core/storage/local_storage.dart',
@@ -1173,6 +1175,16 @@ void main() {
       ),
     );
     expect(storage, contains('class LocalStorage {'));
+
+    final cacheEntry = File(
+      '${temp.path}/lib/core/storage/cache_entry.dart',
+    ).readAsStringSync();
+    expect(
+      cacheEntry,
+      contains("import 'package:my_app/core/errors/result.dart';"),
+    );
+    expect(cacheEntry, contains('class CacheEntry<T> {'));
+    expect(cacheEntry, contains('mixin RepositoryCacheMixin {'));
   });
 
   test('create storage rejects a storage name argument', () async {
@@ -2245,6 +2257,9 @@ void main() {
           (executable, arguments, {required workingDirectory}) async {
             return ProcessResult(0, 0, '', '');
           },
+      runtimePackageCacheDirectory: Directory(
+        '${temp.path}/.cuboid-home/packages/cuboid_flutter',
+      ),
     );
     final runner = CuboidCommandRunner(
       stdout: output,

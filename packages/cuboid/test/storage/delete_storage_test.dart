@@ -19,10 +19,39 @@ void main() {
       File('${root.path}/lib/core/storage/local_storage.dart').existsSync(),
       isFalse,
     );
+    expect(
+      File('${root.path}/lib/core/storage/cache_entry.dart').existsSync(),
+      isFalse,
+    );
     expect(Directory('${root.path}/lib/core/storage').existsSync(), isFalse);
     // lib/core/ holds other things and must survive.
     expect(Directory('${root.path}/lib/core').existsSync(), isTrue);
   });
+
+  test(
+    'tolerates a project whose cache entry file was already removed',
+    () async {
+      final root = _projectRoot();
+      addTearDown(() => root.deleteSync(recursive: true));
+      await CreateStorageService().create(
+        CreateStorageInput(projectRoot: root),
+      );
+      File(
+        '${root.path}/lib/core/storage/cache_entry.dart',
+      ).deleteSync();
+
+      final result = await DeleteStorageService().delete(
+        DeleteStorageInput(projectRoot: root),
+      );
+
+      expect(result.plan.className, 'LocalStorage');
+      expect(
+        File('${root.path}/lib/core/storage/local_storage.dart').existsSync(),
+        isFalse,
+      );
+      expect(Directory('${root.path}/lib/core/storage').existsSync(), isFalse);
+    },
+  );
 
   test('deleting storage twice fails safely without corruption', () async {
     final root = _projectRoot();
@@ -49,6 +78,10 @@ void main() {
     expect(result.plan.dryRun, isTrue);
     expect(
       File('${root.path}/lib/core/storage/local_storage.dart').existsSync(),
+      isTrue,
+    );
+    expect(
+      File('${root.path}/lib/core/storage/cache_entry.dart').existsSync(),
       isTrue,
     );
   });

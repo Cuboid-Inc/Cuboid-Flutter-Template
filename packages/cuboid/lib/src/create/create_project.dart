@@ -7,6 +7,20 @@ import 'package:cuboid/src/templates/flutter_app/template_payload.g.dart'
 import 'package:cuboid/src/templates/flutter_app/template_sync.dart'
     as template;
 
+/// The runtime package is embedded in the same bundled payload as the app
+/// template (see `template_sync.dart`), but files under this prefix are
+/// never written into a generated project. Instead they are installed into
+/// [resolveCuboidFlutterRuntimeDirectory] -- a machine-global cache outside
+/// any generated project -- and the generated `pubspec.yaml` is rewritten to
+/// depend on that location. This keeps the `packages/cuboid_flutter` source
+/// tree (a Cuboid implementation detail) out of every generated app's
+/// visible filesystem while still resolving `package:cuboid_flutter/...`
+/// through an ordinary `path:` dependency.
+const _cuboidFlutterArchivePrefix = 'packages/cuboid_flutter/';
+const _cuboidFlutterPackageName = 'cuboid_flutter';
+const _cuboidFlutterDependencyOldBlock =
+    '  cuboid_flutter:\n    path: packages/cuboid_flutter';
+
 class CreateProjectInput {
   const CreateProjectInput({
     required this.displayName,
@@ -97,10 +111,24 @@ typedef ProcessRunner =
     });
 
 class CreateProjectService {
-  CreateProjectService({ProcessRunner? processRunner})
-    : _processRunner = processRunner ?? _defaultProcessRunner;
+  CreateProjectService({
+    ProcessRunner? processRunner,
+    Directory? runtimePackageCacheDirectory,
+  }) : _processRunner = processRunner ?? _defaultProcessRunner,
+       _explicitRuntimePackageCacheDirectory = runtimePackageCacheDirectory;
 
   final ProcessRunner _processRunner;
+  final Directory? _explicitRuntimePackageCacheDirectory;
+
+  /// Resolved lazily (rather than at construction) so constructing a
+  /// [CreateProjectService] never fails just because `$HOME`/`%LOCALAPPDATA%`
+  /// is unset in an environment that never ends up calling [create].
+  Directory get _runtimePackageCacheDirectory =>
+      _explicitRuntimePackageCacheDirectory ??
+      resolveCuboidFlutterRuntimeDirectory(
+        environment: Platform.environment,
+        isWindows: Platform.isWindows,
+      );
 
   Future<CreateProjectPlan> plan(CreateProjectInput input) async {
     final values = deriveBootstrapValues(
@@ -143,7 +171,14 @@ class CreateProjectService {
     var completed = false;
     try {
       final payload = await _loadBundledTemplatePayload();
-      _extractTemplate(payload, staging);
+      final appFiles = payload.files
+          .where((file) => !file.path.startsWith(_cuboidFlutterArchivePrefix))
+          .toList();
+      final runtimeFiles = payload.files
+          .where((file) => file.path.startsWith(_cuboidFlutterArchivePrefix))
+          .toList();
+      _extractTemplate(appFiles, staging);
+      _installRuntimePackage(runtimeFiles, _runtimePackageCacheDirectory);
 
       final bootstrapPlan = planBootstrap(staging, createPlan.values);
       final bootstrapValidation = validateBootstrapPlan(staging, bootstrapPlan);
@@ -156,6 +191,7 @@ class CreateProjectService {
         );
       }
       final bootstrapResult = applyBootstrapPlan(staging, bootstrapPlan);
+      _linkCuboidFlutterDependency(staging, _runtimePackageCacheDirectory);
 
       final postStepResults = <PostStepResult>[];
       for (final step in createPlan.postSteps) {
@@ -357,8 +393,11 @@ bool _sameStrings(List<String> left, List<String> right) {
   return true;
 }
 
-void _extractTemplate(_TemplatePayload payload, Directory destination) {
-  for (final file in payload.files) {
+void _extractTemplate(
+  List<template.ExtractedTemplateFile> files,
+  Directory destination,
+) {
+  for (final file in files) {
     _rejectUnsafeArchivePath(file.path);
     final output = File(
       '${destination.path}${Platform.pathSeparator}${file.path.replaceAll('/', Platform.pathSeparator)}',
@@ -372,6 +411,97 @@ void _extractTemplate(_TemplatePayload payload, Directory destination) {
       );
     }
   }
+}
+
+/// Installs the embedded `cuboid_flutter` runtime package into
+/// [cacheDirectory], replacing any previous contents so the cache always
+/// matches the version bundled with the currently running CLI.
+void _installRuntimePackage(
+  List<template.ExtractedTemplateFile> files,
+  Directory cacheDirectory,
+) {
+  try {
+    if (cacheDirectory.existsSync()) {
+      cacheDirectory.deleteSync(recursive: true);
+    }
+    for (final file in files) {
+      _rejectUnsafeArchivePath(file.path);
+      final relativePath = file.path.substring(
+        _cuboidFlutterArchivePrefix.length,
+      );
+      final output = File(
+        '${cacheDirectory.path}${Platform.pathSeparator}'
+        '${relativePath.replaceAll('/', Platform.pathSeparator)}',
+      );
+      output.parent.createSync(recursive: true);
+      output.writeAsBytesSync(file.bytes);
+    }
+  } on FileSystemException catch (error) {
+    throw CreateProjectException(
+      'Unable to install the $_cuboidFlutterPackageName runtime package at '
+      '${cacheDirectory.path}: ${error.message}',
+    );
+  }
+}
+
+/// Rewrites the generated project's `pubspec.yaml` so its `cuboid_flutter`
+/// dependency resolves to [runtimeDirectory] -- the machine-global cache the
+/// runtime package was installed into -- instead of the in-repo
+/// `packages/cuboid_flutter` path that no longer exists in the generated
+/// project.
+void _linkCuboidFlutterDependency(
+  Directory staging,
+  Directory runtimeDirectory,
+) {
+  final pubspec = File('${staging.path}${Platform.pathSeparator}pubspec.yaml');
+  final content = pubspec.readAsStringSync();
+  final runtimePath = runtimeDirectory.absolute.path.replaceAll(
+    Platform.pathSeparator,
+    '/',
+  );
+  final updated = replaceExactInContent(
+    content,
+    _cuboidFlutterDependencyOldBlock,
+    '  cuboid_flutter:\n    path: $runtimePath',
+    context: 'pubspec.yaml ($_cuboidFlutterPackageName dependency path)',
+  );
+  pubspec.writeAsStringSync(updated);
+}
+
+/// Resolves the machine-global directory the embedded `cuboid_flutter`
+/// runtime package source is installed into, mirroring how
+/// [resolvePubCacheBinDirectory] in `install_cuboid.dart` resolves a
+/// per-machine location outside any single project checkout.
+Directory resolveCuboidFlutterRuntimeDirectory({
+  required Map<String, String> environment,
+  required bool isWindows,
+}) {
+  final override = environment['CUBOID_HOME'];
+  if (override != null && override.trim().isNotEmpty) {
+    return Directory(
+      '$override${Platform.pathSeparator}packages${Platform.pathSeparator}$_cuboidFlutterPackageName',
+    );
+  }
+
+  if (isWindows) {
+    final localAppData = environment['LOCALAPPDATA'];
+    if (localAppData == null || localAppData.trim().isEmpty) {
+      throw const CreateProjectException(
+        'Unable to resolve the Cuboid home directory: %LOCALAPPDATA% is not set.',
+      );
+    }
+    return Directory(
+      '$localAppData\\Cuboid\\packages\\$_cuboidFlutterPackageName',
+    );
+  }
+
+  final home = environment['HOME'];
+  if (home == null || home.trim().isEmpty) {
+    throw const CreateProjectException(
+      'Unable to resolve the Cuboid home directory: \$HOME is not set.',
+    );
+  }
+  return Directory('$home/.cuboid/packages/$_cuboidFlutterPackageName');
 }
 
 void _rejectUnsafeArchivePath(String path) {

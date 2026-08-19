@@ -13,6 +13,7 @@ void main() {
 
     expect(result.plan.className, 'LocalStorage');
     expect(result.plan.path, 'lib/core/storage/local_storage.dart');
+    expect(result.plan.cacheEntryPath, 'lib/core/storage/cache_entry.dart');
 
     final contents = File(
       '${root.path}/lib/core/storage/local_storage.dart',
@@ -33,6 +34,26 @@ void main() {
     expect(contents, contains('Future<void> delete(String key)'));
     expect(contents, contains('Future<bool> containsKey(String key)'));
     expect(contents, contains('Future<void> clear()'));
+  });
+
+  test('creates a cache entry helper alongside local storage', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final service = CreateStorageService();
+
+    await service.create(CreateStorageInput(projectRoot: root));
+
+    final contents = File(
+      '${root.path}/lib/core/storage/cache_entry.dart',
+    ).readAsStringSync();
+    expect(
+      contents,
+      contains("import 'package:test_app/core/errors/result.dart';"),
+    );
+    expect(contents, contains('class CacheEntry<T> {'));
+    expect(contents, contains('mixin RepositoryCacheMixin {'));
+    expect(contents, contains('factory CacheEntry.now(T value)'));
+    expect(contents, contains('bool isFresh([Duration? ttl])'));
   });
 
   test('dry-run validates and writes nothing', () async {
@@ -82,6 +103,31 @@ void main() {
     expect(target.readAsStringSync(), 'keep\n');
   });
 
+  test('does not overwrite an existing cache entry file', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final target = File('${root.path}/lib/core/storage/cache_entry.dart')
+      ..parent.createSync(recursive: true)
+      ..writeAsStringSync('keep\n');
+    final service = CreateStorageService();
+
+    await expectLater(
+      service.create(CreateStorageInput(projectRoot: root)),
+      throwsA(
+        isA<CreateStorageException>().having(
+          (error) => error.message,
+          'message',
+          'Target already exists: lib/core/storage/cache_entry.dart',
+        ),
+      ),
+    );
+    expect(target.readAsStringSync(), 'keep\n');
+    expect(
+      File('${root.path}/lib/core/storage/local_storage.dart').existsSync(),
+      isFalse,
+    );
+  });
+
   test('rejects symlink ancestors', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
@@ -110,18 +156,47 @@ void main() {
     expect(appFile.readAsStringSync(), 'app registration\n');
     expect(_relativeFiles(root), [
       'lib/app/app.dart',
+      'lib/core/storage/cache_entry.dart',
       'lib/core/storage/local_storage.dart',
       'pubspec.yaml',
     ]);
   });
 
-  test('rolls back and creates no directory when the write fails', () async {
+  test('rolls back and creates no directory when the first write fails', () async {
     final root = _projectRoot();
     addTearDown(() => root.deleteSync(recursive: true));
     final beforeFiles = _relativeFiles(root);
     final service = CreateStorageService(
       fileWriter: (file, contents) {
         throw const FileSystemException('simulated write failure');
+      },
+    );
+
+    await expectLater(
+      service.create(CreateStorageInput(projectRoot: root)),
+      throwsA(
+        isA<CreateStorageException>().having(
+          (error) => error.message,
+          'message',
+          contains('Unable to create storage LocalStorage'),
+        ),
+      ),
+    );
+
+    expect(_relativeFiles(root), beforeFiles);
+    expect(Directory('${root.path}/lib/core/storage').existsSync(), isFalse);
+  });
+
+  test('rolls back the first file when the second write fails', () async {
+    final root = _projectRoot();
+    addTearDown(() => root.deleteSync(recursive: true));
+    final beforeFiles = _relativeFiles(root);
+    final service = CreateStorageService(
+      fileWriter: (file, contents) {
+        if (file.path.endsWith('cache_entry.dart')) {
+          throw const FileSystemException('simulated write failure');
+        }
+        file.writeAsStringSync(contents);
       },
     );
 

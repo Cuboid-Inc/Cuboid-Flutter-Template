@@ -1,9 +1,12 @@
 import 'dart:io';
 
+import 'package:cuboid/src/bootstrap/bootstrap.dart' show dartKeywords;
+
 typedef StorageFileWriter = void Function(File file, String contents);
 
 const _storagePath = 'lib/core/storage/local_storage.dart';
 const _storageClassName = 'LocalStorage';
+const _cacheEntryPath = 'lib/core/storage/cache_entry.dart';
 
 class CreateStorageInput {
   const CreateStorageInput({this.projectRoot, this.dryRun = false});
@@ -16,11 +19,15 @@ class CreateStoragePlan {
   const CreateStoragePlan({
     required this.className,
     required this.path,
+    required this.cacheEntryPath,
+    required this.packageName,
     required this.dryRun,
   });
 
   final String className;
   final String path;
+  final String cacheEntryPath;
+  final String packageName;
   final bool dryRun;
 }
 
@@ -49,10 +56,13 @@ class CreateStorageService {
   Future<CreateStoragePlan> plan(CreateStorageInput input) async {
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     _ensureProjectRoot(projectRoot);
+    final packageName = _readPackageName(projectRoot);
 
     return CreateStoragePlan(
       className: _storageClassName,
       path: _storagePath,
+      cacheEntryPath: _cacheEntryPath,
+      packageName: packageName,
       dryRun: input.dryRun,
     );
   }
@@ -61,14 +71,16 @@ class CreateStorageService {
     final createPlan = await plan(input);
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     final storageFile = _targetFile(projectRoot, createPlan.path);
+    final cacheEntryFile = _targetFile(projectRoot, createPlan.cacheEntryPath);
 
-    _validateTarget(projectRoot, createPlan, storageFile);
+    _validateTarget(projectRoot, createPlan, storageFile, cacheEntryFile);
 
     if (createPlan.dryRun) {
       return CreateStorageResult(plan: createPlan);
     }
 
     final createdDirectories = <Directory>[];
+    final createdFiles = <File>[];
     try {
       _createParentDirectories(
         projectRoot,
@@ -76,14 +88,17 @@ class CreateStorageService {
         createdDirectories,
       );
       _fileWriter(storageFile, _storageContents(createPlan));
+      createdFiles.add(storageFile);
+      _fileWriter(cacheEntryFile, _cacheEntryContents(createPlan));
+      createdFiles.add(cacheEntryFile);
     } on FileSystemException catch (error) {
-      _rollback(storageFile, createdDirectories);
+      _rollback(createdFiles, createdDirectories);
       throw CreateStorageException(
         'Unable to create storage ${createPlan.className}: '
         '${error.message}',
       );
     } catch (error) {
-      _rollback(storageFile, createdDirectories);
+      _rollback(createdFiles, createdDirectories);
       throw CreateStorageException(
         'Unable to create storage ${createPlan.className}: $error',
       );
@@ -97,13 +112,19 @@ void _validateTarget(
   Directory projectRoot,
   CreateStoragePlan plan,
   File storageFile,
+  File cacheEntryFile,
 ) {
   _validateNoAncestorSymlinks(projectRoot);
 
-  if (storageFile.existsSync() ||
-      Directory(storageFile.path).existsSync() ||
-      Link(storageFile.path).existsSync()) {
-    throw CreateStorageException('Target already exists: ${plan.path}');
+  for (final MapEntry(key: file, value: path) in {
+    storageFile: plan.path,
+    cacheEntryFile: plan.cacheEntryPath,
+  }.entries) {
+    if (file.existsSync() ||
+        Directory(file.path).existsSync() ||
+        Link(file.path).existsSync()) {
+      throw CreateStorageException('Target already exists: $path');
+    }
   }
 }
 
@@ -132,6 +153,38 @@ void _ensureProjectRoot(Directory projectRoot) {
   }
 }
 
+String _readPackageName(Directory projectRoot) {
+  final pubspec = File(
+    '${projectRoot.path}${Platform.pathSeparator}pubspec.yaml',
+  );
+  final String contents;
+  try {
+    contents = pubspec.readAsStringSync();
+  } on FileSystemException catch (error) {
+    throw CreateStorageException(
+      'Unable to read pubspec.yaml: ${error.message}',
+    );
+  }
+
+  final match = RegExp(
+    r'''^\s*name:\s*(?:"([A-Za-z_][A-Za-z0-9_]*)"|'([A-Za-z_][A-Za-z0-9_]*)'|([A-Za-z_][A-Za-z0-9_]*))\s*(?:#.*)?$''',
+    multiLine: true,
+  ).firstMatch(contents);
+  if (match == null) {
+    throw const CreateStorageException(
+      'pubspec.yaml must contain a valid Dart package name.',
+    );
+  }
+
+  final packageName = match.group(1) ?? match.group(2) ?? match.group(3)!;
+  if (dartKeywords.contains(packageName)) {
+    throw const CreateStorageException(
+      'pubspec.yaml package name must not be a Dart keyword.',
+    );
+  }
+  return packageName;
+}
+
 File _targetFile(Directory projectRoot, String path) {
   return File(
     '${projectRoot.path}${Platform.pathSeparator}'
@@ -155,13 +208,15 @@ void _createParentDirectories(
   createdDirectories.addAll(missing);
 }
 
-void _rollback(File storageFile, List<Directory> createdDirectories) {
-  try {
-    if (storageFile.existsSync()) {
-      storageFile.deleteSync();
+void _rollback(List<File> createdFiles, List<Directory> createdDirectories) {
+  for (final file in createdFiles) {
+    try {
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+    } on FileSystemException {
+      // Best-effort cleanup; preserve the original creation failure.
     }
-  } on FileSystemException {
-    // Best-effort cleanup; preserve the original creation failure.
   }
 
   final directories = createdDirectories.toSet().toList()
@@ -203,6 +258,44 @@ class ${plan.className} {
   Future<bool> containsKey(String key) => _storage.containsKey(key: key);
 
   Future<void> clear() => _storage.deleteAll();
+}
+''';
+}
+
+String _cacheEntryContents(CreateStoragePlan plan) {
+  return '''
+import 'package:${plan.packageName}/core/errors/result.dart';
+
+/// A generic in-memory cache entry with TTL support.
+class CacheEntry<T> {
+  final T value;
+  final DateTime storedAt;
+  static const Duration defaultTtl = Duration(minutes: 1);
+
+  const CacheEntry({required this.value, required this.storedAt});
+  factory CacheEntry.now(T value) =>
+      CacheEntry(value: value, storedAt: DateTime.now());
+
+  bool isFresh([Duration? ttl]) =>
+      DateTime.now().difference(storedAt) <= (ttl ?? defaultTtl);
+}
+
+mixin RepositoryCacheMixin {
+  Future<Result<T>> cached<T extends Object>(
+    Map<String, CacheEntry<Object>> cache,
+    String key,
+    Future<Result<T>> Function() load,
+  ) async {
+    final entry = cache[key];
+    if (entry?.isFresh() ?? false) return Success(entry!.value as T);
+    final result = await load();
+    if (result case Success<T>(:final value)) {
+      cache[key] = CacheEntry<Object>.now(value);
+    }
+    return result;
+  }
+
+  void clearCache<T>(Map<String, CacheEntry<T>> cache) => cache.clear();
 }
 ''';
 }

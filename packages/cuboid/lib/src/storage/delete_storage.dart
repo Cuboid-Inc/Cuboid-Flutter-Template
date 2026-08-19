@@ -4,6 +4,7 @@ import 'package:cuboid/src/edit/generated_edits.dart';
 
 const _storagePath = 'lib/core/storage/local_storage.dart';
 const _storageClassName = 'LocalStorage';
+const _cacheEntryPath = 'lib/core/storage/cache_entry.dart';
 
 class DeleteStorageInput {
   const DeleteStorageInput({this.projectRoot, this.dryRun = false});
@@ -16,11 +17,13 @@ class DeleteStoragePlan {
   const DeleteStoragePlan({
     required this.className,
     required this.path,
+    required this.cacheEntryPath,
     required this.dryRun,
   });
 
   final String className;
   final String path;
+  final String cacheEntryPath;
   final bool dryRun;
 }
 
@@ -47,6 +50,7 @@ class DeleteStorageService {
     return DeleteStoragePlan(
       className: _storageClassName,
       path: _storagePath,
+      cacheEntryPath: _cacheEntryPath,
       dryRun: input.dryRun,
     );
   }
@@ -55,6 +59,7 @@ class DeleteStorageService {
     final deletePlan = await plan(input);
     final projectRoot = (input.projectRoot ?? Directory.current).absolute;
     final storageFile = targetFile(projectRoot, deletePlan.path);
+    final cacheEntryFile = targetFile(projectRoot, deletePlan.cacheEntryPath);
 
     if (!isRegularFile(storageFile.path)) {
       throw const DeleteStorageException('No local storage found.');
@@ -66,6 +71,9 @@ class DeleteStorageService {
 
     try {
       storageFile.deleteSync();
+      if (isRegularFile(cacheEntryFile.path)) {
+        cacheEntryFile.deleteSync();
+      }
       pruneEmptyDirectories(
         targetDirectory(projectRoot, 'lib/core/storage'),
         stopAt: projectRoot,

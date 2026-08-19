@@ -1058,6 +1058,7 @@ void writeStorageDeleteResult(IOSink stdout, DeleteStorageResult result) {
   }
   stdout.writeln('Removed:');
   stdout.writeln('- ${plan.path}');
+  stdout.writeln('- ${plan.cacheEntryPath}');
 }
 
 void writeDatabaseDeleteResult(IOSink stdout, DeleteDatabaseResult result) {
@@ -1279,6 +1280,7 @@ void writeStorageResult(IOSink stdout, CreateStorageResult result) {
   }
   stdout.writeln('Files:');
   stdout.writeln('- ${plan.path}');
+  stdout.writeln('- ${plan.cacheEntryPath}');
 }
 
 void writeDatabaseResult(IOSink stdout, CreateDatabaseResult result) {
