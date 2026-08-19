@@ -12,10 +12,12 @@ dependencies:
   flutter:
     sdk: flutter
 
+  cuboid_flutter:
+    path: packages/cuboid_flutter
+
   cupertino_icons: ^1.0.9
-  stacked: ^3.5.0
-  stacked_services: ^1.6.0
-  supabase_flutter: ^2.16.0
+  get_it: ^8.2.0
+  logger: ^2.6.1
   google_fonts: ^8.1.0
   intl: ^0.20.3
   path_provider: ^2.1.6
@@ -28,8 +30,6 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
-  build_runner: ^2.15.1
-  stacked_generator: ^2.0.4
   mocktail: ^1.0.5
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.7

@@ -130,25 +130,29 @@ ARCH-18. Do not add one-line pass-through UseCases.
 ARCH-19. Add a reactive service only when at least two features need the same
 live state.
 
-ARCH-20. Register routes, services, repositories, sheets, and dialogs in
-lib/app/app.dart.
+ARCH-20. Register services and repositories in lib/app/app.locator.dart;
+register routes in lib/app/app.router.dart; register sheets and dialogs in
+lib/app/app.bottomsheets.dart and lib/app/app.dialogs.dart.
 
-ARCH-21. Regenerate Stacked files after a registration change. Never edit
-generated files by hand.
+ARCH-21. These files are plain Dart, not code-generated. Edit them directly,
+or let a `cuboid create <artifact>` command patch them idempotently. Never
+hand-edit the marker comments (`// @cuboid-import`, `// @cuboid-service`,
+`// @cuboid-route`, etc.) those commands rely on.
 
-5. GENERATED FILES
+5. LOCATOR, ROUTER, AND UI-REGISTRY FILES
 
-GEN-01. Treat lib/app/app.router.dart, app.locator.dart, app.logger.dart,
-app.dialogs.dart, and app.bottomsheets.dart as generated output when present.
+GEN-01. Treat lib/app/app.locator.dart, app.router.dart, app.bottomsheets.dart,
+and app.dialogs.dart as registration/wiring files only.
 
-GEN-02. Change lib/app/app.dart or the source annotation, then run dart run
-build_runner build -d.
+GEN-02. Change these files directly, or via the `cuboid create <artifact>`
+command that owns the registration. No build step is required afterward.
 
-GEN-03. Do not review generated file length as handwritten code debt.
+GEN-03. Do not review these files' length as handwritten code debt.
 
-GEN-04. Commit generated changes only when their source registration changed.
+GEN-04. Commit changes to these files only when their registration actually
+changed.
 
-GEN-05. Never place custom logic inside a generated file.
+GEN-05. Never place application business logic inside these files.
 
 6. DEPENDENCIES AND PACKAGES
 
@@ -171,8 +175,10 @@ API framework, or general service layer without an approved architecture change.
 DEP-06. Do not add a package for string helpers, collection helpers, validation
 wrappers, simple storage wrappers, or a small widget.
 
-DEP-07. Supabase may be used as an auth/backend SDK, but the template currently
-has no domain schema or active product migrations.
+DEP-07. Supabase may be introduced as an opt-in auth/backend SDK via `cuboid
+create database supabase` (see ARCHITECTURE.md §9); the base template does not
+include it by default and has no domain schema or active product migrations
+until a generated app adds one.
 
 DEP-08. Run flutter pub get after pubspec.yaml changes. Do not hand-edit
 pubspec.lock.
@@ -218,8 +224,9 @@ DATA-11. Repository caches must have explicit invalidation behavior on writes.
 
 ERR-01. Every fallible repository operation returns Result<T>.
 
-ERR-02. Wrap Supabase calls with shared backend guards such as
-lib/core/network/supabase_guard.dart.
+ERR-02. Wrap backend SDK calls with a shared guard (for example
+lib/core/network/supabase_guard.dart, added when a project introduces
+Supabase).
 
 ERR-03. No backend exception crosses a repository boundary.
 
@@ -312,7 +319,7 @@ misc, or utils when a precise name exists.
 NAME-10. Test names describe the behavior, condition, and expected result.
 
 NAME-11. Use package:cuboid_flutter_template imports in handwritten Dart until a
-generated app is bootstrapped to a new package name. Generated files are exempt.
+generated app is bootstrapped to a new package name.
 
 NAME-12. Group imports as Dart SDK, Flutter, third-party packages, then project
 packages.
@@ -444,9 +451,7 @@ where the flow needs each state.
 UI-12. Use direct action labels. Avoid vague labels such as Submit, Process, or
 Done.
 
-UI-13. Preserve bottom navigation state through the existing shell.
-
-UI-14. Do not introduce a new visual pattern when a shared project pattern
+UI-13. Do not introduce a new visual pattern when a shared project pattern
 covers the need.
 
 15. TESTING
@@ -485,7 +490,7 @@ diffs. Flutter tests are optional when no code changed.
 
 TEST-13. Never claim a check passed unless the command completed successfully.
 
-TEST-14. Reset changed Stacked locator registrations during test cleanup.
+TEST-14. Reset changed locator registrations during test cleanup.
 
 16. GIT AND FILE SAFETY
 
@@ -578,9 +583,6 @@ Run flutter analyze after Dart changes.
 
 Run the focused test during development, then run flutter test before code
 handoff.
-
-Run dart run build_runner build -d after registration changes in
-lib/app/app.dart.
 
 Run git diff --check and git diff --stat before handoff.
 
