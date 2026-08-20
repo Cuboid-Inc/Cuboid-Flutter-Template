@@ -1,8 +1,8 @@
 {
   "template_name": "cuboid_flutter_app",
   "template_version": 1,
-  "source_commit": "dd4a6e14515638f7fa878440009b6958ef68ac35",
-  "archive_sha256": "81d28e6999e29ac13f4f41327e12f7fadea3349c17ca0155901967fe2a427c75",
+  "source_commit": "dbee3b806c0a9a02ac6f2ee7687727131d1882dc",
+  "archive_sha256": "2bc6cb188d598c84adeeefe9e9a2fe8c71c6910ab10ea51bb34468c5a08abc8a",
   "files": [
     {
       "path": ".gitignore",
@@ -675,14 +675,24 @@
       "sha256": "6c05225876d832a86e95ece72a732a71eff869330413877c7a947f3eeafa464b"
     },
     {
+      "path": "packages/cuboid_flutter/CHANGELOG.md",
+      "size": 176,
+      "sha256": "c09a80b7ac056b6e3258db0d676583f37565cf0736aa8c3480805a5e0d20ba2b"
+    },
+    {
       "path": "packages/cuboid_flutter/LICENSE",
       "size": 1067,
       "sha256": "0a2334d29f58dda497137c4dd85d15e2b4b5d8dc5019d6efe2cb1226566d5f4a"
     },
     {
+      "path": "packages/cuboid_flutter/README.md",
+      "size": 1215,
+      "sha256": "0c7e9ca4fe10404fe6b49ad2cdd643d1a75c1f786808e86f3111c3d84843a854"
+    },
+    {
       "path": "packages/cuboid_flutter/analysis_options.yaml",
-      "size": 44,
-      "sha256": "c1e9534c05acb3643e72a82ad3d92d56d2ba9b0df2add014c18f7e1d462f24e4"
+      "size": 170,
+      "sha256": "f57abb82d8e4a5e5a8bf34849e4049a1d84eb25ec2f294c31c5410c426dde7c0"
     },
     {
       "path": "packages/cuboid_flutter/lib/cuboid_flutter.dart",
@@ -701,8 +711,8 @@
     },
     {
       "path": "packages/cuboid_flutter/pubspec.yaml",
-      "size": 378,
-      "sha256": "24924b818405ff292336dfaab0c43418790b649225380058bf8a2e58e614dc8c"
+      "size": 578,
+      "sha256": "9c674462f5a9f370f1fcea178ec79920d89968a21c3a5237b8fa9a4235b9c0ff"
     },
     {
       "path": "packages/cuboid_flutter/test/cuboid_view_model_test.dart",

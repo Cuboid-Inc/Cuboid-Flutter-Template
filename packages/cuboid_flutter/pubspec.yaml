@@ -1,11 +1,17 @@
 name: cuboid_flutter
-description: "Cuboid's in-house MVVM runtime for generated Flutter applications."
-publish_to: 'none' # Private framework package; vendored via a path dependency.
+description: Lightweight MVVM runtime for Cuboid-generated Flutter apps, providing CuboidView and CuboidViewModel.
 version: 0.1.0
+homepage: https://github.com/Cuboid-Inc/Cuboid-Flutter-Template
+repository: https://github.com/Cuboid-Inc/Cuboid-Flutter-Template
+issue_tracker: https://github.com/Cuboid-Inc/Cuboid-Flutter-Template/issues
+topics:
+  - flutter
+  - mvvm
+  - cuboid
 
 environment:
   sdk: ^3.11.5
-  flutter: ">=3.0.0"
+  flutter: ">=3.16.0"
 
 dependencies:
   flutter:
