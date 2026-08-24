@@ -1,3 +1,4 @@
+import 'package:cuboid_flutter/cuboid_flutter.dart';
 import 'package:flutter/material.dart';
 
 /// Navigates using a global [navigatorKey] so view models can request
@@ -12,7 +13,7 @@ import 'package:flutter/material.dart';
 ///   [Routes] name.
 /// * Direct-widget methods ([navigateToView], [replaceWithView],
 ///   [pushAndRemoveUntil], [clearStackAndShowView]) push a [Widget]
-///   instance directly via [MaterialPageRoute], for views that don't need a
+///   instance directly via [CuboidPageRoute], for views that don't need a
 ///   registered named route (or need constructor arguments `arguments:`
 ///   can't carry). Cuboid has no route code generation, so these are not
 ///   per-view generated methods the way Stacked's `navigateToLoginView()`
@@ -102,14 +103,14 @@ class NavigationService {
   /// [backTo] or [popUntil] can target it later).
   Future<T?> navigateToView<T>(Widget view, {RouteSettings? settings}) {
     return _navigator.push<T>(
-      MaterialPageRoute<T>(builder: (_) => view, settings: settings),
+      CuboidPageRoute<T>(builder: (_) => view, settings: settings),
     );
   }
 
   /// Replaces the current route with [view], pushed directly.
   Future<T?> replaceWithView<T, TO>(Widget view, {RouteSettings? settings}) {
     return _navigator.pushReplacement<T, TO>(
-      MaterialPageRoute<T>(builder: (_) => view, settings: settings),
+      CuboidPageRoute<T>(builder: (_) => view, settings: settings),
     );
   }
 
@@ -121,7 +122,7 @@ class NavigationService {
     RouteSettings? settings,
   }) {
     return _navigator.pushAndRemoveUntil<T>(
-      MaterialPageRoute<T>(builder: (_) => view, settings: settings),
+      CuboidPageRoute<T>(builder: (_) => view, settings: settings),
       predicate,
     );
   }

@@ -5,5 +5,7 @@
 /// inside its own `lib/` folder.
 library;
 
+export 'src/cuboid_page_route.dart';
 export 'src/cuboid_view.dart';
 export 'src/cuboid_view_model.dart';
+export 'src/swipe_back_configuration.dart';
