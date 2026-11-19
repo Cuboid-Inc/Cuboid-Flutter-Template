@@ -216,13 +216,20 @@ persistent feature data is added, repositories own backend access.
 
 ## 7. Services
 
-`lib/core/services/` ships one framework service in the base template --
+`lib/core/services/` ships three framework services in the base template:
 `NavigationService`, used by view models to navigate without holding a
-`BuildContext` (see [8](#8-navigation-locator-and-routing-files)). Beyond
-that, shared reactive services are appropriate only when multiple features
-require the same live application state. `cuboid create service <name>`
-scaffolds an app-level service alongside it in `lib/core/services/` and
-registers it (see [9](#9-cuboid-cli-command-contract)).
+`BuildContext` (see [8](#8-navigation-locator-and-routing-files));
+`MessageService`, its equivalent for snackbars (`showError`/`showSuccess`/
+`showInfo`/`showWarning`, styled via `lib/app/app.snackbars.dart`, shown
+through a global `scaffoldMessengerKey` the same way `NavigationService`
+uses a global `navigatorKey`); and `MediaUtils`
+(`lib/core/services/media_utils.dart`), a singleton (not locator-registered)
+wrapping `image_picker` and pushing `lib/shared/widgets/app_image_cropper.dart`
+for crop-on-pick flows. Beyond that, shared reactive services are
+appropriate only when multiple features require the same live application
+state. `cuboid create service <name>` scaffolds an app-level service
+alongside it in `lib/core/services/` and registers it (see
+[9](#9-cuboid-cli-command-contract)).
 
 Do not create services simply to wrap one method or one repository call.
 

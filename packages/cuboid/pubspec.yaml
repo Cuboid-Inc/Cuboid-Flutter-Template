@@ -2,7 +2,7 @@ name: cuboid
 description: >-
   Command-line tool for Cuboid Flutter projects: scaffold features, views,
   services, storage, and full apps from a built-in MVVM starter template.
-version: 0.1.0
+version: 0.2.0
 homepage: https://github.com/Cuboid-Inc/Cuboid-Flutter-Template
 repository: https://github.com/Cuboid-Inc/Cuboid-Flutter-Template
 issue_tracker: https://github.com/Cuboid-Inc/Cuboid-Flutter-Template/issues

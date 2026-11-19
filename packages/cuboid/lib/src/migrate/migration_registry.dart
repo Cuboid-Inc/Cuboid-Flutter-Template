@@ -14,12 +14,16 @@ library;
 
 import 'package:cuboid/src/architecture/architecture_version.dart';
 import 'package:cuboid/src/migrate/migration.dart';
+import 'package:cuboid/src/migrate/migrations/media_tools_migration.dart';
 import 'package:cuboid/src/migrate/migrations/navigation_cuboid_page_route_migration.dart';
 
 /// Every migration Cuboid currently ships, in no particular order --
 /// [resolveMigrationChain] does the ordering. Exactly one migration may
 /// exist per `sourceVersion` (enforced by [validateMigrationRegistry]).
-const migrationRegistry = <Migration>[NavigationCuboidPageRouteMigration()];
+const migrationRegistry = <Migration>[
+  NavigationCuboidPageRouteMigration(),
+  MediaToolsMigration(),
+];
 
 class MigrationChainException implements Exception {
   const MigrationChainException(this.message);

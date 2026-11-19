@@ -19,8 +19,21 @@ enum MigrationFileOutcome {
   /// rewritten to its "after" shape.
   modify,
 
+  /// The file does not exist yet and would be written in full from
+  /// [MigrationFileChange.newContents] -- a migration that *adds* a new
+  /// template-owned file (as opposed to rewriting an existing one) reports
+  /// this instead of [modify]. See
+  /// `migrate/migrations/media_tools_migration.dart`.
+  create,
+
   /// The file already matches the "after" shape -- nothing to do.
   alreadyCurrent,
+
+  /// A [create] migration's target file already exists. Never overwritten
+  /// -- this is the core safety guarantee of `cuboid upgrade`: an existing
+  /// file a user may have customized is always left untouched, and this is
+  /// reported to them rather than silently skipped.
+  skippedExisting,
 
   /// The file exists but matches neither the known "before" nor "after"
   /// shape closely enough to rewrite safely. Reported to the user; left
@@ -67,19 +80,38 @@ class MigrationAssessment {
   final List<MigrationFileChange> fileChanges;
 
   bool get hasChanges => fileChanges.any(
-    (change) => change.outcome == MigrationFileOutcome.modify,
+    (change) =>
+        change.outcome == MigrationFileOutcome.modify ||
+        change.outcome == MigrationFileOutcome.create,
   );
 
   bool get hasUnsafeFiles => fileChanges.any(
     (change) => change.outcome == MigrationFileOutcome.unsafeToMigrate,
   );
 
+  bool get hasSkippedFiles => fileChanges.any(
+    (change) => change.outcome == MigrationFileOutcome.skippedExisting,
+  );
+
+  /// Every file this migration would write -- both [MigrationFileOutcome.modify]
+  /// (rewritten in place) and [MigrationFileOutcome.create] (written for
+  /// the first time). [UpgradeService.apply] writes all of these the same
+  /// way; only the user-facing wording ("Added" vs. "Updated") differs.
   List<MigrationFileChange> get changes => fileChanges
-      .where((change) => change.outcome == MigrationFileOutcome.modify)
+      .where(
+        (change) =>
+            change.outcome == MigrationFileOutcome.modify ||
+            change.outcome == MigrationFileOutcome.create,
+      )
       .toList();
 
   List<MigrationFileChange> get unsafeFiles => fileChanges
       .where((change) => change.outcome == MigrationFileOutcome.unsafeToMigrate)
+      .toList();
+
+  /// Files a [create] migration left untouched because they already exist.
+  List<MigrationFileChange> get skippedFiles => fileChanges
+      .where((change) => change.outcome == MigrationFileOutcome.skippedExisting)
       .toList();
 }
 

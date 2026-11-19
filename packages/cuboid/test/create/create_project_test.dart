@@ -94,6 +94,22 @@ void main() {
     expect(result.bootstrapResult!.modifiedFiles, contains('pubspec.yaml'));
     expect(calls, ['flutter pub get', 'dart format .']);
 
+    // A freshly generated project already carries every current
+    // template-owned file -- `cuboid upgrade` is only for *existing*
+    // projects predating them (see `media_tools_migration_test.dart`).
+    for (final path in const [
+      'lib/app/app.snackbars.dart',
+      'lib/core/services/message_service.dart',
+      'lib/core/services/media_utils.dart',
+      'lib/shared/widgets/app_image_cropper.dart',
+    ]) {
+      expect(File('${destination.path}/$path').existsSync(), isTrue);
+    }
+    expect(
+      File('${destination.path}/pubspec.yaml').readAsStringSync(),
+      allOf(contains('image_picker:'), contains('crop_your_image:')),
+    );
+
     expect(
       Directory('${destination.path}/lib/core/mvvm').existsSync(),
       isFalse,

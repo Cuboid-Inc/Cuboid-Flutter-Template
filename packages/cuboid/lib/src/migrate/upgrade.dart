@@ -55,8 +55,13 @@ class UpgradePlan {
     for (final assessment in assessments) ...assessment.unsafeFiles,
   ];
 
+  List<MigrationFileChange> get skippedFiles => [
+    for (final assessment in assessments) ...assessment.skippedFiles,
+  ];
+
   bool get hasChanges => changes.isNotEmpty;
   bool get hasUnsafeFiles => unsafeFiles.isNotEmpty;
+  bool get hasSkippedFiles => skippedFiles.isNotEmpty;
 }
 
 /// The result of [UpgradeService.plan]: either a reason `cuboid upgrade`
@@ -123,6 +128,8 @@ class UpgradeApplyResult {
     required this.modifiedFiles,
     required this.blockedFiles,
     required this.metadataUpdated,
+    this.addedFiles = const [],
+    this.skippedFiles = const [],
     this.backupDirectoryPath,
     this.verification,
     this.error,
@@ -136,8 +143,20 @@ class UpgradeApplyResult {
   /// otherwise the target version [metadataUpdated] confirms was recorded.
   final String toVersion;
 
+  /// Paths rewritten in place ([MigrationFileOutcome.modify]). Disjoint
+  /// from [addedFiles].
   final List<String> modifiedFiles;
+
+  /// Paths written for the first time ([MigrationFileOutcome.create]).
+  /// Disjoint from [modifiedFiles].
+  final List<String> addedFiles;
+
   final List<MigrationFileChange> blockedFiles;
+
+  /// Files a [create] migration found already present and left untouched
+  /// ([MigrationFileOutcome.skippedExisting]) -- never a failure, just
+  /// reported so the user knows nothing was overwritten.
+  final List<MigrationFileChange> skippedFiles;
   final bool metadataUpdated;
 
   /// The absolute path this run's pre-migration file snapshots were backed
@@ -284,7 +303,9 @@ class UpgradeService {
     final snapshots = <_FileSnapshot>[];
     final snapshotted = <String>{};
     final modifiedFiles = <String>[];
+    final addedFiles = <String>[];
     final blockedFiles = <MigrationFileChange>[];
+    final skippedFiles = <MigrationFileChange>[];
 
     void snapshotAndBackup(File file, String relativePath) {
       if (!snapshotted.add(relativePath)) {
@@ -303,11 +324,40 @@ class UpgradeService {
       for (final migration in plan.chain) {
         final assessment = migration.assess(projectRoot);
         blockedFiles.addAll(assessment.unsafeFiles);
+        skippedFiles.addAll(assessment.skippedFiles);
         for (final change in assessment.changes) {
           final file = _fileFor(projectRoot, change.path);
           snapshotAndBackup(file, change.path);
+          if (change.outcome == MigrationFileOutcome.create) {
+            file.parent.createSync(recursive: true);
+          }
           atomicReplaceFileContents(file, change.newContents!);
-          modifiedFiles.add(change.path);
+          if (change.outcome == MigrationFileOutcome.create) {
+            addedFiles.add(change.path);
+          } else {
+            modifiedFiles.add(change.path);
+          }
+        }
+      }
+
+      final pubspecChanged =
+          modifiedFiles.contains('pubspec.yaml') ||
+          addedFiles.contains('pubspec.yaml');
+      // Only pre-fetch new dependencies when verification is actually going
+      // to run `flutter analyze`/`flutter test` against them -- `--no-verify`
+      // means "don't invoke the Flutter toolchain at all", and a bare
+      // `cuboid upgrade` with no further commands shouldn't either.
+      if (verify && pubspecChanged) {
+        try {
+          await _processRunner('flutter', [
+            'pub',
+            'get',
+          ], workingDirectory: projectRoot.path);
+        } on ProcessException {
+          // Best-effort: `flutter analyze`/`flutter test` below will
+          // surface an unresolved-dependency failure clearly enough if
+          // this didn't work; `cuboid upgrade` should not fail outright
+          // just because it could not pre-fetch packages.
         }
       }
 
@@ -340,7 +390,9 @@ class UpgradeService {
         fromVersion: plan.fromVersion,
         toVersion: metadataUpdated ? plan.toVersion : plan.fromVersion,
         modifiedFiles: modifiedFiles,
+        addedFiles: addedFiles,
         blockedFiles: blockedFiles,
+        skippedFiles: skippedFiles,
         metadataUpdated: metadataUpdated,
         backupDirectoryPath: snapshots.isEmpty ? null : backupDirectory.path,
         verification: verification,
@@ -355,6 +407,7 @@ class UpgradeService {
         toVersion: plan.fromVersion,
         modifiedFiles: const [],
         blockedFiles: blockedFiles,
+        skippedFiles: skippedFiles,
         metadataUpdated: false,
         backupDirectoryPath: snapshots.isEmpty ? null : backupDirectory.path,
         error: '$error',
@@ -423,10 +476,19 @@ String renderUpgradePlan(UpgradePlanResult result) {
         ..writeln('Planned changes:')
         ..writeln();
       for (final change in plan.changes) {
-        buffer.writeln('  MODIFY ${change.path}');
+        final verb = change.outcome == MigrationFileOutcome.create
+            ? 'ADD'
+            : 'MODIFY';
+        buffer.writeln('  $verb ${change.path}');
       }
       if (plan.hasChanges) {
         buffer.writeln('  UPDATE Cuboid architecture metadata');
+      }
+      for (final skipped in plan.skippedFiles) {
+        buffer
+          ..writeln()
+          ..writeln('⚠ Skipped ${skipped.path}')
+          ..writeln('  File already exists and was not modified.');
       }
       for (final unsafe in plan.unsafeFiles) {
         buffer
@@ -437,7 +499,9 @@ String renderUpgradePlan(UpgradePlanResult result) {
           ..writeln('Reason:')
           ..writeln('  ${unsafe.reason}');
       }
-      if (!plan.hasChanges && plan.unsafeFiles.isEmpty) {
+      if (!plan.hasChanges &&
+          plan.unsafeFiles.isEmpty &&
+          plan.skippedFiles.isEmpty) {
         buffer.writeln('  (nothing to change; only metadata will be updated)');
       }
       return buffer.toString().trimRight();
@@ -464,6 +528,9 @@ String renderUpgradeApplyResult(UpgradeApplyResult result) {
   }
 
   buffer.writeln('✓ Migration completed.');
+  for (final path in result.addedFiles) {
+    buffer.writeln('✓ Added $path.');
+  }
   for (final path in result.modifiedFiles) {
     buffer.writeln('✓ Updated $path.');
   }
@@ -474,6 +541,11 @@ String renderUpgradeApplyResult(UpgradeApplyResult result) {
       '! Architecture metadata was not updated -- one or more files could '
       'not be migrated safely. Run `cuboid doctor` for details.',
     );
+  }
+  for (final skipped in result.skippedFiles) {
+    buffer
+      ..writeln('⚠ Skipped ${skipped.path}')
+      ..writeln('  File already exists and was not modified.');
   }
   for (final unsafe in result.blockedFiles) {
     buffer.writeln('! ${unsafe.path} was left unchanged: ${unsafe.reason}');

@@ -1,7 +1,10 @@
 import 'dart:io';
 
 import 'package:cuboid/src/architecture/architecture_metadata.dart';
+import 'package:cuboid/src/architecture/architecture_version.dart'
+    show currentArchitectureVersion;
 import 'package:cuboid/src/doctor/doctor.dart';
+import 'package:cuboid/src/migrate/migrations/navigation_cuboid_page_route_migration.dart';
 import 'package:test/test.dart';
 
 const _flutterPubspec =
@@ -61,7 +64,16 @@ class NavigationService {
 
 void main() {
   late Directory root;
-  const service = DoctorService();
+  // Pinned to just the navigation migration/0.2.0 -- not the real, growing
+  // migration registry/[currentArchitectureVersion] -- so this file's
+  // fixtures (which only cover what that one migration touches) stay exact
+  // unit tests of generic doctor diagnosis, independent of how many
+  // migrations a later Cuboid version adds. `media_tools_migration_test.dart`
+  // covers doctor's behavior against the real default registry.
+  const service = DoctorService(
+    migrations: [NavigationCuboidPageRouteMigration()],
+    latestVersion: '0.2.0',
+  );
 
   setUp(() {
     root = Directory.systemTemp.createTempSync('cuboid_doctor_test_');
@@ -131,17 +143,23 @@ void main() {
     writePubspec();
     writeRouter(_currentRouter);
 
-    final report = service.diagnose(DoctorInput(projectRoot: root));
+    // Not the pinned `service` above -- an inferred current router always
+    // infers as the real, live `currentArchitectureVersion` (see
+    // `architecture/architecture_metadata.dart`), so this test (about
+    // `isUpToDate` detection via inference, not about any specific
+    // migration) uses a `DoctorService` with the real defaults rather than
+    // asserting against a version pinned out of step with it.
+    const realDefaultService = DoctorService();
+    final report = realDefaultService.diagnose(DoctorInput(projectRoot: root));
 
     expect(report.isCuboidProject, isTrue);
-    expect(report.currentVersion, '0.2.0');
+    expect(report.currentVersion, currentArchitectureVersion);
     expect(report.versionSource, ArchitectureVersionSource.inferred);
     expect(report.isUpToDate, isTrue);
     expect(report.hasPendingMigrations, isFalse);
 
     final rendered = renderDoctorReport(report);
     expect(rendered, contains('Cuboid project: yes'));
-    expect(rendered, contains('Architecture: 0.2.x'));
     expect(rendered, contains('✓ Project is up to date.'));
     expect(rendered, contains('✓ No migrations required.'));
   });

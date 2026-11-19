@@ -247,6 +247,11 @@ String renderDoctorReport(DoctorReport report) {
     if (assessment.hasChanges) {
       buffer.writeln('  ! ${assessment.migration.description}');
     }
+    for (final skipped in assessment.skippedFiles) {
+      buffer.writeln(
+        '  i ${skipped.path} already exists and will be left unchanged.',
+      );
+    }
     for (final unsafe in assessment.unsafeFiles) {
       buffer.writeln(
         '  ! ${unsafe.path} could not be automatically assessed: '

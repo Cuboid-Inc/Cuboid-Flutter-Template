@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:cuboid/src/architecture/architecture_metadata.dart';
-import 'package:cuboid/src/architecture/architecture_version.dart';
+import 'package:cuboid/src/architecture/architecture_version.dart'
+    show currentArchitectureVersion;
 import 'package:cuboid/src/migrate/migration.dart';
-import 'package:cuboid/src/migrate/migration_registry.dart';
 import 'package:cuboid/src/migrate/migrations/navigation_cuboid_page_route_migration.dart';
 import 'package:cuboid/src/migrate/upgrade.dart';
 import 'package:test/test.dart';
@@ -101,9 +101,18 @@ void main() {
   // rather than a real developer's platform cache directory (see
   // `migrate/backup_location.dart`). One dedicated CLI-level test covers the
   // real, un-injected default separately.
+  //
+  // Defaults to just [NavigationCuboidPageRouteMigration] ending at `0.2.0`
+  // -- not the real, growing [migrationRegistry]/[currentArchitectureVersion]
+  // -- so this file's many generic apply/backup/rollback/verification tests
+  // (written against the fixtures in [writeLegacyProject], which only cover
+  // what that one migration touches) stay exact unit tests of those
+  // mechanics and don't also have to satisfy whatever migrations a later
+  // Cuboid version adds. `media_tools_migration_test.dart` exercises the
+  // real default registry for the migration it actually tests.
   UpgradeService buildService({
-    List<Migration> migrations = migrationRegistry,
-    String latestVersion = currentArchitectureVersion,
+    List<Migration> migrations = const [NavigationCuboidPageRouteMigration()],
+    String latestVersion = '0.2.0',
     UpgradeProcessRunner? processRunner,
     DateTime Function()? now,
   }) {
@@ -159,7 +168,15 @@ void main() {
           _legacyRouter.replaceAll('MaterialPageRoute', 'CuboidPageRoute'),
         );
 
-      final service = buildService();
+      // No `.cuboid/project.json` -- the version is inferred from the
+      // router, which always infers a current-shaped router as the real,
+      // live `currentArchitectureVersion`, not whatever `latestVersion`
+      // this test's `UpgradeService` happens to be pinned to (see
+      // `architecture/architecture_metadata.dart`). Pin `latestVersion` to
+      // match so this test (about `alreadyUpToDate` detection, not about
+      // any specific migration) stays accurate regardless of how many
+      // migrations the real registry has.
+      final service = buildService(latestVersion: currentArchitectureVersion);
       final result = service.plan(UpgradeInput(projectRoot: root));
       expect(result.outcome, UpgradePlanOutcome.alreadyUpToDate);
     });
@@ -363,7 +380,10 @@ void main() {
           _legacyRouter.replaceAll('MaterialPageRoute', 'CuboidPageRoute'),
         );
 
-      final service = buildService();
+      // See the identical note in 'reports alreadyUpToDate for a current
+      // project' above -- an inferred current router is always the real
+      // `currentArchitectureVersion`.
+      final service = buildService(latestVersion: currentArchitectureVersion);
       final result = service.plan(UpgradeInput(projectRoot: root));
 
       expect(result.outcome, UpgradePlanOutcome.alreadyUpToDate);

@@ -24,7 +24,10 @@ library;
 /// generate and migrate to. Bump this, and add a matching [Migration] to
 /// `migrate/migration_registry.dart`, whenever a new generation of
 /// Cuboid-owned project infrastructure ships.
-const currentArchitectureVersion = '0.2.0';
+///
+/// `0.3.0` adds `MessageService`/`MediaUtils`/`AppImageCropper` (see
+/// `migrate/migrations/media_tools_migration.dart`).
+const currentArchitectureVersion = '0.3.0';
 
 /// The architecture version generated projects carried before Cuboid
 /// recorded architecture metadata at all (see [ArchitectureMetadata]) --

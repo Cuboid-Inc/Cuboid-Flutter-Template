@@ -2666,7 +2666,7 @@ void main() {
 
       expect(exitCode, 0);
       expect(output.content, contains('Current architecture: 0.1.x'));
-      expect(output.content, contains('Target architecture: 0.2.x'));
+      expect(output.content, contains('Target architecture: 0.3.x'));
       expect(output.content, contains('MODIFY lib/app/app.router.dart'));
       expect(
         output.content,
@@ -2768,11 +2768,11 @@ void main() {
       final exitCode = await runner.run(['upgrade']);
 
       expect(exitCode, 0);
-      expect(commands, ['flutter analyze', 'flutter test']);
+      expect(commands, ['flutter pub get', 'flutter analyze', 'flutter test']);
       expect(output.content, contains('✓ Migration completed.'));
       expect(
         output.content,
-        contains('✓ Architecture metadata updated to 0.2.0.'),
+        contains('✓ Architecture metadata updated to 0.3.0.'),
       );
       expect(output.content, contains('✓ Project verification passed.'));
 
@@ -2782,8 +2782,17 @@ void main() {
       expect(router, contains('CuboidPageRoute'));
       expect(router, isNot(contains('MaterialPageRoute')));
 
+      expect(
+        File('${temp.path}/lib/app/app.snackbars.dart').existsSync(),
+        isTrue,
+      );
+      expect(
+        File('${temp.path}/pubspec.yaml').readAsStringSync(),
+        contains('image_picker:'),
+      );
+
       final metadata = readArchitectureMetadata(temp)!;
-      expect(metadata.architectureVersion, '0.2.0');
+      expect(metadata.architectureVersion, '0.3.0');
     });
 
     test('--yes skips the confirmation prompt entirely', () async {
@@ -3042,6 +3051,29 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
           ? _currentNavigationServiceContents
           : _legacyNavigationServiceContents,
     );
+  // Satisfies MediaToolsMigration's anchors (see
+  // `migrate/migrations/media_tools_migration.dart`) so a project that only
+  // predates navigation infrastructure -- not these two files -- still
+  // chains cleanly through both migrations in these CLI-level tests, which
+  // deliberately exercise the real, un-injected default migration registry.
+  File(
+    '${root.path}/lib/app/app.locator.dart',
+  ).writeAsStringSync(_locatorContents());
+  File('${root.path}/lib/app/app_root.dart').writeAsStringSync('''
+import 'package:flutter/material.dart';
+import 'package:my_app/core/services/navigation_service.dart';
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      navigatorKey: NavigationService.navigatorKey,
+    );
+  }
+}
+''');
 }
 
 void _writeViewProject(Directory root, String featureName) {
