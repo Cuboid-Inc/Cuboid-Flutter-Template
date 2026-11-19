@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased
+
+### Project migrations
+
+- `cuboid doctor` inspects the current directory (read-only) and reports
+  whether it's a Cuboid project, its current and latest compatible project
+  architecture version, and any available migrations.
+- `cuboid upgrade` migrates a project to the latest architecture version by
+  resolving and applying the sequential chain of migrations between its
+  current version and the latest, showing the exact planned file changes and
+  asking for confirmation before writing (`--dry-run` to preview only,
+  `--yes` for non-interactive use, `--no-verify` to skip post-migration
+  verification). Only Cuboid-owned infrastructure is ever rewritten, and only
+  after a structural match against the exact shape a migration expects --
+  never application/feature code, and never a blind find/replace. A file
+  that doesn't match is left untouched and reported. Every write is atomic
+  (temp file + rename), a snapshot of every touched file is saved to
+  Cuboid's own platform cache directory (never inside the project) before
+  anything changes, and a failure partway through rolls back every change
+  already made in that run. After a successful migration, `flutter analyze`
+  and `flutter test` run automatically and are reported separately from the
+  migration result.
+- The first migration: `0.1.0 -> 0.2.0`, moving generated navigation
+  infrastructure (`lib/app/app.router.dart`,
+  `lib/core/services/navigation_service.dart`) from Flutter's
+  `MaterialPageRoute` to `cuboid_flutter`'s `CuboidPageRoute`, preserving
+  every existing method signature, route name/settings, and generic type.
+- Every project `cuboid create app` generates now records its architecture
+  version (and the generating CLI/`cuboid_flutter` versions, for reference)
+  in `.cuboid/project.json` -- a brand-new project is always current and
+  never needs `cuboid upgrade` immediately after creation.
+
 ## 0.1.0 - 2026-08-19
 
 Initial public release.

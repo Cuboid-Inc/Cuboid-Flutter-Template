@@ -391,6 +391,43 @@ app.locator.dart` and `lib/app/app.router.dart` themselves are foundational
 and are never deleted by any `delete` command -- only the entries a matching
 `create` command had added to them.
 
+**Project architecture versioning and migration.** Distinct from the Cuboid
+CLI's own version and from the `cuboid_flutter` runtime package's version, a
+generated project's *architecture version* tracks which generation of
+Cuboid-owned infrastructure (navigation, locator, router conventions) its
+files actually follow -- upgrading the `cuboid_flutter` dependency alone
+never rewrites already-generated application source. `cuboid create app`
+records the current architecture version (plus the generating CLI/
+`cuboid_flutter` versions, for reference) in `.cuboid/project.json`, so a
+newly generated project is always current. Two read/write commands keep an
+existing project in sync as that architecture evolves:
+
+```text
+cuboid doctor    Inspects the current directory (read-only): whether it is
+                  a Cuboid project, its current and latest compatible
+                  architecture version, and any available migrations.
+cuboid upgrade   Migrates the current directory to the latest architecture
+                  by resolving and applying the sequential chain of
+                  migrations between its current version and the latest
+                  (e.g. 0.1.0 -> 0.2.0 -> 0.3.0, never jumping directly).
+                  Shows the exact planned file changes and asks for
+                  confirmation before writing -- `--dry-run` previews only,
+                  `--yes` skips the prompt for non-interactive/CI use, and
+                  `--no-verify` skips the post-migration verification step.
+```
+
+A migration only ever rewrites the specific Cuboid-owned infrastructure
+files it targets, and only after matching each file structurally against
+the exact shape it expects (never a blind find/replace, and never
+`lib/features/`, `lib/shared/`, or other application code). A file that
+doesn't match is left completely untouched and reported rather than
+guessed at. Every write is atomic (temp file + rename), a snapshot of every
+file about to change is saved under `.cuboid/backups/<timestamp>/` first,
+and a failure partway through an upgrade rolls back every change already
+made in that run -- a project is never left half-migrated. After a
+successful migration, `flutter analyze` and `flutter test` run and are
+reported as a distinct pass/fail result from the migration itself.
+
 ## 10. Core foundations
 
 `lib/core/config/` (not present in the base template)

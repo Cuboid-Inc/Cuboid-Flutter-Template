@@ -91,6 +91,95 @@ an earlier one leaves that shared infrastructure in place. There is no
 never created is an error, not a silent no-op, matching how every `create`
 command treats unexpected state.
 
+## Keeping a project up to date
+
+Bumping the package dependency:
+
+```yaml
+cuboid_flutter: ^0.x.x
+```
+
+and running `flutter pub upgrade` only updates the *runtime* code your app
+imports from `cuboid_flutter` -- it does not rewrite files a generated
+project already has on disk, such as `lib/app/app.router.dart` or
+`lib/core/services/navigation_service.dart`. When `cuboid_flutter` ships new
+infrastructure (`CuboidPageRoute`, for example), an existing project's local
+copies of those files don't start using it just because the package version
+moved.
+
+So the two upgrades are separate, and both matter:
+
+- `flutter pub upgrade` -- updates the package **dependency**.
+- `cuboid upgrade` -- updates the project's Cuboid **architecture**
+  (the generated infrastructure files themselves).
+
+`cuboid doctor` and `cuboid upgrade` close that second gap:
+
+```bash
+cuboid doctor    # inspect the current directory: is it a Cuboid project,
+                  # which architecture version is it on, are migrations available
+cuboid upgrade    # migrate it to the latest architecture
+```
+
+### `cuboid doctor`
+
+Read-only -- it never modifies anything. Run it from the root of a generated
+project:
+
+```bash
+cuboid doctor
+```
+
+It reports whether the current directory is a Cuboid project, which
+architecture version it's on, and which migrations (if any) are available to
+bring it up to the latest architecture this CLI supports.
+
+### `cuboid upgrade`
+
+Migrates the current project between supported architecture versions:
+
+```bash
+cuboid upgrade
+```
+
+It shows the exact planned changes and asks for confirmation before writing
+anything. Useful flags:
+
+```bash
+cuboid upgrade --dry-run     # preview the plan; nothing is written
+cuboid upgrade --yes         # skip the confirmation prompt (CI/non-interactive use)
+cuboid upgrade --no-verify   # skip running `flutter analyze`/`flutter test` after migrating
+```
+
+### Migration safety
+
+`cuboid upgrade` migrations:
+
+- modify only infrastructure files Cuboid itself owns -- never
+  `lib/features/`, `lib/shared/`, or other application code;
+- support `--dry-run` so you can review every planned change first;
+- write changes atomically and back them up before touching anything, so a
+  failure partway through rolls back to the exact pre-migration state;
+- refuse to rewrite a file that doesn't structurally match what a migration
+  expects, reporting it instead of guessing.
+
+Automatic migration is not guaranteed for every possible hand-edited
+project -- a heavily customized file may be reported as needing manual
+attention rather than migrated.
+
+Every project `cuboid create app` generates already records its architecture
+version in `.cuboid/project.json`, so a brand-new project never needs
+`cuboid upgrade` immediately after creation.
+
+### Current migration
+
+The one migration this CLI currently ships moves a project from architecture
+`0.1.0` to `0.2.0`: it updates a project's navigation infrastructure --
+`lib/app/app.router.dart` and `lib/core/services/navigation_service.dart` --
+from `MaterialPageRoute` to `cuboid_flutter`'s current `CuboidPageRoute`
+(which adds the iOS-style swipe-back gesture), while leaving route names,
+generics, and the rest of `NavigationService`'s API untouched.
+
 ## Example workflow
 
 ```bash

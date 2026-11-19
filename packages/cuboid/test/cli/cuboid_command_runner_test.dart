@@ -2568,6 +2568,334 @@ void main() {
       contains('cuboid delete storage does not take a storage name.'),
     );
   });
+
+  group('doctor', () {
+    test('reports a non-Flutter directory as not a Cuboid project', () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      Directory.current = temp;
+      final output = _memorySink();
+
+      final exitCode = await runCuboid(
+        ['doctor'],
+        stdout: output,
+        stderr: _memorySink(),
+      );
+
+      expect(exitCode, 1);
+      expect(
+        output.content.trim(),
+        'This directory does not appear to be a Cuboid project.',
+      );
+    });
+
+    test('reports an outdated project and how to upgrade it', () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeLegacyNavigationProject(temp);
+      Directory.current = temp;
+      final output = _memorySink();
+
+      final exitCode = await runCuboid(
+        ['doctor'],
+        stdout: output,
+        stderr: _memorySink(),
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Cuboid project: yes'));
+      expect(output.content, contains('Current architecture: 0.1.x'));
+      expect(
+        output.content,
+        contains('Run `cuboid upgrade` to migrate this project.'),
+      );
+    });
+
+    test('reports an up-to-date project', () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeLegacyNavigationProject(temp, useCuboidPageRoute: true);
+      Directory.current = temp;
+      final output = _memorySink();
+
+      final exitCode = await runCuboid(
+        ['doctor'],
+        stdout: output,
+        stderr: _memorySink(),
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('✓ Project is up to date.'));
+      expect(output.content, contains('✓ No migrations required.'));
+    });
+  });
+
+  group('upgrade', () {
+    test('--dry-run shows the plan and changes nothing', () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeLegacyNavigationProject(temp);
+      final beforeFiles = _relativeFiles(temp);
+      final beforeRouter = File(
+        '${temp.path}/lib/app/app.router.dart',
+      ).readAsStringSync();
+      Directory.current = temp;
+      final output = _memorySink();
+
+      final exitCode = await runCuboid(
+        ['upgrade', '--dry-run'],
+        stdout: output,
+        stderr: _memorySink(),
+      );
+
+      expect(exitCode, 0);
+      expect(output.content, contains('Current architecture: 0.1.x'));
+      expect(output.content, contains('Target architecture: 0.2.x'));
+      expect(output.content, contains('MODIFY lib/app/app.router.dart'));
+      expect(
+        output.content,
+        contains('MODIFY lib/core/services/navigation_service.dart'),
+      );
+      expect(output.content, contains('No files were changed.'));
+      expect(_relativeFiles(temp), beforeFiles);
+      expect(
+        File('${temp.path}/lib/app/app.router.dart').readAsStringSync(),
+        beforeRouter,
+      );
+    });
+
+    test(
+      'an already up-to-date project reports so and changes nothing',
+      () async {
+        final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+        final previousCurrent = Directory.current;
+        addTearDown(() {
+          Directory.current = previousCurrent;
+          temp.deleteSync(recursive: true);
+        });
+        _writeLegacyNavigationProject(temp, useCuboidPageRoute: true);
+        final beforeFiles = _relativeFiles(temp);
+        Directory.current = temp;
+        final output = _memorySink();
+
+        final exitCode = await runCuboid(
+          ['upgrade'],
+          stdout: output,
+          stderr: _memorySink(),
+        );
+
+        expect(exitCode, 0);
+        expect(output.content, contains('already up to date'));
+        expect(_relativeFiles(temp), beforeFiles);
+      },
+    );
+
+    test('declining the confirmation prompt changes nothing', () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+      });
+      _writeLegacyNavigationProject(temp);
+      final beforeFiles = _relativeFiles(temp);
+      Directory.current = temp;
+      final output = _memorySink();
+      var confirmPrompted = false;
+
+      final runner = CuboidCommandRunner(
+        stdout: output,
+        stderr: _memorySink(),
+        confirmUpgrade: (message) async {
+          confirmPrompted = true;
+          return false;
+        },
+      );
+      final exitCode = await runner.run(['upgrade']);
+
+      expect(exitCode, 0);
+      expect(confirmPrompted, isTrue);
+      expect(output.content, contains('Cancelled. No files were changed.'));
+      expect(_relativeFiles(temp), beforeFiles);
+    });
+
+    test('confirming (or --yes) applies the migration, updates metadata, and '
+        'reports verification', () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final backupsRoot = Directory.systemTemp.createTempSync(
+        'cuboid_cli_test_backups_',
+      );
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+        backupsRoot.deleteSync(recursive: true);
+      });
+      _writeLegacyNavigationProject(temp);
+      Directory.current = temp;
+      final output = _memorySink();
+      final commands = <String>[];
+
+      final runner = CuboidCommandRunner(
+        stdout: output,
+        stderr: _memorySink(),
+        upgradeService: UpgradeService(
+          processRunner:
+              (executable, arguments, {required workingDirectory}) async {
+                commands.add([executable, ...arguments].join(' '));
+                return ProcessResult(0, 0, '', '');
+              },
+          backupsRootDirectory: backupsRoot,
+        ),
+        confirmUpgrade: (message) async => true,
+      );
+      final exitCode = await runner.run(['upgrade']);
+
+      expect(exitCode, 0);
+      expect(commands, ['flutter analyze', 'flutter test']);
+      expect(output.content, contains('✓ Migration completed.'));
+      expect(
+        output.content,
+        contains('✓ Architecture metadata updated to 0.2.0.'),
+      );
+      expect(output.content, contains('✓ Project verification passed.'));
+
+      final router = File(
+        '${temp.path}/lib/app/app.router.dart',
+      ).readAsStringSync();
+      expect(router, contains('CuboidPageRoute'));
+      expect(router, isNot(contains('MaterialPageRoute')));
+
+      final metadata = readArchitectureMetadata(temp)!;
+      expect(metadata.architectureVersion, '0.2.0');
+    });
+
+    test('--yes skips the confirmation prompt entirely', () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final backupsRoot = Directory.systemTemp.createTempSync(
+        'cuboid_cli_test_backups_',
+      );
+      final previousCurrent = Directory.current;
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+        backupsRoot.deleteSync(recursive: true);
+      });
+      _writeLegacyNavigationProject(temp);
+      Directory.current = temp;
+      final output = _memorySink();
+      var confirmPrompted = false;
+
+      final runner = CuboidCommandRunner(
+        stdout: output,
+        stderr: _memorySink(),
+        upgradeService: UpgradeService(backupsRootDirectory: backupsRoot),
+        confirmUpgrade: (message) async {
+          confirmPrompted = true;
+          return true;
+        },
+      );
+      final exitCode = await runner.run(['upgrade', '--yes', '--no-verify']);
+
+      expect(exitCode, 0);
+      expect(confirmPrompted, isFalse);
+      expect(
+        File('${temp.path}/lib/app/app.router.dart').readAsStringSync(),
+        contains('CuboidPageRoute'),
+      );
+    });
+
+    test(
+      'cuboid doctor reports the project as current immediately after upgrade',
+      () async {
+        final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+        final backupsRoot = Directory.systemTemp.createTempSync(
+          'cuboid_cli_test_backups_',
+        );
+        final previousCurrent = Directory.current;
+        addTearDown(() {
+          Directory.current = previousCurrent;
+          temp.deleteSync(recursive: true);
+          backupsRoot.deleteSync(recursive: true);
+        });
+        _writeLegacyNavigationProject(temp);
+        Directory.current = temp;
+
+        final runner = CuboidCommandRunner(
+          stdout: _memorySink(),
+          stderr: _memorySink(),
+          upgradeService: UpgradeService(backupsRootDirectory: backupsRoot),
+          confirmUpgrade: (message) async => true,
+        );
+        final upgradeExitCode = await runner.run([
+          'upgrade',
+          '--yes',
+          '--no-verify',
+        ]);
+        expect(upgradeExitCode, 0);
+
+        final doctorOutput = _memorySink();
+        final doctorExitCode = await runCuboid(
+          ['doctor'],
+          stdout: doctorOutput,
+          stderr: _memorySink(),
+        );
+
+        expect(doctorExitCode, 0);
+        expect(doctorOutput.content, contains('✓ Project is up to date.'));
+        expect(doctorOutput.content, contains('✓ No migrations required.'));
+      },
+    );
+
+    test('with real (un-injected) defaults, backups land under the platform '
+        "cache directory, never inside the project's .cuboid/", () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_cli_test_');
+      final previousCurrent = Directory.current;
+      _writeLegacyNavigationProject(temp);
+      Directory.current = temp;
+      // Resolved from Directory.current (post-chdir), matching exactly what
+      // UpgradeService.plan resolves projectRoot to internally -- on macOS
+      // this can differ from `temp.path` itself (e.g. /var vs /private/var).
+      final expectedBackupsDir = Directory(
+        '${cuboidBackupsRootDirectory().path}${Platform.pathSeparator}'
+        '${projectBackupSlug(Directory.current)}',
+      );
+      addTearDown(() {
+        Directory.current = previousCurrent;
+        temp.deleteSync(recursive: true);
+        if (expectedBackupsDir.existsSync()) {
+          expectedBackupsDir.deleteSync(recursive: true);
+        }
+      });
+
+      final exitCode = await runCuboid(
+        ['upgrade', '--yes', '--no-verify'],
+        stdout: _memorySink(),
+        stderr: _memorySink(),
+      );
+
+      expect(exitCode, 0);
+      expect(Directory('${temp.path}/.cuboid/backups').existsSync(), isFalse);
+      expect(File('${temp.path}/.cuboid/project.json').existsSync(), isTrue);
+      expect(expectedBackupsDir.existsSync(), isTrue);
+    });
+  });
 }
 
 _MemorySink _memorySink() => _MemorySink();
@@ -2597,6 +2925,123 @@ Future<void> setupLocator() async {
 $extraService  // @cuboid-service
 }
 ''';
+}
+
+const _legacyNavigationServiceContents = """
+import 'package:flutter/material.dart';
+
+/// Navigates using a global [navigatorKey] so view models can request
+/// navigation without holding a [BuildContext]. Replaces
+/// `stacked_services`' `NavigationService`.
+class NavigationService {
+  static final navigatorKey = GlobalKey<NavigatorState>();
+
+  NavigatorState get _navigator {
+    final state = navigatorKey.currentState;
+    if (state == null) {
+      throw StateError('NavigationService used before a Navigator exists.');
+    }
+    return state;
+  }
+
+  Future<T?> navigateTo<T>(String routeName, {Object? arguments}) {
+    return _navigator.pushNamed<T>(routeName, arguments: arguments);
+  }
+
+  Future<T?> replaceWith<T, TO>(String routeName, {Object? arguments}) {
+    return _navigator.pushReplacementNamed<T, TO>(
+      routeName,
+      arguments: arguments,
+    );
+  }
+
+  void back<T>({T? result}) {
+    if (_navigator.canPop()) {
+      _navigator.pop<T>(result);
+    }
+  }
+}
+""";
+
+const _currentNavigationServiceContents = """
+import 'package:cuboid_flutter/cuboid_flutter.dart';
+import 'package:flutter/material.dart';
+
+class NavigationService {
+  static final navigatorKey = GlobalKey<NavigatorState>();
+
+  NavigatorState get _navigator {
+    final state = navigatorKey.currentState;
+    if (state == null) {
+      throw StateError('NavigationService used before a Navigator exists.');
+    }
+    return state;
+  }
+
+  Future<T?> navigateTo<T>(String routeName, {Object? arguments}) async {
+    final result = await _navigator.pushNamed<dynamic>(
+      routeName,
+      arguments: arguments,
+    );
+    return result as T?;
+  }
+
+  Future<T?> navigateToView<T>(Widget view, {RouteSettings? settings}) {
+    return _navigator.push<T>(
+      CuboidPageRoute<T>(builder: (_) => view, settings: settings),
+    );
+  }
+
+  bool get canPop => _navigator.canPop();
+
+  void back<T>({T? result}) {
+    if (_navigator.canPop()) {
+      _navigator.pop<T>(result);
+    }
+  }
+}
+""";
+
+/// Writes a fixture project doctor/upgrade recognize as a Cuboid project:
+/// a Flutter pubspec.yaml plus `lib/app/app.router.dart` and
+/// `lib/core/services/navigation_service.dart` matching the exact legacy
+/// (MaterialPageRoute-based) shape [NavigationCuboidPageRouteMigration]
+/// migrates from -- or, when [useCuboidPageRoute] is true, the already-
+/// current shape.
+void _writeLegacyNavigationProject(
+  Directory root, {
+  bool useCuboidPageRoute = false,
+}) {
+  File('${root.path}/pubspec.yaml').writeAsStringSync(
+    'name: my_app\ndependencies:\n  flutter:\n    sdk: flutter\n',
+  );
+  final routeConstructor = useCuboidPageRoute
+      ? 'CuboidPageRoute'
+      : 'MaterialPageRoute';
+  File('${root.path}/lib/app/app.router.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync('''
+class Routes {
+  // @cuboid-route-const
+}
+
+final Map<String, WidgetBuilder> appRoutes = {
+  // @cuboid-route
+};
+
+Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+  final builder = appRoutes[settings.name];
+  if (builder == null) return null;
+  return $routeConstructor<dynamic>(builder: builder, settings: settings);
+}
+''');
+  File('${root.path}/lib/core/services/navigation_service.dart')
+    ..parent.createSync(recursive: true)
+    ..writeAsStringSync(
+      useCuboidPageRoute
+          ? _currentNavigationServiceContents
+          : _legacyNavigationServiceContents,
+    );
 }
 
 void _writeViewProject(Directory root, String featureName) {

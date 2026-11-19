@@ -9,20 +9,24 @@ import 'package:cuboid/src/database/create_database.dart';
 import 'package:cuboid/src/database/delete_database.dart';
 import 'package:cuboid/src/dialog/create_dialog.dart';
 import 'package:cuboid/src/dialog/delete_dialog.dart';
+import 'package:cuboid/src/doctor/doctor.dart';
 import 'package:cuboid/src/feature/create_feature.dart';
 import 'package:cuboid/src/feature/delete_feature.dart';
+import 'package:cuboid/src/migrate/upgrade.dart';
 import 'package:cuboid/src/model/create_model.dart';
 import 'package:cuboid/src/route/delete_route.dart';
 import 'package:cuboid/src/service/delete_service.dart';
 import 'package:cuboid/src/service/register_service.dart';
 import 'package:cuboid/src/storage/create_storage.dart';
 import 'package:cuboid/src/storage/delete_storage.dart';
+import 'package:cuboid/src/version.dart';
 import 'package:cuboid/src/view/create_view.dart';
 import 'package:cuboid/src/view/delete_view.dart';
 import 'package:cuboid/src/widget/create_widget.dart';
 import 'package:cuboid/src/widget/delete_widget.dart';
 
-const cuboidVersion = '0.1.0';
+export 'package:cuboid/src/version.dart' show cuboidVersion;
+
 const _knownCreateArtifacts = <String>[
   'app',
   'service',
@@ -76,6 +80,9 @@ class CuboidCommandRunner extends CommandRunner<int> {
     DeleteViewService? deleteViewService,
     DeleteWidgetService? deleteWidgetService,
     DeleteRouteService? deleteRouteService,
+    DoctorService? doctorService,
+    UpgradeService? upgradeService,
+    ConfirmPrompt? confirmUpgrade,
   }) : _stdout = stdout ?? ioStdout,
        _stderr = stderr ?? ioStderr,
        _createProjectService = createProjectService ?? CreateProjectService(),
@@ -102,6 +109,10 @@ class CuboidCommandRunner extends CommandRunner<int> {
        _deleteViewService = deleteViewService ?? DeleteViewService(),
        _deleteWidgetService = deleteWidgetService ?? DeleteWidgetService(),
        _deleteRouteService = deleteRouteService ?? DeleteRouteService(),
+       _doctorService = doctorService ?? const DoctorService(),
+       _upgradeService = upgradeService ?? UpgradeService(),
+       _confirmUpgrade =
+           confirmUpgrade ?? _defaultConfirmUpgrade(stdout ?? ioStdout),
        super('cuboid', 'Command-line tools for Cuboid Flutter projects.') {
     argParser.addFlag(
       'version',
@@ -160,6 +171,15 @@ class CuboidCommandRunner extends CommandRunner<int> {
         createViewService: _createViewService,
       ),
     );
+    addCommand(DoctorCommand(stdout: _stdout, doctorService: _doctorService));
+    addCommand(
+      UpgradeCommand(
+        stdout: _stdout,
+        stderr: _stderr,
+        upgradeService: _upgradeService,
+        confirm: _confirmUpgrade,
+      ),
+    );
   }
 
   final IOSink _stdout;
@@ -183,6 +203,9 @@ class CuboidCommandRunner extends CommandRunner<int> {
   final DeleteViewService _deleteViewService;
   final DeleteWidgetService _deleteWidgetService;
   final DeleteRouteService _deleteRouteService;
+  final DoctorService _doctorService;
+  final UpgradeService _upgradeService;
+  final ConfirmPrompt _confirmUpgrade;
 
   @override
   Future<int?> run(Iterable<String> args) async {
@@ -1505,6 +1528,144 @@ class ServiceCommand extends Command<int> {
   }
 }
 
+class DoctorCommand extends Command<int> {
+  DoctorCommand({IOSink? stdout, DoctorService? doctorService})
+    : _stdout = stdout ?? ioStdout,
+      _doctorService = doctorService ?? const DoctorService();
+
+  final IOSink _stdout;
+  final DoctorService _doctorService;
+
+  @override
+  String get name => 'doctor';
+
+  @override
+  String get description =>
+      'Inspect the current directory for Cuboid architecture version and '
+      'available migrations.';
+
+  @override
+  String get invocation => 'cuboid doctor';
+
+  @override
+  Future<int> run() async {
+    final report = _doctorService.diagnose(const DoctorInput());
+    _stdout.writeln(renderDoctorReport(report));
+    return report.isCuboidProject && report.isKnownVersion ? 0 : 1;
+  }
+}
+
+/// Prompts [message] and returns whether the user confirmed. Used by
+/// [UpgradeCommand] to gate writing any file; see
+/// `migrate/upgrade.dart` for why this lives in the CLI layer rather than
+/// [UpgradeService] itself.
+typedef ConfirmPrompt = Future<bool> Function(String message);
+
+ConfirmPrompt _defaultConfirmUpgrade(IOSink stdout) {
+  return (message) async {
+    stdout.write(message);
+    final line = ioStdin.readLineSync();
+    final normalized = (line ?? '').trim().toLowerCase();
+    return normalized == 'y' || normalized == 'yes';
+  };
+}
+
+class UpgradeCommand extends Command<int> {
+  UpgradeCommand({
+    IOSink? stdout,
+    IOSink? stderr,
+    UpgradeService? upgradeService,
+    ConfirmPrompt? confirm,
+  }) : _stdout = stdout ?? ioStdout,
+       _stderr = stderr ?? ioStderr,
+       _upgradeService = upgradeService ?? UpgradeService(),
+       _confirm = confirm ?? _defaultConfirmUpgrade(stdout ?? ioStdout) {
+    argParser
+      ..addFlag(
+        'dry-run',
+        negatable: false,
+        help: 'Show the migration plan without writing or confirming anything.',
+      )
+      ..addFlag(
+        'yes',
+        abbr: 'y',
+        negatable: false,
+        help: 'Apply the migration without an interactive confirmation prompt.',
+      )
+      ..addFlag(
+        'verify',
+        defaultsTo: true,
+        help: 'Run flutter analyze and flutter test after migrating.',
+      );
+  }
+
+  final IOSink _stdout;
+  final IOSink _stderr;
+  final UpgradeService _upgradeService;
+  final ConfirmPrompt _confirm;
+
+  @override
+  String get name => 'upgrade';
+
+  @override
+  String get description =>
+      'Migrate the current directory to the latest Cuboid architecture.';
+
+  @override
+  String get invocation => 'cuboid upgrade [options]';
+
+  @override
+  Future<int> run() async {
+    final dryRun = argResults!['dry-run'] as bool;
+    final assumeYes = argResults!['yes'] as bool;
+    final verify = argResults!['verify'] as bool;
+
+    final planResult = _upgradeService.plan(const UpgradeInput());
+    _stdout.writeln(renderUpgradePlan(planResult));
+
+    switch (planResult.outcome) {
+      case UpgradePlanOutcome.notAProject:
+      case UpgradePlanOutcome.unknownVersion:
+        return 1;
+      case UpgradePlanOutcome.alreadyUpToDate:
+        return 0;
+      case UpgradePlanOutcome.ready:
+        break;
+    }
+
+    if (dryRun) {
+      _stdout.writeln();
+      _stdout.writeln('No files were changed.');
+      return 0;
+    }
+
+    if (!assumeYes) {
+      final confirmed = await _confirm('\nApply these changes? [y/N]: ');
+      if (!confirmed) {
+        _stdout.writeln('Cancelled. No files were changed.');
+        return 0;
+      }
+    }
+
+    final applyResult = await _upgradeService.apply(planResult, verify: verify);
+    _stdout.writeln();
+    _stdout.writeln(renderUpgradeApplyResult(applyResult));
+
+    if (applyResult.outcome == UpgradeApplyOutcome.failed) {
+      _stderr.writeln(applyResult.error ?? 'Migration failed.');
+      return 1;
+    }
+    final verification = applyResult.verification;
+    if (verification != null && verification.ran && !verification.passed) {
+      return 1;
+    }
+    if (!applyResult.metadataUpdated) {
+      return 1;
+    }
+    return 0;
+  }
+}
+
 Future<int> runCuboid(
   List<String> arguments, {
   IOSink? stdout,
@@ -1526,3 +1687,4 @@ Future<int> runCuboid(
 
 IOSink get ioStdout => stdout;
 IOSink get ioStderr => stderr;
+Stdin get ioStdin => stdin;

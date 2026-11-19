@@ -1,6 +1,9 @@
 import 'dart:io';
 
+import 'package:cuboid/src/architecture/architecture_metadata.dart';
+import 'package:cuboid/src/architecture/architecture_version.dart';
 import 'package:cuboid/src/create/create_project.dart';
+import 'package:cuboid/src/version.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -104,9 +107,7 @@ void main() {
     );
 
     expect(
-      File(
-        '${runtimeCacheDirectory.path}/pubspec.yaml',
-      ).existsSync(),
+      File('${runtimeCacheDirectory.path}/pubspec.yaml').existsSync(),
       isTrue,
     );
     expect(
@@ -118,7 +119,10 @@ void main() {
     final destinationPubspec = File(
       '${destination.path}/pubspec.yaml',
     ).readAsStringSync();
-    expect(destinationPubspec, isNot(contains('path: packages/cuboid_flutter')));
+    expect(
+      destinationPubspec,
+      isNot(contains('path: packages/cuboid_flutter')),
+    );
     expect(
       destinationPubspec,
       contains(
@@ -159,6 +163,46 @@ void main() {
       }
     }
   });
+
+  test(
+    'a newly created project already carries current architecture metadata '
+    '(cuboid upgrade is never required immediately after cuboid create app)',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('cuboid_create_test_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      final runtimeCacheDirectory = Directory(
+        '${temp.path}/.cuboid-home/packages/cuboid_flutter',
+      );
+      final service = CreateProjectService(
+        processRunner:
+            (executable, arguments, {required workingDirectory}) async {
+              return ProcessResult(0, 0, '', '');
+            },
+        runtimePackageCacheDirectory: runtimeCacheDirectory,
+      );
+
+      await service.create(
+        CreateProjectInput(
+          displayName: 'My App',
+          packageIdentifier: 'com.example.myapp',
+          destinationParent: temp,
+        ),
+      );
+      final destination = Directory('${temp.path}/my_app');
+
+      final metadata = readArchitectureMetadata(destination);
+      expect(metadata, isNotNull);
+      expect(metadata!.architectureVersion, currentArchitectureVersion);
+      expect(metadata.generatedByCuboidVersion, cuboidVersion);
+      expect(metadata.generatedByCuboidFlutterVersion, isNotNull);
+
+      final router = File(
+        '${destination.path}/lib/app/app.router.dart',
+      ).readAsStringSync();
+      expect(router, contains('CuboidPageRoute'));
+      expect(router, isNot(contains('MaterialPageRoute')));
+    },
+  );
 
   test('refuses to overwrite an existing destination', () async {
     final temp = Directory.systemTemp.createTempSync('cuboid_create_test_');

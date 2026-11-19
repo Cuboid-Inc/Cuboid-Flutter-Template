@@ -1,3 +1,16 @@
+export 'src/architecture/architecture_metadata.dart'
+    show
+        ArchitectureMetadata,
+        ArchitectureMetadataException,
+        architectureMetadataRelativePath,
+        inferArchitectureVersionFromSource,
+        readArchitectureMetadata,
+        writeArchitectureMetadata;
+export 'src/architecture/architecture_version.dart'
+    show
+        ArchitectureVersion,
+        currentArchitectureVersion,
+        legacyArchitectureVersion;
 export 'src/bootstrap/bootstrap.dart'
     show
         BootstrapApplyResult,
@@ -68,6 +81,13 @@ export 'src/dialog/delete_dialog.dart'
         DeleteDialogPlan,
         DeleteDialogResult,
         DeleteDialogService;
+export 'src/doctor/doctor.dart'
+    show
+        ArchitectureVersionSource,
+        DoctorInput,
+        DoctorReport,
+        DoctorService,
+        renderDoctorReport;
 export 'src/feature/create_feature.dart'
     show
         CreateFeatureException,
@@ -82,6 +102,40 @@ export 'src/feature/delete_feature.dart'
         DeleteFeaturePlan,
         DeleteFeatureResult,
         DeleteFeatureService;
+export 'src/migrate/backup_location.dart'
+    show
+        backupDirectoryFor,
+        cuboidBackupsRootDirectory,
+        cuboidCacheRootDirectory,
+        projectBackupSlug;
+export 'src/migrate/migration.dart'
+    show
+        Migration,
+        MigrationAssessment,
+        MigrationFileChange,
+        MigrationFileOutcome;
+export 'src/migrate/migration_registry.dart'
+    show
+        MigrationChainException,
+        knownArchitectureVersions,
+        latestVersionIn,
+        migrationRegistry,
+        resolveMigrationChain,
+        validateMigrationRegistry;
+export 'src/migrate/migrations/navigation_cuboid_page_route_migration.dart'
+    show NavigationCuboidPageRouteMigration;
+export 'src/migrate/upgrade.dart'
+    show
+        UpgradeApplyOutcome,
+        UpgradeApplyResult,
+        UpgradeInput,
+        UpgradePlan,
+        UpgradePlanOutcome,
+        UpgradePlanResult,
+        UpgradeService,
+        VerificationResult,
+        renderUpgradeApplyResult,
+        renderUpgradePlan;
 export 'src/model/create_model.dart'
     show
         CreateModelException,

@@ -1,8 +1,8 @@
 {
   "template_name": "cuboid_flutter_app",
   "template_version": 1,
-  "source_commit": "dbee3b806c0a9a02ac6f2ee7687727131d1882dc",
-  "archive_sha256": "2bc6cb188d598c84adeeefe9e9a2fe8c71c6910ab10ea51bb34468c5a08abc8a",
+  "source_commit": "55072e8b51c02ea76804895cf32f9b54f3619eae",
+  "archive_sha256": "b93e64bc032a32cb2e53a4134b162870ed85040a93f24eb77989b812b21aebc4",
   "files": [
     {
       "path": ".gitignore",
@@ -16,8 +16,8 @@
     },
     {
       "path": "ARCHITECTURE.md",
-      "size": 29498,
-      "sha256": "8f670bc82f8dc7e58b28511aef16a2d97691babe6b6de1b826253502a9220773"
+      "size": 31805,
+      "sha256": "0604e3fbfdbdbc123b691c17974268a7218eef94e21e8e779e2a3a35818eab22"
     },
     {
       "path": "README.md",
@@ -521,8 +521,8 @@
     },
     {
       "path": "lib/app/app.router.dart",
-      "size": 709,
-      "sha256": "8ab4883668bb1a0f9b202beb30679d6dcbf36f9927c734b86265702416e01a39"
+      "size": 761,
+      "sha256": "61c243130948ecb409564ddb95d3ac00e28282472e551eca1c744fd79d754bd9"
     },
     {
       "path": "lib/app/app_root.dart",
@@ -566,8 +566,8 @@
     },
     {
       "path": "lib/core/services/navigation_service.dart",
-      "size": 6175,
-      "sha256": "475f6c4a863d708537ba99509e170df632ed87c1c0b57e706b1961b2cc813918"
+      "size": 6220,
+      "sha256": "055377edee669efc4fc3aaaf852f4a546d119cd0743b676cd9b97672ea63eddf"
     },
     {
       "path": "lib/core/theme/app_colors.dart",
@@ -696,8 +696,13 @@
     },
     {
       "path": "packages/cuboid_flutter/lib/cuboid_flutter.dart",
-      "size": 337,
-      "sha256": "47570750b48cb319604b0715dea91632cdb1d3ba339052f550f71963564075ea"
+      "size": 418,
+      "sha256": "19c78cafb889e56ef182930b53d9718e87ff727d9c1cf986a6d51d33c1c958d3"
+    },
+    {
+      "path": "packages/cuboid_flutter/lib/src/cuboid_page_route.dart",
+      "size": 10998,
+      "sha256": "a69299f5cdbafc922de707799316b63f567faa825f96f0570217dececa0ed8ea"
     },
     {
       "path": "packages/cuboid_flutter/lib/src/cuboid_view.dart",
@@ -710,9 +715,19 @@
       "sha256": "0e473daa97dad02eca6432f6b323bae9c8364a157f3f83164f3098f93065798c"
     },
     {
+      "path": "packages/cuboid_flutter/lib/src/swipe_back_configuration.dart",
+      "size": 2625,
+      "sha256": "789965debdbfaca182e4d1801e7c1e69058e09cdded763499e430e8a918eb1d8"
+    },
+    {
       "path": "packages/cuboid_flutter/pubspec.yaml",
       "size": 578,
-      "sha256": "9c674462f5a9f370f1fcea178ec79920d89968a21c3a5237b8fa9a4235b9c0ff"
+      "sha256": "2f12124e67c536d99eb8ef9b0efd4f141e0d258d0daca8447fd6e73b78018ffa"
+    },
+    {
+      "path": "packages/cuboid_flutter/test/cuboid_page_route_test.dart",
+      "size": 6737,
+      "sha256": "f10f6eb94816e7e2c53f0f9a1fbfa8574775513b67c9b20a16673f3fc6a9e178"
     },
     {
       "path": "packages/cuboid_flutter/test/cuboid_view_model_test.dart",
@@ -723,6 +738,11 @@
       "path": "packages/cuboid_flutter/test/cuboid_view_test.dart",
       "size": 1981,
       "sha256": "5ee099a30c58b6442c981864c937feeea85b66931115612e55b69d1e547e730e"
+    },
+    {
+      "path": "packages/cuboid_flutter/test/swipe_back_configuration_test.dart",
+      "size": 2479,
+      "sha256": "5b6c20ba7fa6644cac550ea42763bab8efe104bc7c9703428b3a8288cc72a292"
     },
     {
       "path": "pubspec.lock",

@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cuboid/src/architecture/architecture_metadata.dart';
+import 'package:cuboid/src/architecture/architecture_version.dart';
 import 'package:cuboid/src/bootstrap/bootstrap.dart';
 import 'package:cuboid/src/templates/flutter_app/template_payload.g.dart'
     as embedded_payload;
 import 'package:cuboid/src/templates/flutter_app/template_sync.dart'
     as template;
+import 'package:cuboid/src/version.dart';
 
 /// The runtime package is embedded in the same bundled payload as the app
 /// template (see `template_sync.dart`), but files under this prefix are
@@ -192,6 +195,7 @@ class CreateProjectService {
       }
       final bootstrapResult = applyBootstrapPlan(staging, bootstrapPlan);
       _linkCuboidFlutterDependency(staging, _runtimePackageCacheDirectory);
+      _writeArchitectureMetadata(staging, runtimeFiles);
 
       final postStepResults = <PostStepResult>[];
       for (final step in createPlan.postSteps) {
@@ -466,6 +470,47 @@ void _linkCuboidFlutterDependency(
     context: 'pubspec.yaml ($_cuboidFlutterPackageName dependency path)',
   );
   pubspec.writeAsStringSync(updated);
+}
+
+/// Writes `.cuboid/project.json` into a newly generated project so it
+/// starts on [currentArchitectureVersion] from the moment it exists --
+/// `cuboid upgrade` is never required immediately after `cuboid create
+/// app`. Records the generating CLI's own version and, when it can be
+/// determined from the bundled runtime files, the `cuboid_flutter` package
+/// version installed alongside it -- both diagnostic-only (see
+/// `architecture/architecture_version.dart` for why these differ from the
+/// architecture version itself).
+void _writeArchitectureMetadata(
+  Directory staging,
+  List<template.ExtractedTemplateFile> runtimeFiles,
+) {
+  writeArchitectureMetadata(
+    staging,
+    ArchitectureMetadata(
+      architectureVersion: currentArchitectureVersion,
+      generatedByCuboidVersion: cuboidVersion,
+      generatedByCuboidFlutterVersion: _cuboidFlutterPackageVersion(
+        runtimeFiles,
+      ),
+    ),
+  );
+}
+
+String? _cuboidFlutterPackageVersion(
+  List<template.ExtractedTemplateFile> runtimeFiles,
+) {
+  const pubspecPath = '${_cuboidFlutterArchivePrefix}pubspec.yaml';
+  for (final file in runtimeFiles) {
+    if (file.path != pubspecPath) {
+      continue;
+    }
+    final match = RegExp(
+      r'^version:\s*(\S+)\s*$',
+      multiLine: true,
+    ).firstMatch(utf8.decode(file.bytes));
+    return match?.group(1);
+  }
+  return null;
 }
 
 /// Resolves the machine-global directory the embedded `cuboid_flutter`
